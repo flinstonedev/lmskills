@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { SignInButton, SignUpButton, UserButton, SignedIn, SignedOut } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export function Header() {
   return (
@@ -23,6 +24,7 @@ export function Header() {
         </div>
 
         <div className="flex items-center space-x-4">
+          <ThemeToggle />
           <SignedOut>
             <SignInButton mode="modal">
               <Button variant="ghost">Sign In</Button>

@@ -22,7 +22,7 @@ export default function Home() {
               tools. Built by the community, for the community.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button asChild size="lg">
+              <Button asChild size="lg" variant="gradient">
                 <Link href="/skills">Browse Skills</Link>
               </Button>
               <Button asChild variant="outline" size="lg">
@@ -128,15 +128,16 @@ export default function Home() {
         </section>
 
         {/* CTA Section */}
-        <section className="bg-primary text-primary-foreground py-24">
-          <div className="container mx-auto px-4 text-center">
+        <section className="relative overflow-hidden py-24">
+          <div className="absolute inset-0 bg-[image:var(--gradient-primary)] opacity-10 dark:opacity-20" />
+          <div className="container relative mx-auto px-4 text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               Ready to Share Your Skills?
             </h2>
-            <p className="text-xl mb-8 opacity-90">
+            <p className="text-xl text-muted-foreground mb-8">
               Join our community of builders and start sharing today.
             </p>
-            <Button asChild size="lg" variant="secondary">
+            <Button asChild size="lg" variant="gradient">
               <Link href="/skills/submit">Submit Your First Skill</Link>
             </Button>
           </div>
