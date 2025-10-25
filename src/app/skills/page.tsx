@@ -15,10 +15,19 @@ export default function SkillsPage() {
   const [searchQuery, setSearchQuery] = useState("");
 
   // Get all skills or search results
-  const skills = useQuery(
-    searchQuery.trim() ? api.skills.searchSkills : api.skills.listSkills,
-    searchQuery.trim() ? { query: searchQuery, limit: 20 } : { limit: 20 }
+  const hasSearchQuery = searchQuery.trim().length > 0;
+
+  const searchResults = useQuery(
+    hasSearchQuery ? api.skills.searchSkills : "skip",
+    hasSearchQuery ? { query: searchQuery, limit: 20 } : "skip"
   );
+
+  const allSkills = useQuery(
+    !hasSearchQuery ? api.skills.listSkills : "skip",
+    !hasSearchQuery ? { limit: 20 } : "skip"
+  );
+
+  const skills = hasSearchQuery ? searchResults : allSkills;
 
   return (
     <div className="container mx-auto px-4 py-12">
