@@ -23,15 +23,17 @@ export default defineSchema({
     .index("by_handle", ["handle"])
     .index("by_email", ["email"]),
 
-  // Skills table - prepared for future milestones
+  // Skills table
   skills: defineTable({
     repoUrl: v.string(), // GitHub repo URL (unique)
     name: v.string(),
     description: v.string(),
     license: v.optional(v.string()),
+    skillMdContent: v.string(), // Raw SKILL.md markdown content
     ownerUserId: v.id("users"),
     ownerOrg: v.optional(v.string()), // For GitHub org repos
     visibility: v.string(), // "public" only in MVP
+    stars: v.optional(v.number()), // GitHub stars count
     lastSyncedAt: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),

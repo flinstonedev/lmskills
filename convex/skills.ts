@@ -49,6 +49,8 @@ export const submitSkill = mutation({
       name: args.name,
       description: args.description,
       license: args.license,
+      skillMdContent: args.skillMdContent,
+      stars: args.stars,
       ownerUserId: user._id,
       visibility: "public",
       lastSyncedAt: args.lastSyncedAt,
