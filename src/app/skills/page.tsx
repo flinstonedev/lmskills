@@ -14,20 +14,11 @@ import Link from "next/link";
 export default function SkillsPage() {
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Get all skills or search results
-  const hasSearchQuery = searchQuery.trim().length > 0;
-
-  const searchResults = useQuery(
-    hasSearchQuery ? api.skills.searchSkills : "skip",
-    hasSearchQuery ? { query: searchQuery, limit: 20 } : "skip"
-  );
-
-  const allSkills = useQuery(
-    !hasSearchQuery ? api.skills.listSkills : "skip",
-    !hasSearchQuery ? { limit: 20 } : "skip"
-  );
-
-  const skills = hasSearchQuery ? searchResults : allSkills;
+  // Get all skills or search results using a single unified query
+  const skills = useQuery(api.skills.listSkills, {
+    limit: 20,
+    query: searchQuery.trim() || undefined,
+  });
 
   return (
     <div className="container mx-auto px-4 py-12">

@@ -63,15 +63,51 @@ export const submitSkill = mutation({
 });
 
 /**
- * Get all skills (paginated)
+ * Get all skills (paginated) with optional search
  */
 export const listSkills = query({
   args: {
     limit: v.optional(v.number()),
+    query: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const limit = args.limit ?? 20;
 
+    // If there's a search query, filter results
+    if (args.query && args.query.trim()) {
+      const searchQuery = args.query.toLowerCase();
+
+      const allSkills = await ctx.db
+        .query("skills")
+        .withIndex("by_created_at")
+        .order("desc")
+        .collect();
+
+      const filtered = allSkills.filter(
+        (skill) =>
+          skill.name.toLowerCase().includes(searchQuery) ||
+          skill.description.toLowerCase().includes(searchQuery)
+      );
+
+      const limited = filtered.slice(0, limit);
+
+      const skillsWithOwners = await Promise.all(
+        limited.map(async (skill) => {
+          const owner = await ctx.db.get(skill.ownerUserId);
+          return {
+            ...skill,
+            owner: owner ? {
+              handle: owner.handle,
+              avatarUrl: owner.avatarUrl,
+            } : null,
+          };
+        })
+      );
+
+      return skillsWithOwners;
+    }
+
+    // Otherwise, return all skills
     const skills = await ctx.db
       .query("skills")
       .withIndex("by_created_at")
