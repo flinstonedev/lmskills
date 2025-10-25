@@ -1,36 +1,162 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# LMSkills
+
+A public, LLM-agnostic platform for sharing, discovering, and collaborating on Claude skills and similar LLM-powered tools.
+
+## Features (Milestone 0.1)
+
+- ✅ User authentication with Clerk (GitHub OAuth + Email magic link)
+- ✅ User profiles with customizable handles and bios
+- ✅ Convex database integration
+- ✅ Responsive landing page
+- ✅ Modern UI with shadcn/ui components
+- ✅ Full TypeScript support
+
+## Tech Stack
+
+- **Frontend**: Next.js 15 (App Router), React 19, TypeScript
+- **Styling**: Tailwind CSS 4, shadcn/ui
+- **Database**: Convex
+- **Authentication**: Clerk
+- **Deployment**: Vercel
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- Node.js 18+ and npm
+- Clerk account ([clerk.com](https://clerk.com))
+- Convex account ([convex.dev](https://convex.dev))
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone <your-repo-url>
+   cd lmskills
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Set up environment variables:
+   ```bash
+   cp .env.local.example .env.local
+   ```
+
+4. Configure Convex:
+   ```bash
+   npx convex dev
+   ```
+   This will open your browser to log in and create a project. The command will automatically add `CONVEX_DEPLOYMENT` and `NEXT_PUBLIC_CONVEX_URL` to your `.env.local`.
+
+5. Configure Clerk:
+   - Create a new application in [Clerk Dashboard](https://dashboard.clerk.com)
+   - Enable GitHub OAuth and Email magic link
+   - Create a JWT template named "convex" (see `CLERK_SETUP.md` for details)
+   - Add your Clerk keys to `.env.local`:
+     ```
+     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
+     CLERK_SECRET_KEY=sk_test_...
+     ```
+
+6. Run the development server:
+   ```bash
+   npm run dev
+   ```
+
+7. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## Project Structure
+
+```
+lmskills/
+├── convex/                 # Convex backend
+│   ├── schema.ts          # Database schema
+│   ├── users.ts           # User queries and mutations
+│   ├── http.ts            # HTTP endpoints (webhooks)
+│   └── auth.config.ts     # Clerk auth configuration
+├── src/
+│   ├── app/               # Next.js app router pages
+│   │   ├── layout.tsx     # Root layout with providers
+│   │   ├── page.tsx       # Landing page
+│   │   └── users/         # User profile pages
+│   ├── components/        # React components
+│   │   ├── ui/            # shadcn/ui components
+│   │   ├── header.tsx     # Navigation header
+│   │   ├── footer.tsx     # Footer
+│   │   └── providers/     # Context providers
+│   ├── lib/               # Utilities
+│   └── middleware.ts      # Clerk middleware
+├── public/                # Static assets
+└── ...config files
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Convex HTTP Endpoint
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The Clerk webhook endpoint is available at:
+```
+https://your-convex-deployment.convex.site/clerk-webhook
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Configure this in Clerk Dashboard → Webhooks after deployment.
 
-## Learn More
+## Deployment
 
-To learn more about Next.js, take a look at the following resources:
+### Deploy to Vercel
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Push your code to GitHub
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+2. Import the project in [Vercel](https://vercel.com)
 
-## Deploy on Vercel
+3. Add environment variables in Vercel project settings:
+   - `CONVEX_DEPLOYMENT`
+   - `NEXT_PUBLIC_CONVEX_URL`
+   - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
+   - `CLERK_SECRET_KEY`
+   - `CLERK_WEBHOOK_SECRET`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+4. Deploy!
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+5. After deployment, set up the Clerk webhook:
+   - Go to Clerk Dashboard → Webhooks
+   - Add endpoint: `https://your-domain.vercel.app/api/webhooks/clerk`
+   - Subscribe to: `user.created`, `user.updated`, `user.deleted`
+   - Copy the signing secret and add to Vercel env vars as `CLERK_WEBHOOK_SECRET`
+
+## Development Roadmap
+
+See `MVP_PLAN.md` for the complete roadmap.
+
+### Milestone 0.1 ✅ (Current)
+- Authentication and user management
+- Landing page
+- User profiles
+
+### Milestone 0.2 (Next)
+- Skill submission via GitHub URL
+- Skill ingestion pipeline
+- Skill detail pages
+
+### Milestone 0.3
+- Directory listing with search and filters
+- Sorting (trending, new, rating)
+
+### Future Milestones
+- Comments and ratings
+- Favorites/stars
+- Moderation
+- Skills Lab discussions
+
+## Contributing
+
+Contributions are welcome! Please read our contributing guidelines (coming soon).
+
+## License
+
+MIT License - see LICENSE file for details.
+
+## Support
+
+For issues and questions, please open a GitHub issue or reach out to the team.
