@@ -8,7 +8,9 @@
  * @module
  */
 
+import type * as github from "../github.js";
 import type * as http from "../http.js";
+import type * as skills from "../skills.js";
 import type * as users from "../users.js";
 
 import type {
@@ -26,7 +28,9 @@ import type {
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  github: typeof github;
   http: typeof http;
+  skills: typeof skills;
   users: typeof users;
 }>;
 declare const fullApiWithMounts: typeof fullApi;
