@@ -243,10 +243,19 @@ export const fetchRepoInfo = action({
     // Extract the skill name from the path (last segment)
     const skillName = path.split('/').pop() || path;
 
+    // Parse SKILL.md frontmatter to extract skill metadata
+    const frontmatter = parseSkillMdFrontmatter(skillMdContent);
+
+    // Use skill description from SKILL.md frontmatter, fallback to repo description
+    const description = frontmatter?.description || repoData.description || "";
+
+    // Use skill name from SKILL.md frontmatter if available, otherwise use path-based name
+    const name = frontmatter?.name || skillName;
+
     return {
       owner,
-      name: skillName,
-      description: repoData.description || "",
+      name,
+      description,
       license: repoData.license?.spdx_id || null,
       stars: repoData.stargazers_count,
       url: args.url, // Use the full URL provided by the user
@@ -255,6 +264,47 @@ export const fetchRepoInfo = action({
     };
   },
 });
+
+/**
+ * Parse YAML frontmatter from SKILL.md content
+ * Returns the description from the frontmatter, or null if not found
+ */
+function parseSkillMdFrontmatter(content: string): { name?: string; description?: string } | null {
+  // Match YAML frontmatter between --- delimiters
+  const frontmatterMatch = content.match(/^---\s*\n([\s\S]*?)\n---/);
+
+  if (!frontmatterMatch) {
+    return null;
+  }
+
+  const frontmatter = frontmatterMatch[1];
+  const result: { name?: string; description?: string } = {};
+
+  // Parse name field
+  const nameMatch = frontmatter.match(/^name:\s*(.+)$/m);
+  if (nameMatch) {
+    result.name = nameMatch[1].trim().replace(/^["']|["']$/g, ''); // Remove quotes if present
+  }
+
+  // Parse description field (can be single or multi-line)
+  // First check for multi-line description with pipe or greater-than
+  const multiLineMatch = frontmatter.match(/^description:\s*[|>][-+]?\s*\n((?:[ ]{2,}.*\n?)+)/m);
+  if (multiLineMatch) {
+    result.description = multiLineMatch[1]
+      .split('\n')
+      .map(line => line.replace(/^\s{2,}/, '').trim())
+      .filter(line => line)
+      .join(' ');
+  } else {
+    // Try single-line description
+    const descMatch = frontmatter.match(/^description:\s*(.+)$/m);
+    if (descMatch) {
+      result.description = descMatch[1].trim().replace(/^["']|["']$/g, ''); // Remove quotes if present
+    }
+  }
+
+  return result;
+}
 
 /**
  * Parse GitHub URL to extract owner, repo name, and optional path
