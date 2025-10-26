@@ -11,6 +11,13 @@ export const metadata: Metadata = {
   title: "LMSkills - Skills Directory for Claude",
   description:
     "A platform for sharing and discovering Claude skills. Create, share, and explore powerful LLM capabilities.",
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/icon.svg", type: "image/svg+xml", sizes: "any" },
+    ],
+    apple: [{ url: "/icon.svg", type: "image/svg+xml" }],
+  },
 };
 
 export default function RootLayout({
