@@ -156,7 +156,7 @@ export const fetchRepoInfo = action({
         headers: {
           Accept: "application/vnd.github.v3+json",
           ...(process.env.GITHUB_TOKEN && {
-            Authorization: `token ${process.env.GITHUB_TOKEN}`,
+            Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
           }),
         },
       }
@@ -188,7 +188,7 @@ export const fetchRepoInfo = action({
         headers: {
           Accept: "application/vnd.github.v3+json",
           ...(process.env.GITHUB_TOKEN && {
-            Authorization: `token ${process.env.GITHUB_TOKEN}`,
+            Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
           }),
         },
       }
@@ -403,7 +403,7 @@ async function fetchDirectoryRecursive(
         headers: {
           Accept: "application/vnd.github.v3+json",
           ...(process.env.GITHUB_TOKEN && {
-            Authorization: `token ${process.env.GITHUB_TOKEN}`,
+            Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
           }),
         },
       });
