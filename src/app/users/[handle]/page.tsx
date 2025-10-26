@@ -40,58 +40,56 @@ export default function UserProfilePage({
     );
   }
 
-  const initials = user.handle
-    .slice(0, 2)
-    .toUpperCase();
+  const initials = user.handle.slice(0, 2).toUpperCase();
 
   return (
     <div className="container mx-auto px-4 py-12">
-        <div className="max-w-4xl mx-auto">
-          {/* Profile Header */}
-          <div className="flex items-start gap-6 mb-8">
-            <Avatar className="h-24 w-24">
-              <AvatarImage src={user.avatarUrl} alt={user.handle} />
-              <AvatarFallback>{initials}</AvatarFallback>
-            </Avatar>
-            <div className="flex-1">
-              <div className="flex items-center gap-4 mb-2">
-                <h1 className="text-3xl font-bold">@{user.handle}</h1>
-                {isOwnProfile && (
-                  <Button asChild variant="outline" size="sm">
-                    <Link href={`/users/${user.handle}/edit`}>Edit Profile</Link>
-                  </Button>
-                )}
-              </div>
-              <p className="text-muted-foreground mb-2">{user.email}</p>
-              {user.bio && <p className="text-base">{user.bio}</p>}
-              <p className="text-sm text-muted-foreground mt-2">
-                Joined {new Date(user.createdAt).toLocaleDateString()}
-              </p>
+      <div className="max-w-4xl mx-auto">
+        {/* Profile Header */}
+        <div className="flex items-start gap-6 mb-8">
+          <Avatar className="h-24 w-24">
+            <AvatarImage src={user.avatarUrl} alt={user.handle} />
+            <AvatarFallback>{initials}</AvatarFallback>
+          </Avatar>
+          <div className="flex-1">
+            <div className="flex items-center gap-4 mb-2">
+              <h1 className="text-3xl font-bold">@{user.handle}</h1>
+              {isOwnProfile && (
+                <Button asChild variant="outline" size="sm">
+                  <Link href={`/users/${user.handle}/edit`}>Edit Profile</Link>
+                </Button>
+              )}
             </div>
+            <p className="text-muted-foreground mb-2">{user.email}</p>
+            {user.bio && <p className="text-base">{user.bio}</p>}
+            <p className="text-sm text-muted-foreground mt-2">
+              Joined {new Date(user.createdAt).toLocaleDateString()}
+            </p>
           </div>
-
-          {/* Skills Section - Placeholder for future */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Published Skills</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                No skills published yet. Submit your first skill to get started!
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Favorites Section - Placeholder for future */}
-          <Card className="mt-6">
-            <CardHeader>
-              <CardTitle>Favorite Skills</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">No favorites yet.</p>
-            </CardContent>
-          </Card>
         </div>
+
+        {/* Skills Section - Placeholder for future */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Published Skills</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">
+              No skills published yet. Submit your first skill to get started!
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Favorites Section - Placeholder for future */}
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>Favorite Skills</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">No favorites yet.</p>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

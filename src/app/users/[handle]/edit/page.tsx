@@ -79,89 +79,90 @@ export default function EditProfilePage({
 
   return (
     <div className="container mx-auto px-4 py-12">
-        <div className="max-w-2xl mx-auto">
-          <Card>
-            <CardHeader>
-              <CardTitle>Edit Profile</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {error && (
-                  <div className="bg-destructive/10 text-destructive px-4 py-3 rounded">
-                    {error}
-                  </div>
-                )}
-
-                <div className="space-y-2">
-                  <Label htmlFor="handle">Handle</Label>
-                  <Input
-                    id="handle"
-                    value={formHandle}
-                    onChange={(e) => setFormHandle(e.target.value)}
-                    placeholder="your-handle"
-                    required
-                    pattern="[a-z0-9-]+"
-                    title="Only lowercase letters, numbers, and hyphens"
-                  />
-                  <p className="text-sm text-muted-foreground">
-                    Your public username. Only lowercase letters, numbers, and hyphens.
-                  </p>
+      <div className="max-w-2xl mx-auto">
+        <Card>
+          <CardHeader>
+            <CardTitle>Edit Profile</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {error && (
+                <div className="bg-destructive/10 text-destructive px-4 py-3 rounded">
+                  {error}
                 </div>
+              )}
 
-                <div className="space-y-2">
-                  <Label htmlFor="bio">Bio</Label>
-                  <Textarea
-                    id="bio"
-                    value={bio}
-                    onChange={(e) => setBio(e.target.value)}
-                    placeholder="Tell us about yourself..."
-                    rows={4}
-                    maxLength={500}
-                  />
-                  <p className="text-sm text-muted-foreground">
-                    {bio.length}/500 characters
-                  </p>
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="handle">Handle</Label>
+                <Input
+                  id="handle"
+                  value={formHandle}
+                  onChange={(e) => setFormHandle(e.target.value)}
+                  placeholder="your-handle"
+                  required
+                  pattern="[a-z0-9-]+"
+                  title="Only lowercase letters, numbers, and hyphens"
+                />
+                <p className="text-sm text-muted-foreground">
+                  Your public username. Only lowercase letters, numbers, and
+                  hyphens.
+                </p>
+              </div>
 
-                <div className="space-y-2">
-                  <Label>Email</Label>
-                  <Input value={user.email} disabled />
-                  <p className="text-sm text-muted-foreground">
-                    Email is managed by Clerk and cannot be changed here.
-                  </p>
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="bio">Bio</Label>
+                <Textarea
+                  id="bio"
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  placeholder="Tell us about yourself..."
+                  rows={4}
+                  maxLength={500}
+                />
+                <p className="text-sm text-muted-foreground">
+                  {bio.length}/500 characters
+                </p>
+              </div>
 
-                <div className="space-y-2">
-                  <Label>Avatar</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Avatar is managed by Clerk.{" "}
-                    <a
-                      href="https://dashboard.clerk.com"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary hover:underline"
-                    >
-                      Update in Clerk Dashboard
-                    </a>
-                  </p>
-                </div>
+              <div className="space-y-2">
+                <Label>Email</Label>
+                <Input value={user.email} disabled />
+                <p className="text-sm text-muted-foreground">
+                  Email is managed by Clerk and cannot be changed here.
+                </p>
+              </div>
 
-                <div className="flex gap-4">
-                  <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? "Saving..." : "Save Changes"}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => router.push(`/users/${handle}`)}
+              <div className="space-y-2">
+                <Label>Avatar</Label>
+                <p className="text-sm text-muted-foreground">
+                  Avatar is managed by Clerk.{" "}
+                  <a
+                    href="https://dashboard.clerk.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
                   >
-                    Cancel
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
+                    Update in Clerk Dashboard
+                  </a>
+                </p>
+              </div>
+
+              <div className="flex gap-4">
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? "Saving..." : "Save Changes"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => router.push(`/users/${handle}`)}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
