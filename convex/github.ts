@@ -239,12 +239,28 @@ async function fetchDirectoryRecursive(
   );
 
   if (!response.ok) {
+    // For the initial call (depth 0), throw errors so users see what went wrong
+    // For recursive calls, silently skip failed subdirectories
+    if (depth === 0) {
+      if (response.status === 404) {
+        throw new Error(`Directory not found: ${path}`);
+      } else if (response.status === 403) {
+        throw new Error("GitHub API rate limit exceeded");
+      }
+      throw new Error(`Failed to fetch directory contents (HTTP ${response.status})`);
+    }
     return [];
   }
 
   const contents = await response.json();
 
+  // Validate that contents is an array (directory), not an object (file)
   if (!Array.isArray(contents)) {
+    // For the initial call, this is an error - user provided a file URL instead of directory
+    // For recursive calls, silently skip (shouldn't happen, but handle gracefully)
+    if (depth === 0) {
+      throw new Error("The provided URL points to a file instead of a directory. Please provide a URL to a skill directory containing multiple files.");
+    }
     return [];
   }
 
