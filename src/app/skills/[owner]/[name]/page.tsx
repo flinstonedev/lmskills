@@ -7,9 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { ExternalLink, Star, Github, Calendar } from "lucide-react";
+import { ExternalLink, Star, Github, Calendar, Scale, Check, X, AlertCircle } from "lucide-react";
 import { SafeMarkdown } from "@/components/safe-markdown";
 import Link from "next/link";
+import { getLicenseInfo } from "@/lib/licenses";
 
 export default function SkillDetailPage() {
   const params = useParams();
@@ -54,6 +55,8 @@ export default function SkillDetailPage() {
     day: "numeric",
     year: "numeric",
   });
+
+  const licenseInfo = getLicenseInfo(skill.license);
 
   return (
     <div className="container mx-auto px-4 py-12 max-w-5xl">
@@ -130,7 +133,7 @@ export default function SkillDetailPage() {
       </div>
 
       {/* SKILL.md Content */}
-      <Card className="bg-[var(--surface-2)] backdrop-blur border-border/50">
+      <Card className="bg-[var(--surface-2)] backdrop-blur border-border/50 mb-8">
         <CardHeader>
           <CardTitle className="text-2xl font-semibold">Documentation</CardTitle>
           <CardDescription className="text-sm">
@@ -144,6 +147,97 @@ export default function SkillDetailPage() {
           />
         </CardContent>
       </Card>
+
+      {/* License Information */}
+      {licenseInfo && (
+        <Card className="bg-[var(--surface-2)] backdrop-blur border-border/50">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Scale className="h-5 w-5 text-muted-foreground" />
+              <CardTitle className="text-2xl font-semibold">License</CardTitle>
+            </div>
+            <CardDescription className="text-sm">
+              {licenseInfo.name}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {licenseInfo.description}
+            </p>
+
+            <div className="grid md:grid-cols-3 gap-6">
+              {/* Permissions */}
+              {licenseInfo.permissions.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500" />
+                    Permissions
+                  </h4>
+                  <ul className="space-y-2">
+                    {licenseInfo.permissions.map((permission) => (
+                      <li key={permission} className="text-sm text-muted-foreground flex items-start gap-2">
+                        <Check className="h-3.5 w-3.5 text-green-500 mt-0.5 flex-shrink-0" />
+                        <span>{permission}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Conditions */}
+              {licenseInfo.conditions.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4 text-blue-500" />
+                    Conditions
+                  </h4>
+                  <ul className="space-y-2">
+                    {licenseInfo.conditions.map((condition) => (
+                      <li key={condition} className="text-sm text-muted-foreground flex items-start gap-2">
+                        <AlertCircle className="h-3.5 w-3.5 text-blue-500 mt-0.5 flex-shrink-0" />
+                        <span>{condition}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Limitations */}
+              {licenseInfo.limitations.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                    <X className="h-4 w-4 text-red-500" />
+                    Limitations
+                  </h4>
+                  <ul className="space-y-2">
+                    {licenseInfo.limitations.map((limitation) => (
+                      <li key={limitation} className="text-sm text-muted-foreground flex items-start gap-2">
+                        <X className="h-3.5 w-3.5 text-red-500 mt-0.5 flex-shrink-0" />
+                        <span>{limitation}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+
+            {licenseInfo.url && (
+              <div className="pt-4 border-t border-border/50">
+                <Button variant="outline" size="sm" asChild>
+                  <a
+                    href={licenseInfo.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    View Full License
+                  </a>
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Future: Comments, ratings, etc. */}
     </div>
