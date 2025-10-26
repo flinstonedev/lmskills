@@ -12,6 +12,7 @@ LMSkills is a public, LLM-agnostic platform for sharing, discovering, and collab
 - **Styling**: Tailwind CSS 4, shadcn/ui components
 - **Database & Backend**: Convex (serverless backend with real-time database)
 - **Authentication**: Clerk (GitHub OAuth + Email magic link)
+- **Deployment**: Vercel
 
 ## Development Commands
 

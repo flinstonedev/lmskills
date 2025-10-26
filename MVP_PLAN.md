@@ -193,14 +193,14 @@ SkillsLabReply
 - **Impact**: Medium (webhook deferred)
 
 ### Deployment
-- **Frontend + API**: Any Next.js-compatible hosting platform
+- **Frontend + API**: Vercel
 - **Database**: Convex
 - **Impact**: Small
 
 ### Safety & Compliance
 - **Markdown sanitization**: markdown-it + DOMPurify.
 - **XSS prevention**: Content Security Policy headers.
-- **Rate limiting**: Middleware-based rate limiting.
+- **Rate limiting**: Vercel middleware.
 - **Moderation queue**: Admin dashboard for reports.
 - **Impact**: Small
 
@@ -346,15 +346,15 @@ Authentication:
 ├── Clerk
 
 Deployment:
-├── Any Next.js-compatible hosting platform
+├── Vercel (frontend + API)
 
 Observability (later):
-├── PostHog
+├── PostHog 
 
 Security:
 ├── Content Security Policy (CSP) headers
-├── CORS (Next.js auto-handles)
-├── Rate limiting (Next.js Middleware)
+├── CORS (Vercel auto-handles)
+├── Rate limiting (Vercel Middleware)
 └── Input validation (Zod)
 ```
 
