@@ -17,7 +17,6 @@ A public, LLM-agnostic platform for sharing, discovering, and collaborating on C
 - **Styling**: Tailwind CSS 4, shadcn/ui
 - **Database**: Convex
 - **Authentication**: Clerk
-- **Deployment**: Vercel
 
 ## Getting Started
 
@@ -104,26 +103,24 @@ Configure this in Clerk Dashboard → Webhooks after deployment.
 
 ## Deployment
 
-### Deploy to Vercel
+This is a standard Next.js application and can be deployed to any platform that supports Next.js.
 
-1. Push your code to GitHub
+### Environment Variables
 
-2. Import the project in [Vercel](https://vercel.com)
+Ensure the following environment variables are configured in your deployment platform:
+- `CONVEX_DEPLOYMENT`
+- `NEXT_PUBLIC_CONVEX_URL`
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
+- `CLERK_SECRET_KEY`
+- `CLERK_WEBHOOK_SECRET`
 
-3. Add environment variables in Vercel project settings:
-   - `CONVEX_DEPLOYMENT`
-   - `NEXT_PUBLIC_CONVEX_URL`
-   - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
-   - `CLERK_SECRET_KEY`
-   - `CLERK_WEBHOOK_SECRET`
+### Post-Deployment Setup
 
-4. Deploy!
-
-5. After deployment, set up the Clerk webhook:
-   - Go to Clerk Dashboard → Webhooks
-   - Add endpoint: `https://your-domain.vercel.app/api/webhooks/clerk`
-   - Subscribe to: `user.created`, `user.updated`, `user.deleted`
-   - Copy the signing secret and add to Vercel env vars as `CLERK_WEBHOOK_SECRET`
+After deployment, configure the Clerk webhook:
+1. Go to Clerk Dashboard → Webhooks
+2. Add endpoint: `https://your-domain/api/webhooks/clerk`
+3. Subscribe to: `user.created`, `user.updated`, `user.deleted`
+4. Copy the signing secret and add it as `CLERK_WEBHOOK_SECRET` environment variable
 
 ## Development Roadmap
 
