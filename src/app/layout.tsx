@@ -19,7 +19,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      allowedRedirectOrigins={[
+        "https://www.lmskills.ai",
+        "https://lmskills.ai",
+        "https://accounts.lmskills.ai"
+      ]}
+    >
       <html lang="en" suppressHydrationWarning>
         <head>
           <link rel="preconnect" href="https://fonts.googleapis.com" />
