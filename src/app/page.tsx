@@ -14,7 +14,7 @@ export default function Home() {
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-24 md:py-32">
         <div className="max-w-3xl mx-auto text-center">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6">
+          <h1 className="text-2xl md:text-3xl font-bold leading-tight mb-6">
             Discover, Share, and Collaborate on{" "}
             <span className="text-primary">LLM Skills</span>
           </h1>
@@ -36,7 +36,7 @@ export default function Home() {
       {/* Features Section */}
       <section className="bg-muted/50 py-24">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-semibold text-center mb-12">
+          <h2 className="text-xl md:text-2xl font-semibold text-center mb-12">
             Why LMSkills?
           </h2>
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
@@ -82,7 +82,7 @@ export default function Home() {
       {/* How It Works */}
       <section className="py-24">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-semibold text-center mb-12">
+          <h2 className="text-xl md:text-2xl font-semibold text-center mb-12">
             How It Works
           </h2>
           <div className="max-w-3xl mx-auto space-y-8">
@@ -91,7 +91,7 @@ export default function Home() {
                 1
               </div>
               <div>
-                <h3 className="text-xl font-medium mb-2">Submit Your Skill</h3>
+                <h3 className="text-lg font-medium mb-2">Submit Your Skill</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   Share your GitHub repository URL with your skill's SKILL.md
                   file. We'll automatically parse and display it.
@@ -104,7 +104,7 @@ export default function Home() {
                 2
               </div>
               <div>
-                <h3 className="text-xl font-medium mb-2">Get Discovered</h3>
+                <h3 className="text-lg font-medium mb-2">Get Discovered</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   Your skill appears in our searchable directory. Users can
                   filter by tags, language, and sort by trending or ratings.
@@ -117,7 +117,7 @@ export default function Home() {
                 3
               </div>
               <div>
-                <h3 className="text-xl font-medium mb-2">
+                <h3 className="text-lg font-medium mb-2">
                   Collaborate & Improve
                 </h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
@@ -134,7 +134,7 @@ export default function Home() {
       <section className="relative overflow-hidden py-24">
         <div className="absolute inset-0 bg-[image:var(--gradient-primary)] opacity-10 dark:opacity-20" />
         <div className="container relative mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+          <h2 className="text-xl md:text-2xl font-bold mb-4">
             Ready to Share Your Skills?
           </h2>
           <p className="text-xl text-muted-foreground mb-8">

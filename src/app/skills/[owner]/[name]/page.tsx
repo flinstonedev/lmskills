@@ -4,7 +4,7 @@ import { useQuery, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardHeading } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ExternalLink, Star, Github, Calendar, Scale, Check, X, AlertCircle, FileText, ChevronDown, ChevronRight, Folder, FolderOpen } from "lucide-react";
@@ -133,7 +133,7 @@ export default function SkillDetailPage() {
       <div className="container mx-auto px-4 py-12">
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
-            <h1 className="text-3xl font-bold mb-3">Skill Not Found</h1>
+            <h1 className="text-2xl font-bold mb-3">Skill Not Found</h1>
             <p className="text-base text-muted-foreground mb-6">
               The skill you're looking for doesn't exist.
             </p>
@@ -160,7 +160,7 @@ export default function SkillDetailPage() {
       <div className="mb-8">
         <div className="flex items-start justify-between gap-4 mb-4">
           <div className="flex-1">
-            <h1 className="text-4xl md:text-5xl font-bold mb-3 leading-tight">
+            <h1 className="text-2xl md:text-3xl font-bold mb-3 leading-tight">
               {skill.name}
             </h1>
             <p className="text-base text-muted-foreground leading-relaxed mb-4">
@@ -221,7 +221,7 @@ export default function SkillDetailPage() {
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
               <FileText className="h-5 w-5 text-muted-foreground" />
-              <CardTitle className="text-lg font-semibold">Files</CardTitle>
+              <CardHeading level={2} className="text-lg font-semibold">Files</CardHeading>
             </div>
           </CardHeader>
           <CardContent className="p-0">
@@ -304,9 +304,9 @@ export default function SkillDetailPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-2xl font-semibold">
+                <CardHeading level={2} className="text-2xl font-semibold">
                   {selectedFile ? selectedFile.name : 'No file selected'}
-                </CardTitle>
+                </CardHeading>
                 {selectedFile && (
                   <CardDescription className="text-sm font-mono mt-1">
                     {selectedFile.path}
@@ -351,7 +351,7 @@ export default function SkillDetailPage() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <Scale className="h-5 w-5 text-muted-foreground" />
-              <CardTitle className="text-2xl font-semibold">License</CardTitle>
+              <CardHeading level={2} className="text-xl">License</CardHeading>
             </div>
             <CardDescription className="text-sm">
               {licenseInfo.name}

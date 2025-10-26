@@ -5,7 +5,7 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardHeading } from "@/components/ui/card";
 import Link from "next/link";
 
 export default function UserProfilePage({
@@ -53,7 +53,7 @@ export default function UserProfilePage({
           </Avatar>
           <div className="flex-1">
             <div className="flex items-center gap-4 mb-2">
-              <h1 className="text-3xl font-bold">@{user.handle}</h1>
+              <h1 className="text-2xl font-bold">@{user.handle}</h1>
               {isOwnProfile && (
                 <Button asChild variant="outline" size="sm">
                   <Link href={`/users/${user.handle}/edit`}>Edit Profile</Link>
@@ -71,7 +71,7 @@ export default function UserProfilePage({
         {/* Skills Section - Placeholder for future */}
         <Card>
           <CardHeader>
-            <CardTitle>Published Skills</CardTitle>
+            <CardHeading level={2}>Published Skills</CardHeading>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
@@ -83,7 +83,7 @@ export default function UserProfilePage({
         {/* Favorites Section - Placeholder for future */}
         <Card className="mt-6">
           <CardHeader>
-            <CardTitle>Favorite Skills</CardTitle>
+            <CardHeading level={2}>Favorite Skills</CardHeading>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">No favorites yet.</p>

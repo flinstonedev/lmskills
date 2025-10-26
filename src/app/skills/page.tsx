@@ -26,7 +26,7 @@ export default function SkillsPage() {
       <div className="mb-8">
         <div className="flex items-start justify-between mb-4">
           <div>
-            <h1 className="text-4xl md:text-5xl font-bold mb-3 leading-tight">
+            <h1 className="text-2xl md:text-3xl font-bold mb-3 leading-tight">
               Browse Skills
             </h1>
             <p className="text-base text-muted-foreground leading-relaxed">
@@ -65,7 +65,7 @@ export default function SkillsPage() {
       ) : skills.length === 0 ? (
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
-            <h2 className="text-2xl font-semibold mb-3">No skills found</h2>
+            <p className="text-lg font-semibold mb-3">No skills found</p>
             <p className="text-base text-muted-foreground mb-6">
               {searchQuery
                 ? "Try a different search term"

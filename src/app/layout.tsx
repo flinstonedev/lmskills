@@ -49,7 +49,7 @@ export default function RootLayout({
             <ConvexClientProvider>
               <div className="flex min-h-screen flex-col">
                 <Header />
-                <main className="flex-1">{children}</main>
+                <main className="flex-1 min-h-[calc(100vh-theme(spacing.32))]">{children}</main>
                 <Footer />
               </div>
               <CookieConsentBanner />

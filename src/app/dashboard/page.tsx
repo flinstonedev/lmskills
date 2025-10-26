@@ -127,57 +127,59 @@ export default function DashboardPage() {
                     >
                       {skill.name}
                     </Link>
-                    <Link
+                    <a
                       href={skill.repoUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="shrink-0"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                      }}
                     >
                       <ExternalLink className="h-4 w-4 text-muted-foreground hover:text-foreground" />
-                    </Link>
+                    </a>
                   </CardTitle>
-                    <CardDescription className="line-clamp-2">
-                      {skill.description}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex-1">
-                    <div className="space-y-2 text-sm">
-                      {skill.license && (
-                        <p className="text-muted-foreground">
-                          License: {skill.license}
-                        </p>
-                      )}
-                      {skill.stars !== undefined && skill.stars > 0 && (
-                        <p className="text-muted-foreground">
-                          Stars: {skill.stars}
-                        </p>
-                      )}
+                  <CardDescription className="line-clamp-2">
+                    {skill.description}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex-1">
+                  <div className="space-y-2 text-sm">
+                    {skill.license && (
                       <p className="text-muted-foreground">
-                        Created:{" "}
-                        {new Date(skill.createdAt).toLocaleDateString()}
+                        License: {skill.license}
                       </p>
+                    )}
+                    {skill.stars !== undefined && skill.stars > 0 && (
                       <p className="text-muted-foreground">
-                        Updated:{" "}
-                        {new Date(skill.updatedAt).toLocaleDateString()}
+                        Stars: {skill.stars}
                       </p>
-                    </div>
-                  </CardContent>
-                  <CardFooter>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleDelete(skill._id);
-                      }}
-                      className="w-full text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete
-                    </Button>
-                  </CardFooter>
-                </Card>
+                    )}
+                    <p className="text-muted-foreground">
+                      Created:{" "}
+                      {new Date(skill.createdAt).toLocaleDateString()}
+                    </p>
+                    <p className="text-muted-foreground">
+                      Updated:{" "}
+                      {new Date(skill.updatedAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                </CardContent>
+                <CardFooter>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(skill._id);
+                    }}
+                    className="w-full text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete
+                  </Button>
+                </CardFooter>
+              </Card>
             </div>
           ))}
         </div>
