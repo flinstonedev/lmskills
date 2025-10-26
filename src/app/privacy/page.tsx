@@ -6,7 +6,7 @@ export default function PrivacyPolicy() {
       <h1 className="text-4xl font-bold mb-8">Privacy Policy</h1>
 
       <div className="prose prose-slate dark:prose-invert max-w-none">
-        <p className="text-muted-foreground mb-8">
+        <p className="text-muted-foreground mb-8" suppressHydrationWarning={true}>
           Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
         </p>
 
