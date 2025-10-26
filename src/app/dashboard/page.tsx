@@ -14,6 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -58,13 +59,29 @@ export default function DashboardPage() {
   if (!isLoaded) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <div className="animate-pulse">
-          <div className="h-8 bg-muted rounded w-1/4 mb-8"></div>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-48 bg-muted rounded"></div>
-            ))}
-          </div>
+        <div className="flex justify-between items-center mb-8">
+          <Skeleton className="h-9 w-48" />
+          <Skeleton className="h-10 w-44" />
+        </div>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <Card key={i} className="flex flex-col h-full">
+              <CardHeader>
+                <Skeleton className="h-6 w-3/4 mb-2" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-5/6" />
+              </CardHeader>
+              <CardContent className="flex-1 space-y-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-2/3" />
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+              </CardContent>
+              <CardFooter>
+                <Skeleton className="h-9 w-full" />
+              </CardFooter>
+            </Card>
+          ))}
         </div>
       </div>
     );
@@ -73,7 +90,7 @@ export default function DashboardPage() {
   if (!user) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8">My Skills</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold mb-8">My Skills</h1>
         <p className="text-muted-foreground">
           Please sign in to view your skills.
         </p>
@@ -84,7 +101,7 @@ export default function DashboardPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">My Skills</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold">My Skills</h1>
         <Button asChild>
           <Link href="/skills/submit">
             <Plus className="mr-2 h-4 w-4" />
@@ -94,9 +111,24 @@ export default function DashboardPage() {
       </div>
 
       {skills === undefined ? (
-        <div className="animate-pulse grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-48 bg-muted rounded"></div>
+            <Card key={i} className="flex flex-col h-full">
+              <CardHeader>
+                <Skeleton className="h-6 w-3/4 mb-2" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-5/6" />
+              </CardHeader>
+              <CardContent className="flex-1 space-y-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-2/3" />
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+              </CardContent>
+              <CardFooter>
+                <Skeleton className="h-9 w-full" />
+              </CardFooter>
+            </Card>
           ))}
         </div>
       ) : skills.length === 0 ? (

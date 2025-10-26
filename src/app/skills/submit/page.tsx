@@ -149,7 +149,7 @@ export default function SubmitSkillPage() {
   return (
     <div className="container mx-auto px-4 py-12 max-w-4xl">
       <div className="mb-8">
-        <h1 className="text-4xl md:text-5xl font-bold mb-3 leading-tight">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-3 leading-tight">
           Submit a Skill
         </h1>
         <p className="text-base text-muted-foreground leading-relaxed">
@@ -215,7 +215,7 @@ export default function SubmitSkillPage() {
             <CardHeader>
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
-                  <CardTitle className="text-2xl font-bold mb-2">
+                  <CardTitle className="text-xl font-semibold mb-2">
                     {repoInfo.name}
                   </CardTitle>
                   <CardDescription className="text-sm leading-relaxed">

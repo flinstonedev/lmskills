@@ -7,11 +7,38 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardHeading } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ExternalLink, Star, Github, Calendar, Scale, Check, X, AlertCircle, FileText, ChevronDown, ChevronRight, Folder, FolderOpen } from "lucide-react";
 import { SafeMarkdown } from "@/components/safe-markdown";
 import Link from "next/link";
 import { getLicenseInfo } from "@/lib/licenses";
 import { useState, useEffect } from "react";
+import { Light as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { atomOneDark } from 'react-syntax-highlighter/dist/esm/styles/hljs';
+// Import languages we need
+import javascript from 'react-syntax-highlighter/dist/esm/languages/hljs/javascript';
+import typescript from 'react-syntax-highlighter/dist/esm/languages/hljs/typescript';
+import python from 'react-syntax-highlighter/dist/esm/languages/hljs/python';
+import json from 'react-syntax-highlighter/dist/esm/languages/hljs/json';
+import yaml from 'react-syntax-highlighter/dist/esm/languages/hljs/yaml';
+import bash from 'react-syntax-highlighter/dist/esm/languages/hljs/bash';
+import css from 'react-syntax-highlighter/dist/esm/languages/hljs/css';
+import xml from 'react-syntax-highlighter/dist/esm/languages/hljs/xml';
+import go from 'react-syntax-highlighter/dist/esm/languages/hljs/go';
+import rust from 'react-syntax-highlighter/dist/esm/languages/hljs/rust';
+
+// Register languages
+SyntaxHighlighter.registerLanguage('javascript', javascript);
+SyntaxHighlighter.registerLanguage('typescript', typescript);
+SyntaxHighlighter.registerLanguage('python', python);
+SyntaxHighlighter.registerLanguage('json', json);
+SyntaxHighlighter.registerLanguage('yaml', yaml);
+SyntaxHighlighter.registerLanguage('bash', bash);
+SyntaxHighlighter.registerLanguage('css', css);
+SyntaxHighlighter.registerLanguage('xml', xml);
+SyntaxHighlighter.registerLanguage('html', xml);
+SyntaxHighlighter.registerLanguage('go', go);
+SyntaxHighlighter.registerLanguage('rust', rust);
 
 interface SkillFile {
   name: string;
@@ -19,6 +46,73 @@ interface SkillFile {
   content: string;
   size: number;
   type: "file" | "dir";
+}
+
+// Helper function to detect language from file extension
+function getLanguageFromFilename(filename: string): string | null {
+  const extension = filename.split('.').pop()?.toLowerCase();
+
+  const languageMap: Record<string, string> = {
+    // JavaScript/TypeScript (registered)
+    'js': 'javascript',
+    'jsx': 'javascript',
+    'ts': 'typescript',
+    'tsx': 'typescript',
+    'mjs': 'javascript',
+    'cjs': 'javascript',
+
+    // Python (registered)
+    'py': 'python',
+    'pyw': 'python',
+
+    // Web (registered)
+    'html': 'html',
+    'htm': 'html',
+    'css': 'css',
+    'scss': 'css',
+    'sass': 'css',
+    'less': 'css',
+
+    // Config/Data (registered)
+    'json': 'json',
+    'yaml': 'yaml',
+    'yml': 'yaml',
+    'toml': 'yaml',
+    'xml': 'xml',
+
+    // Shell (registered)
+    'sh': 'bash',
+    'bash': 'bash',
+    'zsh': 'bash',
+    'fish': 'bash',
+
+    // Other languages (registered)
+    'go': 'go',
+    'rs': 'rust',
+
+    // Config files without extensions or special names
+    'dockerfile': 'bash',
+    'makefile': 'bash',
+    'env': 'bash',
+  };
+
+  // Check for files without extension but with specific names
+  const filenameLower = filename.toLowerCase();
+  if (filenameLower === 'dockerfile') return 'bash';
+  if (filenameLower === 'makefile') return 'bash';
+  if (filenameLower === '.env' || filenameLower.startsWith('.env.')) return 'bash';
+
+  return extension ? (languageMap[extension] || null) : null;
+}
+
+// Helper function to check if file should use syntax highlighting
+function shouldUseSyntaxHighlighting(filename: string): boolean {
+  // Don't use syntax highlighting for markdown files (use SafeMarkdown instead)
+  if (filename.toLowerCase().endsWith('.md') || filename.toLowerCase().endsWith('.markdown')) {
+    return false;
+  }
+
+  return getLanguageFromFilename(filename) !== null;
 }
 
 export default function SkillDetailPage() {
@@ -121,11 +215,51 @@ export default function SkillDetailPage() {
   if (skill === undefined) {
     return (
       <div className="container mx-auto px-4 py-12">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center">
-            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent mb-4" />
-            <p className="text-sm text-muted-foreground">Loading skill...</p>
+        <div className="mb-8">
+          <div className="flex flex-col sm:flex-row items-start justify-between gap-4 mb-4">
+            <div className="flex-1 w-full">
+              <Skeleton className="h-10 sm:h-12 md:h-14 lg:h-16 w-3/4 mb-3" />
+              <Skeleton className="h-4 w-full mb-2" />
+              <Skeleton className="h-4 w-5/6" />
+            </div>
+            <Skeleton className="h-10 w-full sm:w-40" />
           </div>
+          <div className="flex flex-wrap items-center gap-4 mb-6">
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-8 w-8 rounded-full" />
+              <Skeleton className="h-4 w-24" />
+            </div>
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-5 w-16 rounded-full" />
+          </div>
+        </div>
+        <div className="flex flex-col lg:flex-row gap-6">
+          <Card className="bg-[var(--surface-2)] backdrop-blur border-border/50 w-full lg:w-[280px]">
+            <CardHeader className="pb-3">
+              <Skeleton className="h-6 w-20" />
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <Skeleton key={i} className="h-8 w-full" />
+              ))}
+            </CardContent>
+          </Card>
+          <Card className="bg-[var(--surface-2)] backdrop-blur border-border/50 w-full lg:flex-1">
+            <CardHeader>
+              <Skeleton className="h-7 w-48 mb-2" />
+              <Skeleton className="h-4 w-64" />
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-5/6" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-4/5" />
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
@@ -163,7 +297,7 @@ export default function SkillDetailPage() {
       <div className="mb-8">
         <div className="flex flex-col sm:flex-row items-start justify-between gap-4 mb-4">
           <div className="flex-1">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3 leading-tight">
+            <h1 className="text-2xl sm:text-3xl font-bold mb-3 leading-tight">
               {skill.name}
             </h1>
             <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-4">
@@ -229,8 +363,10 @@ export default function SkillDetailPage() {
           </CardHeader>
           <CardContent className="p-0">
             {filesLoading && (
-              <div className="flex items-center justify-center py-8 px-4">
-                <div className="inline-block h-6 w-6 animate-spin rounded-full border-4 border-solid border-current border-r-transparent" />
+              <div className="py-2 px-4 space-y-2">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <Skeleton key={i} className="h-8 w-full" />
+                ))}
               </div>
             )}
 
@@ -307,8 +443,8 @@ export default function SkillDetailPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardHeading level={2} className="text-2xl font-semibold">
-                  {selectedFile ? selectedFile.name : 'No file selected'}
+                <CardHeading level={2} className="text-xl font-semibold">
+                  {filesLoading ? 'Loading...' : selectedFile ? selectedFile.name : 'No file selected'}
                 </CardHeading>
                 {selectedFile && (
                   <CardDescription className="text-sm font-mono mt-1">
@@ -324,22 +460,53 @@ export default function SkillDetailPage() {
             </div>
           </CardHeader>
           <CardContent>
-            {!selectedFile && (
+            {filesLoading && (
+              <div className="space-y-3 p-4">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-5/6" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-4/5" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+              </div>
+            )}
+
+            {!filesLoading && !selectedFile && (
               <div className="text-sm text-muted-foreground py-8 text-center">
                 Select a file from the sidebar to view its contents
               </div>
             )}
 
-            {selectedFile && selectedFile.type === "file" && (
+            {!filesLoading && selectedFile && selectedFile.type === "file" && (
               <>
                 {selectedFile.name.toLowerCase().endsWith('.md') ? (
                   <SafeMarkdown
                     content={selectedFile.content}
                     className="prose prose-sm dark:prose-invert max-w-none"
                   />
+                ) : shouldUseSyntaxHighlighting(selectedFile.name) ? (
+                  <SyntaxHighlighter
+                    language={getLanguageFromFilename(selectedFile.name) || 'text'}
+                    style={atomOneDark}
+                    showLineNumbers
+                    customStyle={{
+                      margin: 0,
+                      borderRadius: '0.5rem',
+                      fontSize: '0.75rem',
+                      lineHeight: '1.5',
+                    }}
+                    codeTagProps={{
+                      style: {
+                        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                      }
+                    }}
+                  >
+                    {selectedFile.content}
+                  </SyntaxHighlighter>
                 ) : (
                   <pre className="p-4 overflow-x-auto text-xs bg-background/50 rounded-lg border border-border/30">
-                    <code>{selectedFile.content}</code>
+                    <code className="font-mono">{selectedFile.content}</code>
                   </pre>
                 )}
               </>

@@ -5,7 +5,7 @@ export default function Documentation() {
     <div className="prose prose-slate dark:prose-invert max-w-none">
         {/* Header */}
         <div className="mb-12 pb-8 border-b">
-          <h1 className="text-4xl font-bold mb-3">Documentation</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold mb-3">Documentation</h1>
           <p className="text-lg text-muted-foreground">
             A comprehensive guide to using LMSkills. For official Claude skills documentation, visit{" "}
             <a
@@ -41,7 +41,7 @@ export default function Documentation() {
             <div>
               <h3 className="text-lg font-semibold mb-2">3. Submit Your Skills</h3>
               <p className="text-muted-foreground">
-                Share your own skills by submitting a GitHub repository containing a <code className="bg-muted px-1.5 py-0.5 rounded text-sm">SKILL.md</code> file.
+                Share your own skills by submitting a GitHub repository containing a <code>SKILL.md</code> file.
               </p>
             </div>
           </div>
@@ -58,7 +58,7 @@ export default function Documentation() {
 
           <ul className="space-y-2 text-muted-foreground mb-6">
             <li>Public repository (private repositories are not supported)</li>
-            <li>A <code className="bg-muted px-1.5 py-0.5 rounded text-sm">SKILL.md</code> file in the root directory with proper YAML frontmatter</li>
+            <li>A <code>SKILL.md</code> file in the root directory with proper YAML frontmatter</li>
             <li>Valid markdown content following the{" "}
               <a
                 href="https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview"
@@ -102,18 +102,18 @@ Practical examples and use cases...`}
             </pre>
           </div>
 
-          <div className="bg-blue-50 dark:bg-blue-950/30 border-l-4 border-blue-500 p-4 mb-4">
-            <p className="text-sm text-blue-900 dark:text-blue-100 mb-2">
+          <div className="bg-accent/10 border-l-4 border-accent p-4 mb-4">
+            <p className="text-sm mb-2">
               <strong>Required Frontmatter Fields:</strong>
             </p>
-            <ul className="text-sm text-blue-900 dark:text-blue-100 space-y-1 list-disc list-inside">
-              <li><code className="bg-blue-100 dark:bg-blue-900 px-1 rounded">name</code>: Lowercase letters, numbers, and hyphens only (max 64 characters)</li>
-              <li><code className="bg-blue-100 dark:bg-blue-900 px-1 rounded">description</code>: What the skill does and when to use it (max 1024 characters)</li>
+            <ul className="text-sm space-y-1 list-disc list-inside">
+              <li><code>name</code>: Lowercase letters, numbers, and hyphens only (max 64 characters)</li>
+              <li><code>description</code>: What the skill does and when to use it (max 1024 characters)</li>
             </ul>
           </div>
 
-          <div className="bg-amber-50 dark:bg-amber-950/30 border-l-4 border-amber-500 p-4 mb-6">
-            <p className="text-sm text-amber-900 dark:text-amber-100">
+          <div className="bg-destructive/10 border-l-4 border-destructive p-4 mb-6">
+            <p className="text-sm">
               <strong>Security Note:</strong> Only use skills from trusted sources. Skills can direct Claude to execute code, so verify the source before use. See{" "}
               <a
                 href="https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview"
