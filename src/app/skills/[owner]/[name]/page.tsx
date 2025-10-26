@@ -155,7 +155,7 @@ export default function SkillDetailPage() {
   const licenseInfo = getLicenseInfo(skill.license);
 
   return (
-    <div className="container mx-auto px-4 py-12 max-w-5xl">
+    <div className="container mx-auto px-4 py-12 max-w-7xl">
       {/* Header Section */}
       <div className="mb-8">
         <div className="flex items-start justify-between mb-4">
