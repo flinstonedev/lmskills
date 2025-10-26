@@ -283,7 +283,14 @@ export const getMySkills = query({
       .order("desc")
       .collect();
 
-    return skills;
+    // Add owner info to each skill for consistency
+    return skills.map((skill) => ({
+      ...skill,
+      owner: {
+        handle: user.handle,
+        avatarUrl: user.avatarUrl,
+      },
+    }));
   },
 });
 
