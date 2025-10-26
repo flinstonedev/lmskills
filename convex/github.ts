@@ -287,18 +287,19 @@ function parseSkillMdFrontmatter(content: string): { name?: string; description?
   }
 
   // Parse description field (can be single or multi-line)
-  const descMatch = frontmatter.match(/^description:\s*(.+)$/m);
-  if (descMatch) {
-    result.description = descMatch[1].trim().replace(/^["']|["']$/g, ''); // Remove quotes if present
+  // First check for multi-line description with pipe or greater-than
+  const multiLineMatch = frontmatter.match(/^description:\s*[|>][-+]?\s*\n((?:[ ]{2,}.*\n?)+)/m);
+  if (multiLineMatch) {
+    result.description = multiLineMatch[1]
+      .split('\n')
+      .map(line => line.replace(/^\s{2,}/, '').trim())
+      .filter(line => line)
+      .join(' ');
   } else {
-    // Try multi-line description with pipe or greater-than
-    const multiLineMatch = frontmatter.match(/^description:\s*[|>][-+]?\s*\n((?:[ ]{2,}.+\n?)+)/m);
-    if (multiLineMatch) {
-      result.description = multiLineMatch[1]
-        .split('\n')
-        .map(line => line.replace(/^\s{2,}/, '').trim())
-        .filter(line => line)
-        .join(' ');
+    // Try single-line description
+    const descMatch = frontmatter.match(/^description:\s*(.+)$/m);
+    if (descMatch) {
+      result.description = descMatch[1].trim().replace(/^["']|["']$/g, ''); // Remove quotes if present
     }
   }
 
