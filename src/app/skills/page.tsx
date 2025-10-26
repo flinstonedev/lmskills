@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Search, Star, Calendar, Plus } from "lucide-react";
 import Link from "next/link";
 
@@ -56,11 +57,29 @@ export default function SkillsPage() {
 
       {/* Skills Grid */}
       {skills === undefined ? (
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center">
-            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent mb-4" />
-            <p className="text-sm text-muted-foreground">Loading skills...</p>
-          </div>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Card key={i} className="h-full bg-[var(--surface-2)] backdrop-blur border-border/50">
+              <CardHeader>
+                <div className="flex items-start justify-between mb-2">
+                  <Skeleton className="h-7 w-3/4" />
+                  <Skeleton className="h-4 w-12 ml-2" />
+                </div>
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-5/6 mt-1" />
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-6 w-6 rounded-full" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+                <div className="flex items-center justify-between">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-5 w-16 rounded-full" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       ) : skills.length === 0 ? (
         <div className="flex items-center justify-center min-h-[400px]">
