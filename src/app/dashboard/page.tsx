@@ -57,7 +57,7 @@ export default function DashboardPage() {
 
   if (!isLoaded) {
     return (
-      <div className="container mx-auto py-8">
+      <div className="container mx-auto px-4 py-8">
         <div className="animate-pulse">
           <div className="h-8 bg-muted rounded w-1/4 mb-8"></div>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -72,7 +72,7 @@ export default function DashboardPage() {
 
   if (!user) {
     return (
-      <div className="container mx-auto py-8">
+      <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-8">My Skills</h1>
         <p className="text-muted-foreground">
           Please sign in to view your skills.
@@ -82,7 +82,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="container mx-auto py-8">
+    <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">My Skills</h1>
         <Button asChild>
@@ -118,24 +118,24 @@ export default function DashboardPage() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {skills.map((skill) => (
             <div key={skill._id} className="relative">
-              <Link
-                href={`/skills/${skill.owner?.handle}/${skill.name}`}
-                className="block h-full"
-              >
-                <Card className="flex flex-col h-full hover:shadow-lg hover:scale-[1.02] transition-all cursor-pointer">
-                  <CardHeader>
-                    <CardTitle className="flex items-start justify-between gap-2">
-                      <span className="line-clamp-2">{skill.name}</span>
-                      <Link
-                        href={skill.repoUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="shrink-0"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <ExternalLink className="h-4 w-4 text-muted-foreground hover:text-foreground" />
-                      </Link>
-                    </CardTitle>
+              <Card className="flex flex-col h-full hover:shadow-lg transition-all">
+                <CardHeader>
+                  <CardTitle className="flex items-start justify-between gap-2">
+                    <Link
+                      href={`/skills/${skill.owner?.handle}/${skill.name}`}
+                      className="line-clamp-2 hover:underline"
+                    >
+                      {skill.name}
+                    </Link>
+                    <Link
+                      href={skill.repoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="shrink-0"
+                    >
+                      <ExternalLink className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                    </Link>
+                  </CardTitle>
                     <CardDescription className="line-clamp-2">
                       {skill.description}
                     </CardDescription>
@@ -178,7 +178,6 @@ export default function DashboardPage() {
                     </Button>
                   </CardFooter>
                 </Card>
-              </Link>
             </div>
           ))}
         </div>

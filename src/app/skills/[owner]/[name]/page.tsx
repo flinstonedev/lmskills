@@ -155,10 +155,10 @@ export default function SkillDetailPage() {
   const licenseInfo = getLicenseInfo(skill.license);
 
   return (
-    <div className="container mx-auto px-4 py-12 max-w-7xl">
+    <div className="container mx-auto px-4 py-12">
       {/* Header Section */}
       <div className="mb-8">
-        <div className="flex items-start justify-between mb-4">
+        <div className="flex items-start justify-between gap-4 mb-4">
           <div className="flex-1">
             <h1 className="text-4xl md:text-5xl font-bold mb-3 leading-tight">
               {skill.name}
@@ -167,6 +167,16 @@ export default function SkillDetailPage() {
               {skill.description}
             </p>
           </div>
+          <Button variant="gradient" asChild className="flex-shrink-0">
+            <a
+              href={skill.repoUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Github className="mr-2 h-4 w-4" />
+              View on GitHub
+            </a>
+          </Button>
         </div>
 
         {/* Metadata Bar */}
@@ -202,26 +212,12 @@ export default function SkillDetailPage() {
             </Badge>
           )}
         </div>
-
-        {/* Action Buttons */}
-        <div className="flex gap-3">
-          <Button variant="gradient" asChild>
-            <a
-              href={skill.repoUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Github className="mr-2 h-4 w-4" />
-              View on GitHub
-            </a>
-          </Button>
-        </div>
       </div>
 
       {/* Files Section with Sidebar Layout */}
-      <div className="grid grid-cols-[280px,1fr] gap-6 mb-8">
+      <div className="flex gap-6 mb-8">
         {/* Left Sidebar - File Tree */}
-        <Card className="bg-[var(--surface-2)] backdrop-blur border-border/50 h-fit sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto">
+        <Card className="bg-[var(--surface-2)] backdrop-blur border-border/50 h-fit sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto w-[280px] flex-shrink-0">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
               <FileText className="h-5 w-5 text-muted-foreground" />
@@ -304,7 +300,7 @@ export default function SkillDetailPage() {
         </Card>
 
         {/* Right Content Area - Selected File */}
-        <Card className="bg-[var(--surface-2)] backdrop-blur border-border/50">
+        <Card className="bg-[var(--surface-2)] backdrop-blur border-border/50 flex-1 min-w-0">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
