@@ -175,7 +175,7 @@ export default function SkillDetailPage() {
           // Keep SKILL.md selected if it was already selected
           if (selectedFile && (selectedFile.name === "SKILL.md" || selectedFile.name === "skill.md")) {
             const updatedSkillMd = fetchedFiles.find(
-              (f) => f.type === "file" && (f.name === "SKILL.md" || f.name === "skill.md")
+              (f: SkillFile) => f.type === "file" && (f.name === "SKILL.md" || f.name === "skill.md")
             );
             if (updatedSkillMd) {
               setSelectedFile(updatedSkillMd);
