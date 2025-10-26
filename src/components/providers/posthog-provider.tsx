@@ -66,7 +66,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
         posthog.opt_in_capturing();
       }
     }
-  }, [consent, isLoaded]);
+  }, [isLoaded]);
 
   return (
     <>
