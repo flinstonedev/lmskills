@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { ExternalLink, Star, Github, Calendar, Scale, Check, X, AlertCircle, FileText, ChevronDown, ChevronRight } from "lucide-react";
+import { ExternalLink, Star, Github, Calendar, Scale, Check, X, AlertCircle, FileText, ChevronDown, ChevronRight, Folder, FolderOpen } from "lucide-react";
 import { SafeMarkdown } from "@/components/safe-markdown";
 import Link from "next/link";
 import { getLicenseInfo } from "@/lib/licenses";
@@ -18,6 +18,7 @@ interface SkillFile {
   path: string;
   content: string;
   size: number;
+  type: "file" | "dir";
 }
 
 export default function SkillDetailPage() {
@@ -61,6 +62,36 @@ export default function SkillDetailPage() {
       }
       return newSet;
     });
+  };
+
+  // Helper function to calculate indentation level based on path depth
+  const getIndentLevel = (file: SkillFile, basePath: string): number => {
+    // Remove the base path to get relative path
+    const relativePath = file.path.replace(basePath + '/', '');
+    const depth = relativePath.split('/').length - 1;
+    return depth;
+  };
+
+  // Helper function to check if a file should be visible based on parent folder expansion
+  const isFileVisible = (file: SkillFile, files: SkillFile[]): boolean => {
+    const pathParts = file.path.split('/');
+
+    // Root level is always visible
+    if (pathParts.length <= 2) {
+      return true;
+    }
+
+    // Check if all parent directories are expanded
+    for (let i = 1; i < pathParts.length - 1; i++) {
+      const parentPath = pathParts.slice(0, i + 1).join('/');
+      const parentDir = files.find(f => f.path === parentPath && f.type === 'dir');
+
+      if (parentDir && !expandedFiles.has(parentDir.path)) {
+        return false;
+      }
+    }
+
+    return true;
   };
 
   if (skill === undefined) {
@@ -225,39 +256,72 @@ export default function SkillDetailPage() {
           )}
 
           {!filesLoading && !filesError && files.length > 0 && (
-            <div className="space-y-2">
-              {files.map((file) => (
-                <div
-                  key={file.path}
-                  className="border border-border/50 rounded-lg overflow-hidden"
-                >
-                  <button
-                    onClick={() => toggleFile(file.path)}
-                    className="w-full flex items-center justify-between p-3 hover:bg-accent/50 transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      {expandedFiles.has(file.path) ? (
-                        <ChevronDown className="h-4 w-4" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4" />
-                      )}
-                      <FileText className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-mono text-sm font-medium">{file.name}</span>
-                    </div>
-                    <Badge variant="secondary" className="text-xs">
-                      {(file.size / 1024).toFixed(1)} KB
-                    </Badge>
-                  </button>
+            <div className="space-y-1">
+              {files.map((file) => {
+                const basePath = files.length > 0 ? files[0].path.split('/').slice(0, -1).join('/') : '';
+                const indentLevel = getIndentLevel(file, basePath);
+                const isVisible = isFileVisible(file, files);
 
-                  {expandedFiles.has(file.path) && (
-                    <div className="border-t border-border/50 bg-background/50">
-                      <pre className="p-4 overflow-x-auto text-xs">
-                        <code>{file.content}</code>
-                      </pre>
-                    </div>
-                  )}
-                </div>
-              ))}
+                if (!isVisible) {
+                  return null;
+                }
+
+                const isDirectory = file.type === 'dir';
+                const isExpanded = expandedFiles.has(file.path);
+
+                return (
+                  <div
+                    key={file.path}
+                    className="border border-border/50 rounded-lg overflow-hidden"
+                  >
+                    <button
+                      onClick={() => toggleFile(file.path)}
+                      className="w-full flex items-center justify-between p-3 hover:bg-accent/50 transition-colors"
+                      style={{ paddingLeft: `${12 + indentLevel * 24}px` }}
+                    >
+                      <div className="flex items-center gap-2">
+                        {isDirectory ? (
+                          <>
+                            {isExpanded ? (
+                              <ChevronDown className="h-4 w-4" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4" />
+                            )}
+                            {isExpanded ? (
+                              <FolderOpen className="h-4 w-4 text-blue-500" />
+                            ) : (
+                              <Folder className="h-4 w-4 text-blue-500" />
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            {isExpanded ? (
+                              <ChevronDown className="h-4 w-4" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4" />
+                            )}
+                            <FileText className="h-4 w-4 text-muted-foreground" />
+                          </>
+                        )}
+                        <span className="font-mono text-sm font-medium">{file.name}</span>
+                      </div>
+                      {!isDirectory && (
+                        <Badge variant="secondary" className="text-xs">
+                          {(file.size / 1024).toFixed(1)} KB
+                        </Badge>
+                      )}
+                    </button>
+
+                    {isExpanded && !isDirectory && (
+                      <div className="border-t border-border/50 bg-background/50">
+                        <pre className="p-4 overflow-x-auto text-xs">
+                          <code>{file.content}</code>
+                        </pre>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </CardContent>
