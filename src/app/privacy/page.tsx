@@ -1,4 +1,18 @@
 import Link from "next/link";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Privacy Policy",
+  description:
+    "Privacy Policy for LMSkills - Learn how we collect, use, and protect your personal information when you use our clade skills directory for Claude AI.",
+  robots: {
+    index: true,
+    follow: true,
+  },
+  alternates: {
+    canonical: "https://lmskills.com/privacy",
+  },
+};
 
 export default function PrivacyPolicy() {
   return (
