@@ -253,3 +253,115 @@ export const getSkillsByOwner = query({
     }));
   },
 });
+
+/**
+ * Get skills for the current authenticated user
+ */
+export const getMySkills = query({
+  args: {},
+  handler: async (ctx) => {
+    // Check authentication
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return [];
+    }
+
+    // Get current user
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .first();
+
+    if (!user) {
+      return [];
+    }
+
+    // Get their skills
+    const skills = await ctx.db
+      .query("skills")
+      .withIndex("by_owner", (q) => q.eq("ownerUserId", user._id))
+      .order("desc")
+      .collect();
+
+    return skills;
+  },
+});
+
+/**
+ * Delete a skill (read-only, skills stay synced with GitHub)
+ */
+export const deleteSkill = mutation({
+  args: {
+    skillId: v.id("skills"),
+  },
+  handler: async (ctx, args) => {
+    // Check authentication
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    // Get current user
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .first();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Get the skill
+    const skill = await ctx.db.get(args.skillId);
+    if (!skill) {
+      throw new Error("Skill not found");
+    }
+
+    // Check ownership
+    if (skill.ownerUserId !== user._id) {
+      throw new Error("Not authorized to delete this skill");
+    }
+
+    // Delete related data first
+    // Delete skill tags
+    const skillTags = await ctx.db
+      .query("skillTags")
+      .withIndex("by_skill", (q) => q.eq("skillId", args.skillId))
+      .collect();
+    for (const skillTag of skillTags) {
+      await ctx.db.delete(skillTag._id);
+    }
+
+    // Delete comments
+    const comments = await ctx.db
+      .query("comments")
+      .withIndex("by_skill", (q) => q.eq("skillId", args.skillId))
+      .collect();
+    for (const comment of comments) {
+      await ctx.db.delete(comment._id);
+    }
+
+    // Delete ratings
+    const ratings = await ctx.db
+      .query("ratings")
+      .withIndex("by_skill", (q) => q.eq("skillId", args.skillId))
+      .collect();
+    for (const rating of ratings) {
+      await ctx.db.delete(rating._id);
+    }
+
+    // Delete favorites
+    const favorites = await ctx.db
+      .query("favorites")
+      .withIndex("by_skill", (q) => q.eq("skillId", args.skillId))
+      .collect();
+    for (const favorite of favorites) {
+      await ctx.db.delete(favorite._id);
+    }
+
+    // Finally, delete the skill
+    await ctx.db.delete(args.skillId);
+
+    return { success: true };
+  },
+});
