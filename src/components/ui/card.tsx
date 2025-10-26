@@ -38,6 +38,24 @@ function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
+interface CardHeadingProps extends Omit<React.ComponentProps<"h1">, "level"> {
+  level?: 1 | 2 | 3 | 4 | 5 | 6;
+}
+
+function CardHeading({
+  level = 2,
+  className,
+  ...props
+}: CardHeadingProps) {
+  const Tag = `h${level}` as keyof React.JSX.IntrinsicElements;
+
+  return React.createElement(Tag, {
+    "data-slot": "card-heading",
+    className: cn("leading-none font-semibold", className),
+    ...props
+  });
+}
+
 function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -86,6 +104,7 @@ export {
   CardHeader,
   CardFooter,
   CardTitle,
+  CardHeading,
   CardAction,
   CardDescription,
   CardContent,

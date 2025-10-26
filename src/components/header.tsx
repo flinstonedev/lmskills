@@ -24,7 +24,7 @@ export function Header() {
               </Button>
             </SheetTrigger>
             <SheetContent side="left">
-              <div className="flex flex-col space-y-4 mt-8">
+              <nav aria-label="Mobile navigation" className="flex flex-col space-y-4 mt-8">
                 <Link
                   href="/skills"
                   className="text-lg font-medium hover:underline"
@@ -65,7 +65,7 @@ export function Header() {
                     </SignUpButton>
                   </div>
                 </SignedOut>
-              </div>
+              </nav>
             </SheetContent>
           </Sheet>
 

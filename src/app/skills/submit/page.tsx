@@ -262,7 +262,7 @@ export default function SubmitSkillPage() {
             <CardContent>
               <SafeMarkdown
                 content={repoInfo.skillMdContent}
-                className="prose prose-sm dark:prose-invert max-w-none"
+                className="prose dark:prose-invert max-w-none"
               />
             </CardContent>
           </Card>

@@ -114,7 +114,7 @@ export function DocsSidebar() {
   };
 
   return (
-    <nav className="space-y-6">
+    <nav aria-label="Documentation navigation" className="space-y-6">
       <div className="mb-4">
         <h2 className="text-lg font-semibold px-3">Documentation</h2>
       </div>

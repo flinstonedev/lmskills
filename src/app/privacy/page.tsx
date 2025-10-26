@@ -3,7 +3,7 @@ import Link from "next/link";
 export default function PrivacyPolicy() {
   return (
     <div className="container mx-auto px-4 py-12 max-w-4xl">
-      <h1 className="text-4xl font-bold mb-8">Privacy Policy</h1>
+      <h1 className="text-2xl font-bold mb-8">Privacy Policy</h1>
 
       <div className="prose prose-slate dark:prose-invert max-w-none">
         <p className="text-muted-foreground mb-8" suppressHydrationWarning={true}>
