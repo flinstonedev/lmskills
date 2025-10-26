@@ -11,6 +11,34 @@ export const metadata: Metadata = {
   title: "LMSkills - Skills Directory for Claude",
   description:
     "A platform for sharing and discovering Claude skills. Create, share, and explore powerful LLM capabilities.",
+  openGraph: {
+    title: "LMSkills - Skills Directory for Claude",
+    description:
+      "A platform for sharing and discovering Claude skills. Create, share, and explore powerful LLM capabilities.",
+    url: "https://lmskills.com",
+    siteName: "LMSkills",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "LMSkills - Skills Directory for Claude",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "LMSkills - Skills Directory for Claude",
+    description:
+      "A platform for sharing and discovering Claude skills. Create, share, and explore powerful LLM capabilities.",
+    images: ["/og-image.png"],
+  },
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({
