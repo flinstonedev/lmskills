@@ -25,7 +25,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Trash2, ExternalLink, Plus } from "lucide-react";
+import { Trash2, ExternalLink } from "lucide-react";
 import { Id } from "../../../convex/_generated/dataModel";
 
 export default function DashboardPage() {
@@ -100,14 +100,8 @@ export default function DashboardPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
+      <div className="mb-8">
         <h1 className="text-2xl sm:text-3xl font-bold">My Skills</h1>
-        <Button asChild>
-          <Link href="/skills/submit">
-            <Plus className="mr-2 h-4 w-4" />
-            Submit New Skill
-          </Link>
-        </Button>
       </div>
 
       {skills === undefined ? (
@@ -140,11 +134,6 @@ export default function DashboardPage() {
               your first skill!
             </CardDescription>
           </CardHeader>
-          <CardFooter>
-            <Button asChild>
-              <Link href="/skills/submit">Submit Your First Skill</Link>
-            </Button>
-          </CardFooter>
         </Card>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
