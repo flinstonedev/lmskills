@@ -7,9 +7,9 @@ import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 
 export const metadata: Metadata = {
-  title: "LMSkills - Skills Directory for LLMs",
+  title: "LMSkills - Skills Directory for Claude",
   description:
-    "A public, LLM-agnostic platform for sharing, discovering, and collaborating on Claude skills and similar LLM-powered tools.",
+    "A platform for sharing and discovering Claude skills. Create, share, and explore powerful LLM capabilities.",
 };
 
 export default function RootLayout({

@@ -8,7 +8,7 @@ export function Footer() {
           <div>
             <h3 className="font-bold text-lg mb-4">LMSkills</h3>
             <p className="text-sm text-muted-foreground">
-              A public, LLM-agnostic platform for sharing and discovering skills.
+              A platform for sharing and discovering Claude skills.
             </p>
           </div>
           <div>

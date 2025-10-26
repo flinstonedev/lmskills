@@ -30,7 +30,7 @@ export default function SkillsPage() {
               Browse Skills
             </h1>
             <p className="text-base text-muted-foreground leading-relaxed">
-              Discover and share Claude skills from the community
+              Discover and share Claude skills
             </p>
           </div>
           <Button variant="gradient" asChild>
