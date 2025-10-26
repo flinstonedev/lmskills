@@ -1,5 +1,130 @@
 import { v } from "convex/values";
-import { action } from "./_generated/server";
+import { action, internalMutation, internalQuery } from "./_generated/server";
+
+/**
+ * Internal mutation to save GitHub API response to cache
+ */
+const saveToCache = internalMutation({
+  args: {
+    url: v.string(),
+    response: v.string(),
+    ttlMinutes: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    const expiresAt = now + (args.ttlMinutes * 60 * 1000);
+
+    // Check if cache entry exists
+    const existing = await ctx.db
+      .query("githubCache")
+      .withIndex("by_url", (q) => q.eq("url", args.url))
+      .first();
+
+    if (existing) {
+      // Update existing
+      await ctx.db.patch(existing._id, {
+        response: args.response,
+        expiresAt,
+      });
+    } else {
+      // Create new
+      await ctx.db.insert("githubCache", {
+        url: args.url,
+        response: args.response,
+        expiresAt,
+        createdAt: now,
+      });
+    }
+  },
+});
+
+/**
+ * Internal query to get cached GitHub API response
+ */
+const getFromCache = internalQuery({
+  args: {
+    url: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+
+    const cached = await ctx.db
+      .query("githubCache")
+      .withIndex("by_url", (q) => q.eq("url", args.url))
+      .first();
+
+    if (!cached) {
+      return null;
+    }
+
+    // Check if expired
+    if (cached.expiresAt < now) {
+      return null; // Will be cleaned up later
+    }
+
+    return cached.response;
+  },
+});
+
+/**
+ * Helper function to fetch from GitHub with caching
+ */
+async function fetchWithCache(
+  ctx: any,
+  url: string,
+  options: RequestInit = {},
+  ttlMinutes: number = 60
+): Promise<Response> {
+  // Try to get from cache first
+  const cached = await ctx.runQuery(getFromCache, { url });
+
+  if (cached) {
+    console.log("Cache HIT for:", url);
+    const cachedData = JSON.parse(cached);
+    return new Response(JSON.stringify(cachedData.body), {
+      status: cachedData.status,
+      headers: cachedData.headers,
+    });
+  }
+
+  console.log("Cache MISS for:", url);
+
+  // Fetch from GitHub
+  const response = await fetch(url, options);
+
+  // Cache successful responses
+  if (response.ok) {
+    const body = await response.json();
+
+    // Extract relevant headers
+    const headers: Record<string, string> = {};
+    const headerKeys = ['content-type', 'x-ratelimit-remaining', 'x-ratelimit-limit', 'x-ratelimit-reset'];
+    headerKeys.forEach(key => {
+      const value = response.headers.get(key);
+      if (value) headers[key] = value;
+    });
+
+    const cacheData = {
+      status: response.status,
+      headers,
+      body,
+    };
+
+    await ctx.runMutation(saveToCache, {
+      url,
+      response: JSON.stringify(cacheData),
+      ttlMinutes,
+    });
+
+    // Return a new response with the body
+    return new Response(JSON.stringify(body), {
+      status: response.status,
+      headers: response.headers,
+    });
+  }
+
+  return response;
+}
 
 /**
  * Convex action to fetch GitHub repository information
@@ -30,7 +155,7 @@ export const fetchRepoInfo = action({
         headers: {
           Accept: "application/vnd.github.v3+json",
           ...(process.env.GITHUB_TOKEN && {
-            Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
+            Authorization: `token ${process.env.GITHUB_TOKEN}`,
           }),
         },
       }
@@ -62,7 +187,7 @@ export const fetchRepoInfo = action({
         headers: {
           Accept: "application/vnd.github.v3+json",
           ...(process.env.GITHUB_TOKEN && {
-            Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
+            Authorization: `token ${process.env.GITHUB_TOKEN}`,
           }),
         },
       }
@@ -71,16 +196,20 @@ export const fetchRepoInfo = action({
     if (!fileResponse.ok) {
       console.log("First attempt failed with status:", fileResponse.status);
       // Try lowercase
-      const fileResponse2 = await fetch(
-        `https://api.github.com/repos/${owner}/${repo}/contents/${skillMdPathLower}`,
+      const skillMdUrlLower = `https://api.github.com/repos/${owner}/${repo}/contents/${skillMdPathLower}`;
+      const fileResponse2 = await fetchWithCache(
+        ctx,
+        skillMdUrlLower,
         {
           headers: {
             Accept: "application/vnd.github.v3+json",
+            "X-GitHub-Api-Version": "2022-11-28",
             ...(process.env.GITHUB_TOKEN && {
               Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
             }),
           },
-        }
+        },
+        60 // Cache for 60 minutes
       );
 
       if (!fileResponse2.ok) {
@@ -273,7 +402,7 @@ async function fetchDirectoryRecursive(
         headers: {
           Accept: "application/vnd.github.v3+json",
           ...(process.env.GITHUB_TOKEN && {
-            Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
+            Authorization: `token ${process.env.GITHUB_TOKEN}`,
           }),
         },
       });
@@ -331,6 +460,132 @@ async function fetchDirectoryRecursive(
 
   return allFiles;
 }
+
+/**
+ * Convex action to fetch only SKILL.md file (fast initial load)
+ */
+export const fetchSkillMd = action({
+  args: {
+    repoUrl: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const parsed = parseGitHubUrl(args.repoUrl);
+    if (!parsed) {
+      throw new Error("Invalid GitHub URL format");
+    }
+
+    const { owner, repo, path } = parsed;
+
+    if (!path) {
+      throw new Error("No path specified in the repository URL");
+    }
+
+    // Try to fetch SKILL.md
+    const skillMdPath = `${path}/SKILL.md`;
+    const skillMdPathLower = `${path}/skill.md`;
+
+    console.log("Fetching SKILL.md from:", `https://api.github.com/repos/${owner}/${repo}/contents/${skillMdPath}`);
+    console.log("GitHub token configured:", !!process.env.GITHUB_TOKEN);
+
+    const skillMdUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${skillMdPath}`;
+    const fileResponse = await fetchWithCache(
+      ctx,
+      skillMdUrl,
+      {
+        headers: {
+          Accept: "application/vnd.github.v3+json",
+          "X-GitHub-Api-Version": "2022-11-28",
+          ...(process.env.GITHUB_TOKEN && {
+            Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
+          }),
+        },
+      },
+      60 // Cache for 60 minutes
+    );
+
+    // Log rate limit headers
+    const remaining = fileResponse.headers.get("x-ratelimit-remaining");
+    const limit = fileResponse.headers.get("x-ratelimit-limit");
+    const reset = fileResponse.headers.get("x-ratelimit-reset");
+    const resetDate = reset ? new Date(parseInt(reset) * 1000) : null;
+    const resetISO = resetDate ? resetDate.toISOString() : 'unknown';
+    const minutesUntilReset = resetDate ? Math.ceil((resetDate.getTime() - Date.now()) / 60000) : 0;
+
+    console.log("Rate limit remaining:", remaining);
+    console.log("Rate limit total:", limit);
+    console.log("Rate limit resets at:", resetISO, `(in ${minutesUntilReset} minutes)`);
+
+    let skillMdContent: string;
+    let skillMdName = "SKILL.md";
+    let skillMdSize = 0;
+
+    if (!fileResponse.ok) {
+      console.log("Response status:", fileResponse.status);
+
+      // Check for rate limiting or auth issues
+      if (fileResponse.status === 403) {
+        if (remaining === '0') {
+          throw new Error(`GitHub API rate limit exceeded. Resets in ${minutesUntilReset} minutes. Try again after this time.`);
+        }
+        throw new Error(`GitHub API request failed with 403. This might be a permissions issue with your GITHUB_TOKEN.`);
+      }
+
+      // Try lowercase
+      const skillMdUrlLower = `https://api.github.com/repos/${owner}/${repo}/contents/${skillMdPathLower}`;
+      const fileResponse2 = await fetchWithCache(
+        ctx,
+        skillMdUrlLower,
+        {
+          headers: {
+            Accept: "application/vnd.github.v3+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+            ...(process.env.GITHUB_TOKEN && {
+              Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
+            }),
+          },
+        },
+        60 // Cache for 60 minutes
+      );
+
+      if (!fileResponse2.ok) {
+        if (fileResponse2.status === 403) {
+          throw new Error("GitHub API rate limit exceeded. Please add a GITHUB_TOKEN to your Convex environment variables.");
+        }
+        console.log("Second attempt failed. GitHub API response:", fileResponse2.status);
+        throw new Error(`SKILL.md not found in ${path}/. Tried both SKILL.md and skill.md`);
+      }
+
+      const fileData = await fileResponse2.json();
+      skillMdName = "skill.md";
+      skillMdSize = fileData.size || 0;
+      const base64 = fileData.content.replace(/\n/g, '');
+      const binaryString = atob(base64);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      skillMdContent = new TextDecoder('utf-8').decode(bytes);
+    } else {
+      const fileData = await fileResponse.json();
+      skillMdSize = fileData.size || 0;
+      const base64 = fileData.content.replace(/\n/g, '');
+      const binaryString = atob(base64);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      skillMdContent = new TextDecoder('utf-8').decode(bytes);
+    }
+
+    return {
+      name: skillMdName,
+      path: `${path}/${skillMdName}`,
+      content: skillMdContent,
+      size: skillMdSize,
+      type: "file" as const,
+    };
+  },
+});
 
 /**
  * Convex action to fetch all files from a skill's GitHub directory
