@@ -19,9 +19,8 @@ export default function Home() {
             <span className="text-primary">LLM Skills</span>
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground leading-relaxed mb-8">
-            A public, LLM-agnostic platform for sharing Claude skills and
-            similar LLM-powered tools. Built by the community, for the
-            community.
+            A platform for sharing and discovering Claude skills.
+            Create, share, and explore powerful LLM capabilities.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button asChild size="lg" variant="gradient">
@@ -47,27 +46,27 @@ export default function Home() {
               </CardHeader>
               <CardContent>
                 <CardDescription>
-                  All skills start public to maximize discoverability and
-                  community engagement. Share your work with the world.
+                  All skills are public to maximize discoverability.
+                  Share your work with the world.
                 </CardDescription>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>LLM-Agnostic</CardTitle>
+                <CardTitle>Built for Claude</CardTitle>
               </CardHeader>
               <CardContent>
                 <CardDescription>
-                  Built for Claude skills but designed to work with any LLM. The
-                  future is multi-model.
+                  Currently focused on Claude skills. Share and discover
+                  capabilities that extend Claude's functionality.
                 </CardDescription>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>Community-Driven</CardTitle>
+                <CardTitle>Collaborative</CardTitle>
               </CardHeader>
               <CardContent>
                 <CardDescription>
@@ -123,7 +122,7 @@ export default function Home() {
                 </h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   Receive feedback through comments and ratings. Fork, improve,
-                  and share your contributions back to the community.
+                  and share your contributions with others.
                 </p>
               </div>
             </div>
@@ -139,7 +138,7 @@ export default function Home() {
             Ready to Share Your Skills?
           </h2>
           <p className="text-xl text-muted-foreground mb-8">
-            Join our community of builders and start sharing today.
+            Start sharing your skills today.
           </p>
           <Button asChild size="lg" variant="gradient">
             <Link href="/skills/submit">Submit Your First Skill</Link>

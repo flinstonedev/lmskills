@@ -153,7 +153,7 @@ export default function SubmitSkillPage() {
           Submit a Skill
         </h1>
         <p className="text-base text-muted-foreground leading-relaxed">
-          Share your Claude skill with the community. Provide a GitHub URL to a specific skill directory containing a SKILL.md file.
+          Share your Claude skill. Provide a GitHub URL to a specific skill directory containing a SKILL.md file.
         </p>
       </div>
 
