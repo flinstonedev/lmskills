@@ -5,7 +5,6 @@ import { api } from "../../../convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -30,7 +29,6 @@ import { Id } from "../../../convex/_generated/dataModel";
 
 export default function DashboardPage() {
   const { user, isLoaded } = useUser();
-  const router = useRouter();
   const skills = useQuery(api.skills.getMySkills);
   const deleteSkill = useMutation(api.skills.deleteSkill);
 
@@ -59,7 +57,7 @@ export default function DashboardPage() {
 
   if (!isLoaded) {
     return (
-      <div className="container mx-auto py-8">
+      <div className="container mx-auto px-4 py-8">
         <div className="animate-pulse">
           <div className="h-8 bg-muted rounded w-1/4 mb-8"></div>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -74,7 +72,7 @@ export default function DashboardPage() {
 
   if (!user) {
     return (
-      <div className="container mx-auto py-8">
+      <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-8">My Skills</h1>
         <p className="text-muted-foreground">
           Please sign in to view your skills.
@@ -84,7 +82,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="container mx-auto py-8">
+    <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">My Skills</h1>
         <Button asChild>
@@ -120,13 +118,15 @@ export default function DashboardPage() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {skills.map((skill) => (
             <div key={skill._id} className="relative">
-              <Card
-                className="flex flex-col h-full hover:shadow-lg hover:scale-[1.02] transition-all cursor-pointer"
-                onClick={() => router.push(`/skills/${skill.owner?.handle}/${skill.name}`)}
-              >
+              <Card className="flex flex-col h-full hover:shadow-lg transition-all">
                 <CardHeader>
                   <CardTitle className="flex items-start justify-between gap-2">
-                    <span className="line-clamp-2">{skill.name}</span>
+                    <Link
+                      href={`/skills/${skill.owner?.handle}/${skill.name}`}
+                      className="line-clamp-2 hover:underline"
+                    >
+                      {skill.name}
+                    </Link>
                     <a
                       href={skill.repoUrl}
                       target="_blank"
