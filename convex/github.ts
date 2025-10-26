@@ -206,6 +206,11 @@ export const fetchSkillFiles = action({
 
     const contents = await response.json();
 
+    // Validate that contents is an array (directory), not an object (file)
+    if (!Array.isArray(contents)) {
+      throw new Error("The provided URL points to a file instead of a directory. Please provide a URL to a skill directory containing multiple files.");
+    }
+
     // Filter to only include files (not directories)
     const files = contents.filter((item: any) => item.type === "file");
 
