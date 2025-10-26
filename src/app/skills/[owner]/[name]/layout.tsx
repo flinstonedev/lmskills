@@ -26,6 +26,10 @@ export async function generateMetadata({
       return {
         title: "Skill Not Found",
         description: "The requested clade skill could not be found.",
+        robots: {
+          index: false,
+          follow: false,
+        },
       };
     }
 
@@ -39,6 +43,10 @@ export async function generateMetadata({
     return {
       title: "Error Loading Skill",
       description: "An error occurred while loading this clade skill.",
+      robots: {
+        index: false,
+        follow: false,
+      },
     };
   }
 }
