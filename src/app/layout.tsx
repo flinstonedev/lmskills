@@ -3,6 +3,7 @@ import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ConvexClientProvider } from "@/components/providers/convex-client-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
+import { PostHogProvider } from "@/components/providers/posthog-provider";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { CookieConsentBanner } from "@/components/cookie-consent-banner";
@@ -60,12 +61,14 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <ConvexClientProvider>
-              <div className="flex min-h-screen flex-col">
-                <Header />
-                <main className="flex-1 min-h-[calc(100vh-theme(spacing.32))]">{children}</main>
-                <Footer />
-              </div>
-              <CookieConsentBanner />
+              <PostHogProvider>
+                <div className="flex min-h-screen flex-col">
+                  <Header />
+                  <main className="flex-1 min-h-[calc(100vh-theme(spacing.32))]">{children}</main>
+                  <Footer />
+                </div>
+                <CookieConsentBanner />
+              </PostHogProvider>
             </ConvexClientProvider>
           </ThemeProvider>
         </body>
