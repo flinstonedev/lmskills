@@ -40,6 +40,7 @@ export default function SkillDetailPage() {
     if (skill && skill.repoUrl) {
       setFilesLoading(true);
       setFilesError(null);
+      setSelectedFile(null); // Clear previously selected file
       fetchSkillFiles({ repoUrl: skill.repoUrl })
         .then((fetchedFiles) => {
           setFiles(fetchedFiles);
@@ -63,6 +64,8 @@ export default function SkillDetailPage() {
           console.error("Error fetching skill files:", error);
           setFilesError(error.message || "Failed to fetch skill files");
           setFilesLoading(false);
+          setSelectedFile(null); // Clear stale file content on error
+          setFiles([]); // Clear stale file list on error
         });
     }
   }, [skill?.repoUrl, fetchSkillFiles]);
