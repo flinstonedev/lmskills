@@ -173,4 +173,7 @@
   body {
     @apply bg-background text-foreground;
   }
+  code, pre, kbd, samp {
+    @apply font-mono;
+  }
 }

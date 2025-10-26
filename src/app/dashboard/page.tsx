@@ -73,7 +73,7 @@ export default function DashboardPage() {
   if (!user) {
     return (
       <div className="container mx-auto py-8">
-        <h1 className="text-3xl font-bold mb-8">My Skills</h1>
+        <h1 className="text-2xl font-bold mb-8">My Skills</h1>
         <p className="text-muted-foreground">
           Please sign in to view your skills.
         </p>
@@ -84,7 +84,7 @@ export default function DashboardPage() {
   return (
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">My Skills</h1>
+        <h1 className="text-2xl font-bold">My Skills</h1>
         <Button asChild>
           <Link href="/skills/submit">
             <Plus className="mr-2 h-4 w-4" />

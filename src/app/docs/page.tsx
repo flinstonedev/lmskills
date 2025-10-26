@@ -5,7 +5,7 @@ export default function Documentation() {
     <div className="prose prose-slate dark:prose-invert max-w-none">
         {/* Header */}
         <div className="mb-12 pb-8 border-b">
-          <h1 className="text-4xl font-bold mb-3">Documentation</h1>
+          <h1 className="text-2xl font-bold mb-3">Documentation</h1>
           <p className="text-lg text-muted-foreground">
             A comprehensive guide to using LMSkills.
           </p>
@@ -43,7 +43,7 @@ export default function Documentation() {
         <section className="mb-12">
           <h2 className="text-2xl font-semibold mb-4 scroll-mt-24" id="submitting-skills">Submitting Skills</h2>
 
-          <h3 className="text-xl font-semibold mb-3 mt-6">Requirements</h3>
+          <h3 className="text-lg font-semibold mb-3 mt-6 scroll-mt-24" id="requirements">Requirements</h3>
           <p className="text-muted-foreground mb-4">
             To submit a skill, your GitHub repository must meet the following requirements:
           </p>
@@ -54,7 +54,7 @@ export default function Documentation() {
             <li>Valid markdown content in your SKILL.md file</li>
           </ul>
 
-          <h3 className="text-xl font-semibold mb-3 mt-6">SKILL.md Format</h3>
+          <h3 className="text-lg font-semibold mb-3 mt-6 scroll-mt-24" id="skill-md-format">SKILL.md Format</h3>
           <p className="text-muted-foreground mb-4">
             Your SKILL.md file should follow standard markdown format:
           </p>
@@ -85,7 +85,7 @@ Practical examples...`}
             </p>
           </div>
 
-          <h3 className="text-xl font-semibold mb-3 mt-6">Submission Process</h3>
+          <h3 className="text-lg font-semibold mb-3 mt-6 scroll-mt-24" id="submission-process">Submission Process</h3>
           <ol className="space-y-3 text-muted-foreground mb-6">
             <li>
               <strong>Prepare Your Repository:</strong> Ensure your GitHub repository is public and contains a SKILL.md file.
@@ -106,7 +106,7 @@ Practical examples...`}
         <section className="mb-12">
           <h2 className="text-2xl font-semibold mb-4 scroll-mt-24" id="using-skills">Using Skills</h2>
 
-          <h3 className="text-xl font-semibold mb-3 mt-6">Finding Skills</h3>
+          <h3 className="text-lg font-semibold mb-3 mt-6 scroll-mt-24" id="finding-skills">Finding Skills</h3>
           <p className="text-muted-foreground mb-4">
             The <Link href="/skills" className="text-primary hover:underline">Browse Skills</Link> page provides several ways to discover skills:
           </p>
@@ -117,7 +117,7 @@ Practical examples...`}
             <li>Sort by trending, newest, or highest rated</li>
           </ul>
 
-          <h3 className="text-xl font-semibold mb-3 mt-6">Skill Details</h3>
+          <h3 className="text-lg font-semibold mb-3 mt-6 scroll-mt-24" id="skill-details">Skill Details</h3>
           <p className="text-muted-foreground mb-4">
             Each skill page includes:
           </p>
@@ -130,7 +130,7 @@ Practical examples...`}
             <li>Tags and categories</li>
           </ul>
 
-          <h3 className="text-xl font-semibold mb-3 mt-6">Managing Your Skills</h3>
+          <h3 className="text-lg font-semibold mb-3 mt-6 scroll-mt-24" id="managing-skills">Managing Your Skills</h3>
           <p className="text-muted-foreground mb-4">
             Access your <Link href="/dashboard" className="text-primary hover:underline">dashboard</Link> to:
           </p>
@@ -147,7 +147,7 @@ Practical examples...`}
         <section className="mb-12">
           <h2 className="text-2xl font-semibold mb-4 scroll-mt-24" id="best-practices">Best Practices</h2>
 
-          <h3 className="text-xl font-semibold mb-3 mt-6">Documentation</h3>
+          <h3 className="text-lg font-semibold mb-3 mt-6 scroll-mt-24" id="best-practices-documentation">Documentation</h3>
           <ul className="space-y-2 text-muted-foreground mb-6">
             <li>Write clear, concise descriptions</li>
             <li>Include practical examples with code snippets</li>
@@ -155,7 +155,7 @@ Practical examples...`}
             <li>Provide troubleshooting guidance for common issues</li>
           </ul>
 
-          <h3 className="text-xl font-semibold mb-3 mt-6">Code Quality</h3>
+          <h3 className="text-lg font-semibold mb-3 mt-6 scroll-mt-24" id="code-quality">Code Quality</h3>
           <ul className="space-y-2 text-muted-foreground mb-6">
             <li>Follow coding best practices and conventions</li>
             <li>Include inline comments for complex logic</li>
@@ -163,7 +163,7 @@ Practical examples...`}
             <li>Keep dependencies minimal and well-documented</li>
           </ul>
 
-          <h3 className="text-xl font-semibold mb-3 mt-6">Maintenance</h3>
+          <h3 className="text-lg font-semibold mb-3 mt-6 scroll-mt-24" id="maintenance">Maintenance</h3>
           <ul className="space-y-2 text-muted-foreground mb-6">
             <li>Keep your skills updated with the latest changes</li>
             <li>Respond to issues and questions from users</li>
@@ -176,7 +176,7 @@ Practical examples...`}
         <section className="mb-12">
           <h2 className="text-2xl font-semibold mb-4 scroll-mt-24" id="api-reference">API Reference</h2>
 
-          <h3 className="text-xl font-semibold mb-3 mt-6">SKILL.md Metadata</h3>
+          <h3 className="text-lg font-semibold mb-3 mt-6 scroll-mt-24" id="skill-md-metadata">SKILL.md Metadata</h3>
           <p className="text-muted-foreground mb-4">
             LMSkills parses your SKILL.md file to extract metadata. While most content is freeform markdown, certain conventions are recognized:
           </p>

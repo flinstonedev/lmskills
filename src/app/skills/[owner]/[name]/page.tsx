@@ -4,7 +4,7 @@ import { useQuery, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardHeading } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ExternalLink, Star, Github, Calendar, Scale, Check, X, AlertCircle, FileText, ChevronDown, ChevronRight, Folder, FolderOpen } from "lucide-react";
@@ -112,7 +112,7 @@ export default function SkillDetailPage() {
       <div className="container mx-auto px-4 py-12">
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
-            <h1 className="text-3xl font-bold mb-3">Skill Not Found</h1>
+            <h1 className="text-2xl font-bold mb-3">Skill Not Found</h1>
             <p className="text-base text-muted-foreground mb-6">
               The skill you're looking for doesn't exist.
             </p>
@@ -139,7 +139,7 @@ export default function SkillDetailPage() {
       <div className="mb-8">
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
-            <h1 className="text-4xl md:text-5xl font-bold mb-3 leading-tight">
+            <h1 className="text-2xl md:text-3xl font-bold mb-3 leading-tight">
               {skill.name}
             </h1>
             <p className="text-base text-muted-foreground leading-relaxed mb-4">
@@ -200,7 +200,7 @@ export default function SkillDetailPage() {
       {/* SKILL.md Content */}
       <Card className="bg-[var(--surface-2)] backdrop-blur border-border/50 mb-8">
         <CardHeader>
-          <CardTitle className="text-2xl font-semibold">Documentation</CardTitle>
+          <CardHeading level={2} className="text-xl">Documentation</CardHeading>
           <CardDescription className="text-sm">
             Learn how to use this skill with Claude
           </CardDescription>
@@ -208,7 +208,7 @@ export default function SkillDetailPage() {
         <CardContent>
           <SafeMarkdown
             content={skill.skillMdContent}
-            className="prose prose-sm dark:prose-invert max-w-none"
+            className="prose dark:prose-invert max-w-none"
           />
         </CardContent>
       </Card>
@@ -218,7 +218,7 @@ export default function SkillDetailPage() {
         <CardHeader>
           <div className="flex items-center gap-2">
             <FileText className="h-5 w-5 text-muted-foreground" />
-            <CardTitle className="text-2xl font-semibold">Skill Files</CardTitle>
+            <CardHeading level={2} className="text-xl">Skill Files</CardHeading>
           </div>
           <CardDescription className="text-sm">
             All files in this skill directory
@@ -323,7 +323,7 @@ export default function SkillDetailPage() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <Scale className="h-5 w-5 text-muted-foreground" />
-              <CardTitle className="text-2xl font-semibold">License</CardTitle>
+              <CardHeading level={2} className="text-xl">License</CardHeading>
             </div>
             <CardDescription className="text-sm">
               {licenseInfo.name}
