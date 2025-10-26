@@ -12,6 +12,7 @@ LMSkills is a public, LLM-agnostic platform for sharing, discovering, and collab
 - **Styling**: Tailwind CSS 4, shadcn/ui components
 - **Database & Backend**: Convex (serverless backend with real-time database)
 - **Authentication**: Clerk (GitHub OAuth + Email magic link)
+- **Analytics**: PostHog (privacy-respecting analytics with cookie consent)
 - **Deployment**: Vercel
 
 ## Development Commands
@@ -99,6 +100,12 @@ TypeScript is configured with path aliases:
 
 **Markdown Rendering**: All user-generated markdown (skill content, comments, reviews) must be sanitized using the `SafeMarkdown` component which uses DOMPurify to prevent XSS attacks.
 
+**Analytics & Privacy**: PostHog analytics is integrated with cookie consent. Tracking only occurs when users accept cookies via the cookie consent banner. Use helper functions from `src/lib/posthog.ts` to track custom events:
+- `trackEvent(eventName, properties)`: Track custom events
+- `identifyUser(userId, traits)`: Identify users after sign-in
+- `resetUser()`: Reset identity on sign-out
+- `setUserProperties(properties)`: Update user properties
+
 ## Environment Variables
 
 Required in `.env.local`:
@@ -107,6 +114,8 @@ Required in `.env.local`:
 - `CONVEX_DEPLOYMENT`: Convex deployment name
 - `NEXT_PUBLIC_CONVEX_URL`: Convex API URL
 - `CLERK_WEBHOOK_SECRET`: Webhook signing secret (production only)
+- `NEXT_PUBLIC_POSTHOG_KEY`: PostHog project API key
+- `NEXT_PUBLIC_POSTHOG_HOST`: PostHog API host (default: https://us.i.posthog.com)
 
 ## Clerk Configuration
 
@@ -117,6 +126,16 @@ Required in `.env.local`:
    - Include standard claims
 4. Configure webhook endpoint: `https://your-domain/api/webhooks/clerk`
 5. Subscribe to events: `user.created`, `user.updated`, `user.deleted`
+
+## PostHog Configuration
+
+1. Create a project in PostHog (cloud or self-hosted)
+2. Copy the Project API Key from Settings → Project
+3. Add `NEXT_PUBLIC_POSTHOG_KEY` and `NEXT_PUBLIC_POSTHOG_HOST` to `.env.local`
+4. Analytics tracking respects cookie consent:
+   - When cookies are rejected: PostHog uses memory-only storage, no data persists
+   - When cookies are accepted: PostHog uses localStorage + cookies, full tracking enabled
+   - Pageviews, autocapture, and custom events only fire when consent is given
 
 ## Development Roadmap
 
