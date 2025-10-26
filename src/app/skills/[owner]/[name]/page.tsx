@@ -194,16 +194,6 @@ export default function SkillDetailPage() {
               View on GitHub
             </a>
           </Button>
-          <Button variant="outline" asChild>
-            <a
-              href={skill.repoUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <ExternalLink className="mr-2 h-4 w-4" />
-              Open Repository
-            </a>
-          </Button>
         </div>
       </div>
 
