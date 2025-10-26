@@ -129,6 +129,7 @@ export default function SkillDetailPage() {
   const [files, setFiles] = useState<SkillFile[]>([]);
   const [skillMdLoading, setSkillMdLoading] = useState(false);
   const [filesLoading, setFilesLoading] = useState(false);
+  const [allFilesFetched, setAllFilesFetched] = useState(false);
   const [filesError, setFilesError] = useState<string | null>(null);
   const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set());
   const [selectedFile, setSelectedFile] = useState<SkillFile | null>(null);
@@ -161,7 +162,7 @@ export default function SkillDetailPage() {
 
   // Step 2: Fetch remaining files in the background
   useEffect(() => {
-    if (skill && skill.repoUrl && files.length > 0 && !filesLoading) {
+    if (skill && skill.repoUrl && files.length > 0 && !filesLoading && !allFilesFetched) {
       setFilesLoading(true);
 
       fetchSkillFiles({ repoUrl: skill.repoUrl })
@@ -169,6 +170,7 @@ export default function SkillDetailPage() {
           // Replace the temporary SKILL.md with full file tree
           setFiles(fetchedFiles);
           setFilesLoading(false);
+          setAllFilesFetched(true);
 
           // Keep SKILL.md selected if it was already selected
           if (selectedFile && (selectedFile.name === "SKILL.md" || selectedFile.name === "skill.md")) {
@@ -189,7 +191,7 @@ export default function SkillDetailPage() {
           setFilesLoading(false);
         });
     }
-  }, [skill?.repoUrl, files.length, fetchSkillFiles, filesLoading, selectedFile]);
+  }, [skill?.repoUrl, files.length, fetchSkillFiles, filesLoading, allFilesFetched, selectedFile]);
 
   const toggleDir = (dirPath: string) => {
     setExpandedDirs((prev) => {

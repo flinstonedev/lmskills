@@ -1,10 +1,11 @@
 import { v } from "convex/values";
 import { action, internalMutation, internalQuery } from "./_generated/server";
+import { internal } from "./_generated/api";
 
 /**
  * Internal mutation to save GitHub API response to cache
  */
-const saveToCache = internalMutation({
+export const saveToCache = internalMutation({
   args: {
     url: v.string(),
     response: v.string(),
@@ -41,7 +42,7 @@ const saveToCache = internalMutation({
 /**
  * Internal query to get cached GitHub API response
  */
-const getFromCache = internalQuery({
+export const getFromCache = internalQuery({
   args: {
     url: v.string(),
   },
@@ -76,7 +77,7 @@ async function fetchWithCache(
   ttlMinutes: number = 60
 ): Promise<Response> {
   // Try to get from cache first
-  const cached = await ctx.runQuery(getFromCache, { url });
+  const cached = await ctx.runQuery(internal.github.getFromCache, { url });
 
   if (cached) {
     console.log("Cache HIT for:", url);
@@ -110,7 +111,7 @@ async function fetchWithCache(
       body,
     };
 
-    await ctx.runMutation(saveToCache, {
+    await ctx.runMutation(internal.github.saveToCache, {
       url,
       response: JSON.stringify(cacheData),
       ttlMinutes,
@@ -606,8 +607,35 @@ export const fetchSkillFiles = action({
       throw new Error("No path specified in the repository URL");
     }
 
+    // Create a cache key for this skill's files
+    const cacheKey = `skill-files:${owner}/${repo}/${path}`;
+
+    // Try to get from cache first
+    const cached = await ctx.runQuery(internal.github.getFromCache, { url: cacheKey });
+
+    if (cached) {
+      console.log("Cache HIT for skill files:", cacheKey);
+      const cachedData = JSON.parse(cached);
+      return cachedData.body;
+    }
+
+    console.log("Cache MISS for skill files:", cacheKey);
+
     // Recursively fetch all files
     const allFiles = await fetchDirectoryRecursive(owner, repo, path);
+
+    // Cache the result for 60 minutes
+    const cacheData = {
+      status: 200,
+      headers: {},
+      body: allFiles,
+    };
+
+    await ctx.runMutation(internal.github.saveToCache, {
+      url: cacheKey,
+      response: JSON.stringify(cacheData),
+      ttlMinutes: 60,
+    });
 
     return allFiles;
   },
