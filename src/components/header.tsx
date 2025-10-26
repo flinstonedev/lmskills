@@ -20,11 +20,6 @@ export function Header() {
             <Link href="/skills-lab" className="text-sm font-medium hover:underline">
               Skills Lab
             </Link>
-            <SignedIn>
-              <Link href="/dashboard" className="text-sm font-medium hover:underline">
-                My Skills
-              </Link>
-            </SignedIn>
           </nav>
         </div>
 
