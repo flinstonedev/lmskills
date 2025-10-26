@@ -54,14 +54,14 @@ export function SafeMarkdown({ content, className }: SafeMarkdownProps) {
             const isInline = !className;
             return isInline ? (
               <code
-                className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono"
+                className="bg-secondary text-secondary-foreground px-1.5 py-0.5 rounded text-sm font-mono border border-border"
                 {...props}
               >
                 {children}
               </code>
             ) : (
               <code
-                className={`block bg-muted p-4 rounded-lg overflow-x-auto text-sm font-mono ${className || ""}`}
+                className={`block bg-secondary text-secondary-foreground p-4 rounded-lg overflow-x-auto text-sm font-mono border border-border ${className || ""}`}
                 {...props}
               >
                 {children}

@@ -131,4 +131,14 @@ export default defineSchema({
   })
     .index("by_post", ["postId"])
     .index("by_user", ["userId"]),
+
+  // GitHub API response cache
+  githubCache: defineTable({
+    url: v.string(), // Full GitHub API URL (unique key)
+    response: v.string(), // JSON stringified response
+    expiresAt: v.number(), // Cache expiry timestamp
+    createdAt: v.number(),
+  })
+    .index("by_url", ["url"])
+    .index("by_expires", ["expiresAt"]),
 });

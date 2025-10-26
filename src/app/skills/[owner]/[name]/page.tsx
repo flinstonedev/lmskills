@@ -8,13 +8,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardHeading 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ExternalLink, Star, Github, Calendar, Scale, Check, X, AlertCircle, FileText, ChevronDown, ChevronRight, Folder, FolderOpen } from "lucide-react";
+import { ExternalLink, Star, Github, Calendar, Scale, Check, X, AlertCircle, FileText, ChevronDown, ChevronRight, Folder, FolderOpen, Loader2 } from "lucide-react";
 import { SafeMarkdown } from "@/components/safe-markdown";
 import Link from "next/link";
 import { getLicenseInfo } from "@/lib/licenses";
 import { useState, useEffect } from "react";
+import { useTheme } from "next-themes";
 import { Light as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { atomOneDark } from 'react-syntax-highlighter/dist/esm/styles/hljs';
+import { atomOneDark, atomOneLight } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 // Import languages we need
 import javascript from 'react-syntax-highlighter/dist/esm/languages/hljs/javascript';
 import typescript from 'react-syntax-highlighter/dist/esm/languages/hljs/typescript';
@@ -119,50 +120,79 @@ export default function SkillDetailPage() {
   const params = useParams();
   const owner = params.owner as string;
   const name = params.name as string;
+  const { resolvedTheme } = useTheme();
 
   const skill = useQuery(api.skills.getSkill, { owner, name });
+  const fetchSkillMd = useAction(api.github.fetchSkillMd);
   const fetchSkillFiles = useAction(api.github.fetchSkillFiles);
 
   const [files, setFiles] = useState<SkillFile[]>([]);
+  const [skillMdLoading, setSkillMdLoading] = useState(false);
   const [filesLoading, setFilesLoading] = useState(false);
+  const [allFilesFetched, setAllFilesFetched] = useState(false);
   const [filesError, setFilesError] = useState<string | null>(null);
   const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set());
   const [selectedFile, setSelectedFile] = useState<SkillFile | null>(null);
 
-  // Fetch skill files when skill data is available
+  // Debug theme
   useEffect(() => {
-    if (skill && skill.repoUrl) {
-      setFilesLoading(true);
+    console.log('Current resolvedTheme:', resolvedTheme);
+  }, [resolvedTheme]);
+
+  // Step 1: Fetch SKILL.md first for immediate display
+  useEffect(() => {
+    if (skill && skill.repoUrl && files.length === 0) {
+      setSkillMdLoading(true);
       setFilesError(null);
-      setSelectedFile(null); // Clear previously selected file
+
+      fetchSkillMd({ repoUrl: skill.repoUrl })
+        .then((skillMdFile) => {
+          // Add SKILL.md to files and select it
+          setFiles([skillMdFile]);
+          setSelectedFile(skillMdFile);
+          setSkillMdLoading(false);
+        })
+        .catch((error) => {
+          console.error("Error fetching SKILL.md:", error);
+          setFilesError(error.message || "Failed to fetch SKILL.md");
+          setSkillMdLoading(false);
+        });
+    }
+  }, [skill?.repoUrl, fetchSkillMd, files.length]);
+
+  // Step 2: Fetch remaining files in the background
+  useEffect(() => {
+    if (skill && skill.repoUrl && files.length > 0 && !filesLoading && !allFilesFetched) {
+      setFilesLoading(true);
+
       fetchSkillFiles({ repoUrl: skill.repoUrl })
         .then((fetchedFiles) => {
+          // Replace the temporary SKILL.md with full file tree
           setFiles(fetchedFiles);
           setFilesLoading(false);
+          setAllFilesFetched(true);
 
-          // Find and select SKILL.md by default
-          const skillMdFile = fetchedFiles.find(
-            (f) => f.type === "file" && (f.name === "SKILL.md" || f.name === "skill.md")
-          );
-          if (skillMdFile) {
-            setSelectedFile(skillMdFile);
-          } else if (fetchedFiles.length > 0) {
-            // If SKILL.md not found, select first file
-            const firstFile = fetchedFiles.find((f) => f.type === "file");
-            if (firstFile) {
-              setSelectedFile(firstFile);
+          // Keep SKILL.md selected if it was already selected
+          if (selectedFile && (selectedFile.name === "SKILL.md" || selectedFile.name === "skill.md")) {
+            const updatedSkillMd = fetchedFiles.find(
+              (f: SkillFile) => f.type === "file" && (f.name === "SKILL.md" || f.name === "skill.md")
+            );
+            if (updatedSkillMd) {
+              setSelectedFile(updatedSkillMd);
             }
           }
         })
         .catch((error) => {
           console.error("Error fetching skill files:", error);
-          setFilesError(error.message || "Failed to fetch skill files");
+          // Don't show error if we already have SKILL.md loaded
+          if (files.length === 0) {
+            setFilesError(error.message || "Failed to fetch skill files");
+          }
           setFilesLoading(false);
-          setSelectedFile(null); // Clear stale file content on error
-          setFiles([]); // Clear stale file list on error
+          setAllFilesFetched(true); // Prevent retry loop on failures
         });
     }
-  }, [skill?.repoUrl, fetchSkillFiles]);
+  }, [skill?.repoUrl, files.length, fetchSkillFiles, filesLoading, allFilesFetched, selectedFile]);
 
   const toggleDir = (dirPath: string) => {
     setExpandedDirs((prev) => {
@@ -362,28 +392,28 @@ export default function SkillDetailPage() {
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            {filesLoading && (
+            {skillMdLoading && files.length === 0 && (
               <div className="py-2 px-4 space-y-2">
-                {[1, 2, 3, 4, 5].map((i) => (
+                {[1, 2, 3].map((i) => (
                   <Skeleton key={i} className="h-8 w-full" />
                 ))}
               </div>
             )}
 
-            {filesError && (
+            {filesError && files.length === 0 && (
               <div className="flex items-center gap-2 text-sm text-red-500 py-4 px-4">
                 <AlertCircle className="h-4 w-4" />
                 <span className="text-xs">{filesError}</span>
               </div>
             )}
 
-            {!filesLoading && !filesError && files.length === 0 && (
+            {!skillMdLoading && !filesError && files.length === 0 && (
               <div className="text-sm text-muted-foreground py-4 px-4">
                 No files found.
               </div>
             )}
 
-            {!filesLoading && !filesError && files.length > 0 && (
+            {files.length > 0 && (
               <div className="py-2">
                 {files.map((file) => {
                   const basePath = files.length > 0 ? files[0].path.split('/').slice(0, -1).join('/') : '';
@@ -433,6 +463,16 @@ export default function SkillDetailPage() {
                     </button>
                   );
                 })}
+
+                {/* Show loading indicator when fetching remaining files */}
+                {filesLoading && files.length === 1 && (
+                  <div className="px-4 py-3 border-t border-border/30">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      <span>Loading more files...</span>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </CardContent>
@@ -444,7 +484,7 @@ export default function SkillDetailPage() {
             <div className="flex items-center justify-between">
               <div>
                 <CardHeading level={2} className="text-xl font-semibold">
-                  {filesLoading ? 'Loading...' : selectedFile ? selectedFile.name : 'No file selected'}
+                  {skillMdLoading ? 'Loading...' : selectedFile ? selectedFile.name : 'No file selected'}
                 </CardHeading>
                 {selectedFile && (
                   <CardDescription className="text-sm font-mono mt-1">
@@ -460,7 +500,7 @@ export default function SkillDetailPage() {
             </div>
           </CardHeader>
           <CardContent>
-            {filesLoading && (
+            {skillMdLoading && !selectedFile && (
               <div className="space-y-3 p-4">
                 <Skeleton className="h-4 w-full" />
                 <Skeleton className="h-4 w-full" />
@@ -472,13 +512,13 @@ export default function SkillDetailPage() {
               </div>
             )}
 
-            {!filesLoading && !selectedFile && (
+            {!skillMdLoading && !selectedFile && (
               <div className="text-sm text-muted-foreground py-8 text-center">
                 Select a file from the sidebar to view its contents
               </div>
             )}
 
-            {!filesLoading && selectedFile && selectedFile.type === "file" && (
+            {selectedFile && selectedFile.type === "file" && (
               <>
                 {selectedFile.name.toLowerCase().endsWith('.md') ? (
                   <SafeMarkdown
@@ -486,24 +526,33 @@ export default function SkillDetailPage() {
                     className="prose prose-sm dark:prose-invert max-w-none"
                   />
                 ) : shouldUseSyntaxHighlighting(selectedFile.name) ? (
-                  <SyntaxHighlighter
-                    language={getLanguageFromFilename(selectedFile.name) || 'text'}
-                    style={atomOneDark}
-                    showLineNumbers
-                    customStyle={{
-                      margin: 0,
-                      borderRadius: '0.5rem',
-                      fontSize: '0.75rem',
-                      lineHeight: '1.5',
-                    }}
-                    codeTagProps={{
-                      style: {
-                        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-                      }
-                    }}
-                  >
-                    {selectedFile.content}
-                  </SyntaxHighlighter>
+                  <div className="rounded-lg overflow-hidden border border-border/30">
+                    <SyntaxHighlighter
+                      language={getLanguageFromFilename(selectedFile.name) || 'text'}
+                      style={resolvedTheme === 'light' ? {
+                        ...atomOneLight,
+                        'hljs': {
+                          ...atomOneLight['hljs'],
+                          background: 'hsl(var(--muted))',
+                          color: 'hsl(var(--foreground))',
+                        }
+                      } : atomOneDark}
+                      showLineNumbers
+                      customStyle={{
+                        margin: 0,
+                        fontSize: '0.75rem',
+                        lineHeight: '1.5',
+                        padding: '1rem',
+                      }}
+                      codeTagProps={{
+                        style: {
+                          fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                        }
+                      }}
+                    >
+                      {selectedFile.content}
+                    </SyntaxHighlighter>
+                  </div>
                 ) : (
                   <pre className="p-4 overflow-x-auto text-xs bg-background/50 rounded-lg border border-border/30">
                     <code className="font-mono">{selectedFile.content}</code>
