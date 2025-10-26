@@ -1,15 +1,8 @@
 import type { Metadata } from "next";
-import { Fira_Code } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ConvexClientProvider } from "@/components/providers/convex-client-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
-
-const firaCode = Fira_Code({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: "LMSkills - Skills Directory for LLMs",
@@ -25,7 +18,15 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en" suppressHydrationWarning>
-        <body className={`${firaCode.className} antialiased`}>
+        <head>
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+          <link
+            href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&display=swap"
+            rel="stylesheet"
+          />
+        </head>
+        <body className="antialiased" style={{ fontFamily: "'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace" }}>
           <ThemeProvider
             attribute="class"
             defaultTheme="system"
