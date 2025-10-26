@@ -15,14 +15,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -32,62 +24,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Pencil, Trash2, ExternalLink, Plus } from "lucide-react";
+import { Trash2, ExternalLink, Plus } from "lucide-react";
 import { Id } from "../../../convex/_generated/dataModel";
 
 export default function DashboardPage() {
   const { user, isLoaded } = useUser();
   const skills = useQuery(api.skills.getMySkills);
-  const updateSkill = useMutation(api.skills.updateSkill);
   const deleteSkill = useMutation(api.skills.deleteSkill);
 
-  const [editingSkill, setEditingSkill] = useState<{
-    id: Id<"skills">;
-    name: string;
-    description: string;
-    license?: string;
-  } | null>(null);
   const [deletingSkillId, setDeletingSkillId] = useState<Id<"skills"> | null>(
     null
   );
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-
-  const handleEdit = (skill: {
-    _id: Id<"skills">;
-    name: string;
-    description: string;
-    license?: string;
-  }) => {
-    setEditingSkill({
-      id: skill._id,
-      name: skill.name,
-      description: skill.description,
-      license: skill.license,
-    });
-    setIsEditDialogOpen(true);
-  };
-
-  const handleSaveEdit = async () => {
-    if (!editingSkill) return;
-
-    try {
-      await updateSkill({
-        skillId: editingSkill.id,
-        name: editingSkill.name,
-        description: editingSkill.description,
-        license: editingSkill.license,
-      });
-      setIsEditDialogOpen(false);
-      setEditingSkill(null);
-    } catch (error) {
-      console.error("Failed to update skill:", error);
-      alert("Failed to update skill. Please try again.");
-    }
-  };
 
   const handleDelete = (skillId: Id<"skills">) => {
     setDeletingSkillId(skillId);
@@ -208,21 +156,12 @@ export default function DashboardPage() {
                   </p>
                 </div>
               </CardContent>
-              <CardFooter className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleEdit(skill)}
-                  className="flex-1"
-                >
-                  <Pencil className="mr-2 h-4 w-4" />
-                  Edit
-                </Button>
+              <CardFooter>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => handleDelete(skill._id)}
-                  className="flex-1 text-destructive hover:text-destructive"
+                  className="w-full text-destructive hover:text-destructive"
                 >
                   <Trash2 className="mr-2 h-4 w-4" />
                   Delete
@@ -232,69 +171,6 @@ export default function DashboardPage() {
           ))}
         </div>
       )}
-
-      {/* Edit Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Skill</DialogTitle>
-            <DialogDescription>
-              Update your skill&apos;s information. Changes will be reflected
-              immediately.
-            </DialogDescription>
-          </DialogHeader>
-          {editingSkill && (
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="name">Name</Label>
-                <Input
-                  id="name"
-                  value={editingSkill.name}
-                  onChange={(e) =>
-                    setEditingSkill({ ...editingSkill, name: e.target.value })
-                  }
-                />
-              </div>
-              <div>
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={editingSkill.description}
-                  onChange={(e) =>
-                    setEditingSkill({
-                      ...editingSkill,
-                      description: e.target.value,
-                    })
-                  }
-                  rows={4}
-                />
-              </div>
-              <div>
-                <Label htmlFor="license">License (optional)</Label>
-                <Input
-                  id="license"
-                  value={editingSkill.license || ""}
-                  onChange={(e) =>
-                    setEditingSkill({
-                      ...editingSkill,
-                      license: e.target.value,
-                    })
-                  }
-                />
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsEditDialogOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleSaveEdit}>Save Changes</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog

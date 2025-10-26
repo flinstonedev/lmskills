@@ -288,64 +288,6 @@ export const getMySkills = query({
 });
 
 /**
- * Update a skill
- */
-export const updateSkill = mutation({
-  args: {
-    skillId: v.id("skills"),
-    name: v.optional(v.string()),
-    description: v.optional(v.string()),
-    license: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    // Check authentication
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Not authenticated");
-    }
-
-    // Get current user
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-      .first();
-
-    if (!user) {
-      throw new Error("User not found");
-    }
-
-    // Get the skill
-    const skill = await ctx.db.get(args.skillId);
-    if (!skill) {
-      throw new Error("Skill not found");
-    }
-
-    // Check ownership
-    if (skill.ownerUserId !== user._id) {
-      throw new Error("Not authorized to update this skill");
-    }
-
-    // Update the skill
-    const updates: {
-      updatedAt: number;
-      name?: string;
-      description?: string;
-      license?: string;
-    } = {
-      updatedAt: Date.now(),
-    };
-
-    if (args.name !== undefined) updates.name = args.name;
-    if (args.description !== undefined) updates.description = args.description;
-    if (args.license !== undefined) updates.license = args.license;
-
-    await ctx.db.patch(args.skillId, updates);
-
-    return args.skillId;
-  },
-});
-
-/**
  * Delete a skill
  */
 export const deleteSkill = mutation({
