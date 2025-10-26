@@ -219,9 +219,9 @@ export default function SkillDetailPage() {
       </div>
 
       {/* Files Section with Sidebar Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-[300px,1fr] gap-6 mb-8">
+      <div className="grid grid-cols-[280px,1fr] gap-6 mb-8">
         {/* Left Sidebar - File Tree */}
-        <Card className="bg-[var(--surface-2)] backdrop-blur border-border/50 h-fit lg:sticky lg:top-4">
+        <Card className="bg-[var(--surface-2)] backdrop-blur border-border/50 h-fit sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
               <FileText className="h-5 w-5 text-muted-foreground" />
