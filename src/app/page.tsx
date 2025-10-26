@@ -16,15 +16,15 @@ export default function Home() {
         <div className="max-w-3xl mx-auto text-center">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6">
             Discover, Share, and Collaborate on{" "}
-            <span className="text-primary">LLM Skills</span>
+            <span className="text-primary">Clade Skills</span> for Claude AI
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground leading-relaxed mb-8">
-            A platform for sharing and discovering Claude skills.
-            Create, share, and explore powerful LLM capabilities.
+            The premier platform for sharing and discovering clade skills for Claude AI.
+            Create, share, and explore powerful Claude capabilities, custom agents, and LLM tools.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button asChild size="lg" variant="gradient">
-              <Link href="/skills">Browse Skills</Link>
+              <Link href="/skills">Browse Clade Skills</Link>
             </Button>
             <Button asChild variant="outline" size="lg">
               <Link href="/skills/submit">Submit a Skill</Link>
@@ -54,12 +54,12 @@ export default function Home() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Built for Claude</CardTitle>
+                <CardTitle>Built for Claude AI</CardTitle>
               </CardHeader>
               <CardContent>
                 <CardDescription>
-                  Currently focused on Claude skills. Share and discover
-                  capabilities that extend Claude's functionality.
+                  The largest directory of clade skills for Claude. Share and discover
+                  capabilities that extend Claude AI's functionality with custom agents and tools.
                 </CardDescription>
               </CardContent>
             </Card>

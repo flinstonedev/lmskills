@@ -1,4 +1,18 @@
 import Link from "next/link";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Terms of Service",
+  description:
+    "Terms of Service for LMSkills - Review our terms and conditions for using the clade skills directory and submitting Claude AI skills to our platform.",
+  robots: {
+    index: true,
+    follow: true,
+  },
+  alternates: {
+    canonical: "https://lmskills.com/terms",
+  },
+};
 
 export default function TermsOfService() {
   return (

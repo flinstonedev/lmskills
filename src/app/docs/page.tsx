@@ -8,6 +8,37 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { AlertCircle, Github, FileText, Search, Star } from "lucide-react";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Documentation - Clade Skills Guide",
+  description:
+    "Learn how to create, submit, and discover clade skills for Claude AI. Complete guide for using LMSkills to share Claude skills, custom agents, and LLM capabilities with the community.",
+  keywords: [
+    "clade skills documentation",
+    "Claude skills guide",
+    "submit Claude skill",
+    "create Claude agent",
+    "LLM skills tutorial",
+    "Claude AI guide"
+  ],
+  openGraph: {
+    title: "Documentation - Clade Skills Guide for Claude AI",
+    description:
+      "Learn how to create, submit, and discover clade skills for Claude AI. Complete guide for using LMSkills.",
+    url: "https://lmskills.com/docs",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "Documentation - Clade Skills Guide",
+    description:
+      "Learn how to create, submit, and discover clade skills for Claude AI. Complete guide for using LMSkills.",
+  },
+  alternates: {
+    canonical: "https://lmskills.com/docs",
+  },
+};
 
 export default function Documentation() {
   return (
