@@ -15,25 +15,6 @@ export function Header() {
     <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <div className="flex items-center space-x-8">
-          <Link href="/" className="text-2xl font-bold">
-            LMSkills
-          </Link>
-          <nav className="hidden md:flex space-x-6">
-            <Link href="/skills" className="text-sm font-medium hover:underline">
-              Browse Skills
-            </Link>
-            <Link href="/skills-lab" className="text-sm font-medium hover:underline">
-              Skills Lab
-            </Link>
-            <SignedIn>
-              <Link href="/dashboard" className="text-sm font-medium hover:underline">
-                My Skills
-              </Link>
-            </SignedIn>
-          </nav>
-        </div>
-
-        <div className="flex items-center space-x-2 md:space-x-4">
           {/* Mobile Menu */}
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
@@ -88,6 +69,25 @@ export function Header() {
             </SheetContent>
           </Sheet>
 
+          <Link href="/" className="text-2xl font-bold">
+            LMSkills
+          </Link>
+          <nav className="hidden md:flex space-x-6">
+            <Link href="/skills" className="text-sm font-medium hover:underline">
+              Browse Skills
+            </Link>
+            <Link href="/skills-lab" className="text-sm font-medium hover:underline">
+              Skills Lab
+            </Link>
+            <SignedIn>
+              <Link href="/dashboard" className="text-sm font-medium hover:underline">
+                My Skills
+              </Link>
+            </SignedIn>
+          </nav>
+        </div>
+
+        <div className="flex items-center space-x-2 md:space-x-4">
           <ThemeToggle />
           <SignedOut>
             <SignInButton mode="modal">
