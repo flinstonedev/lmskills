@@ -168,8 +168,8 @@ export function generateSkillJsonLd({
       name: author.name,
       ...(author.url && { url: author.url }),
     },
-    ...(datePublished && { datePublished: new Date(datePublished).toISOString() }),
-    ...(dateModified && { dateModified: new Date(dateModified).toISOString() }),
+    ...(datePublished != null && { datePublished: new Date(datePublished).toISOString() }),
+    ...(dateModified != null && { dateModified: new Date(dateModified).toISOString() }),
     url: `${siteConfig.url}${url}`,
     offers: {
       "@type": "Offer",
