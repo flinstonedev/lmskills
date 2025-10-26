@@ -24,11 +24,6 @@ export function Footer() {
                   Submit a Skill
                 </Link>
               </li>
-              <li>
-                <Link href="/skills-lab" className="text-muted-foreground hover:text-foreground">
-                  Skills Lab
-                </Link>
-              </li>
             </ul>
           </div>
           <div>
@@ -37,11 +32,6 @@ export function Footer() {
               <li>
                 <Link href="/docs" className="text-muted-foreground hover:text-foreground">
                   Documentation
-                </Link>
-              </li>
-              <li>
-                <Link href="/guide" className="text-muted-foreground hover:text-foreground">
-                  Submission Guide
                 </Link>
               </li>
             </ul>

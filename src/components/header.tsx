@@ -33,11 +33,11 @@ export function Header() {
                   Browse Skills
                 </Link>
                 <Link
-                  href="/skills-lab"
+                  href="/docs"
                   className="text-lg font-medium hover:underline"
                   onClick={() => setOpen(false)}
                 >
-                  Skills Lab
+                  Documentation
                 </Link>
                 <SignedIn>
                   <Link
@@ -76,8 +76,8 @@ export function Header() {
             <Link href="/skills" className="text-sm font-medium hover:underline">
               Browse Skills
             </Link>
-            <Link href="/skills-lab" className="text-sm font-medium hover:underline">
-              Skills Lab
+            <Link href="/docs" className="text-sm font-medium hover:underline">
+              Documentation
             </Link>
             <SignedIn>
               <Link href="/dashboard" className="text-sm font-medium hover:underline">
