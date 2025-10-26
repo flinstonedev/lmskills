@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardHeading 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ExternalLink, Star, Github, Calendar, Scale, Check, X, AlertCircle, FileText, ChevronDown, ChevronRight, Folder, FolderOpen, Loader2 } from "lucide-react";
+import { ExternalLink, Star, Github, Calendar, Scale, Check, X, AlertCircle, FileText, ChevronDown, ChevronRight, Folder, FolderOpen, Loader2, Copy, Download, CheckCheck } from "lucide-react";
 import { SafeMarkdown } from "@/components/safe-markdown";
 import Link from "next/link";
 import { getLicenseInfo } from "@/lib/licenses";
@@ -133,6 +133,7 @@ export default function SkillDetailPage() {
   const [filesError, setFilesError] = useState<string | null>(null);
   const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set());
   const [selectedFile, setSelectedFile] = useState<SkillFile | null>(null);
+  const [copied, setCopied] = useState(false);
 
   // Debug theme
   useEffect(() => {
@@ -210,6 +211,32 @@ export default function SkillDetailPage() {
     if (file.type === "file") {
       setSelectedFile(file);
     }
+  };
+
+  const copyToClipboard = async () => {
+    if (!selectedFile || selectedFile.type !== "file") return;
+
+    try {
+      await navigator.clipboard.writeText(selectedFile.content);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error("Failed to copy:", error);
+    }
+  };
+
+  const downloadMarkdown = () => {
+    if (!selectedFile || selectedFile.type !== "file") return;
+
+    const blob = new Blob([selectedFile.content], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = selectedFile.name;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   // Helper function to calculate indentation level based on path depth
@@ -334,16 +361,24 @@ export default function SkillDetailPage() {
               {skill.description}
             </p>
           </div>
-          <Button variant="gradient" asChild className="flex-shrink-0 w-full sm:w-auto">
-            <a
-              href={skill.repoUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Github className="mr-2 h-4 w-4" />
-              View on GitHub
-            </a>
-          </Button>
+          <div className="flex gap-2 flex-shrink-0 w-full sm:w-auto">
+            <Button variant="gradient" asChild className="flex-1 sm:flex-initial">
+              <a
+                href={skill.repoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Github className="mr-2 h-4 w-4" />
+                View on GitHub
+              </a>
+            </Button>
+            <Button variant="outline" asChild className="flex-1 sm:flex-initial">
+              <Link href={`/skills/${owner}/${name}.md`}>
+                <FileText className="mr-2 h-4 w-4" />
+                View as Markdown
+              </Link>
+            </Button>
+          </div>
         </div>
 
         {/* Metadata Bar */}
@@ -481,21 +516,45 @@ export default function SkillDetailPage() {
         {/* Right Content Area - Selected File */}
         <Card className="bg-[var(--surface-2)] backdrop-blur border-border/50 w-full lg:flex-1 lg:min-w-0">
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex-1 min-w-0">
                 <CardHeading level={2} className="text-xl font-semibold">
                   {skillMdLoading ? 'Loading...' : selectedFile ? selectedFile.name : 'No file selected'}
                 </CardHeading>
                 {selectedFile && (
-                  <CardDescription className="text-sm font-mono mt-1">
+                  <CardDescription className="text-sm font-mono mt-1 truncate">
                     {selectedFile.path}
                   </CardDescription>
                 )}
               </div>
               {selectedFile && selectedFile.type === "file" && (
-                <Badge variant="secondary" className="text-xs">
-                  {(selectedFile.size / 1024).toFixed(1)} KB
-                </Badge>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <Badge variant="secondary" className="text-xs">
+                    {(selectedFile.size / 1024).toFixed(1)} KB
+                  </Badge>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={copyToClipboard}
+                    className="h-8 px-3"
+                    title="Copy to clipboard"
+                  >
+                    {copied ? (
+                      <CheckCheck className="h-4 w-4" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={downloadMarkdown}
+                    className="h-8 px-3"
+                    title="Download file"
+                  >
+                    <Download className="h-4 w-4" />
+                  </Button>
+                </div>
               )}
             </div>
           </CardHeader>
