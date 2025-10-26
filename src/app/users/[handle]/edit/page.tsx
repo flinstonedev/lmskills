@@ -3,8 +3,6 @@
 import { use, useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { Header } from "@/components/header";
-import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -41,29 +39,21 @@ export default function EditProfilePage({
 
   if (user === undefined || currentUser === undefined) {
     return (
-      <div className="flex min-h-screen flex-col">
-        <Header />
-        <main className="flex-1 container mx-auto px-4 py-12">
-          <div className="text-center">Loading...</div>
-        </main>
-        <Footer />
+      <div className="container mx-auto px-4 py-12">
+        <div className="text-center">Loading...</div>
       </div>
     );
   }
 
   if (!isOwnProfile) {
     return (
-      <div className="flex min-h-screen flex-col">
-        <Header />
-        <main className="flex-1 container mx-auto px-4 py-12">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
-            <p className="text-muted-foreground">
-              You can only edit your own profile.
-            </p>
-          </div>
-        </main>
-        <Footer />
+      <div className="container mx-auto px-4 py-12">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
+          <p className="text-muted-foreground">
+            You can only edit your own profile.
+          </p>
+        </div>
       </div>
     );
   }
@@ -88,9 +78,7 @@ export default function EditProfilePage({
   };
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <Header />
-      <main className="flex-1 container mx-auto px-4 py-12">
+    <div className="container mx-auto px-4 py-12">
         <div className="max-w-2xl mx-auto">
           <Card>
             <CardHeader>
@@ -174,8 +162,6 @@ export default function EditProfilePage({
             </CardContent>
           </Card>
         </div>
-      </main>
-      <Footer />
     </div>
   );
 }

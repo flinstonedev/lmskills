@@ -3,8 +3,6 @@
 import { use } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { Header } from "@/components/header";
-import { Footer } from "@/components/footer";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,29 +21,21 @@ export default function UserProfilePage({
 
   if (user === undefined) {
     return (
-      <div className="flex min-h-screen flex-col">
-        <Header />
-        <main className="flex-1 container mx-auto px-4 py-12">
-          <div className="text-center">Loading...</div>
-        </main>
-        <Footer />
+      <div className="container mx-auto px-4 py-12">
+        <div className="text-center">Loading...</div>
       </div>
     );
   }
 
   if (user === null) {
     return (
-      <div className="flex min-h-screen flex-col">
-        <Header />
-        <main className="flex-1 container mx-auto px-4 py-12">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold mb-4">User not found</h1>
-            <p className="text-muted-foreground">
-              The user @{handle} does not exist.
-            </p>
-          </div>
-        </main>
-        <Footer />
+      <div className="container mx-auto px-4 py-12">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">User not found</h1>
+          <p className="text-muted-foreground">
+            The user @{handle} does not exist.
+          </p>
+        </div>
       </div>
     );
   }
@@ -55,9 +45,7 @@ export default function UserProfilePage({
     .toUpperCase();
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <Header />
-      <main className="flex-1 container mx-auto px-4 py-12">
+    <div className="container mx-auto px-4 py-12">
         <div className="max-w-4xl mx-auto">
           {/* Profile Header */}
           <div className="flex items-start gap-6 mb-8">
@@ -104,8 +92,6 @@ export default function UserProfilePage({
             </CardContent>
           </Card>
         </div>
-      </main>
-      <Footer />
     </div>
   );
 }

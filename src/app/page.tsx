@@ -1,15 +1,10 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Header } from "@/components/header";
-import { Footer } from "@/components/footer";
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen flex-col">
-      <Header />
-
-      <main className="flex-1">
+    <>
         {/* Hero Section */}
         <section className="container mx-auto px-4 py-24 md:py-32">
           <div className="max-w-3xl mx-auto text-center">
@@ -142,9 +137,6 @@ export default function Home() {
             </Button>
           </div>
         </section>
-      </main>
-
-      <Footer />
-    </div>
+    </>
   );
 }
