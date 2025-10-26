@@ -5,6 +5,7 @@ import { api } from "../../../convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -29,6 +30,7 @@ import { Id } from "../../../convex/_generated/dataModel";
 
 export default function DashboardPage() {
   const { user, isLoaded } = useUser();
+  const router = useRouter();
   const skills = useQuery(api.skills.getMySkills);
   const deleteSkill = useMutation(api.skills.deleteSkill);
 
@@ -73,7 +75,7 @@ export default function DashboardPage() {
   if (!user) {
     return (
       <div className="container mx-auto py-8">
-        <h1 className="text-2xl font-bold mb-8">My Skills</h1>
+        <h1 className="text-3xl font-bold mb-8">My Skills</h1>
         <p className="text-muted-foreground">
           Please sign in to view your skills.
         </p>
@@ -84,7 +86,7 @@ export default function DashboardPage() {
   return (
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold">My Skills</h1>
+        <h1 className="text-3xl font-bold">My Skills</h1>
         <Button asChild>
           <Link href="/skills/submit">
             <Plus className="mr-2 h-4 w-4" />
@@ -118,67 +120,66 @@ export default function DashboardPage() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {skills.map((skill) => (
             <div key={skill._id} className="relative">
-              <Link
-                href={`/skills/${skill.owner?.handle}/${skill.name}`}
-                className="block h-full"
+              <Card
+                className="flex flex-col h-full hover:shadow-lg hover:scale-[1.02] transition-all cursor-pointer"
+                onClick={() => router.push(`/skills/${skill.owner?.handle}/${skill.name}`)}
               >
-                <Card className="flex flex-col h-full hover:shadow-lg hover:scale-[1.02] transition-all cursor-pointer">
-                  <CardHeader>
-                    <CardTitle className="flex items-start justify-between gap-2">
-                      <span className="line-clamp-2">{skill.name}</span>
-                      <Link
-                        href={skill.repoUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="shrink-0"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <ExternalLink className="h-4 w-4 text-muted-foreground hover:text-foreground" />
-                      </Link>
-                    </CardTitle>
-                    <CardDescription className="line-clamp-2">
-                      {skill.description}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex-1">
-                    <div className="space-y-2 text-sm">
-                      {skill.license && (
-                        <p className="text-muted-foreground">
-                          License: {skill.license}
-                        </p>
-                      )}
-                      {skill.stars !== undefined && skill.stars > 0 && (
-                        <p className="text-muted-foreground">
-                          Stars: {skill.stars}
-                        </p>
-                      )}
-                      <p className="text-muted-foreground">
-                        Created:{" "}
-                        {new Date(skill.createdAt).toLocaleDateString()}
-                      </p>
-                      <p className="text-muted-foreground">
-                        Updated:{" "}
-                        {new Date(skill.updatedAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </CardContent>
-                  <CardFooter>
-                    <Button
-                      variant="outline"
-                      size="sm"
+                <CardHeader>
+                  <CardTitle className="flex items-start justify-between gap-2">
+                    <span className="line-clamp-2">{skill.name}</span>
+                    <a
+                      href={skill.repoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="shrink-0"
                       onClick={(e) => {
-                        e.preventDefault();
                         e.stopPropagation();
-                        handleDelete(skill._id);
                       }}
-                      className="w-full text-destructive hover:text-destructive"
                     >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete
-                    </Button>
-                  </CardFooter>
-                </Card>
-              </Link>
+                      <ExternalLink className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                    </a>
+                  </CardTitle>
+                  <CardDescription className="line-clamp-2">
+                    {skill.description}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex-1">
+                  <div className="space-y-2 text-sm">
+                    {skill.license && (
+                      <p className="text-muted-foreground">
+                        License: {skill.license}
+                      </p>
+                    )}
+                    {skill.stars !== undefined && skill.stars > 0 && (
+                      <p className="text-muted-foreground">
+                        Stars: {skill.stars}
+                      </p>
+                    )}
+                    <p className="text-muted-foreground">
+                      Created:{" "}
+                      {new Date(skill.createdAt).toLocaleDateString()}
+                    </p>
+                    <p className="text-muted-foreground">
+                      Updated:{" "}
+                      {new Date(skill.updatedAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                </CardContent>
+                <CardFooter>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(skill._id);
+                    }}
+                    className="w-full text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete
+                  </Button>
+                </CardFooter>
+              </Card>
             </div>
           ))}
         </div>
