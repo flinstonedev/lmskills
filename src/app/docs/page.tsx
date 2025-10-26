@@ -7,7 +7,15 @@ export default function Documentation() {
         <div className="mb-12 pb-8 border-b">
           <h1 className="text-4xl font-bold mb-3">Documentation</h1>
           <p className="text-lg text-muted-foreground">
-            A comprehensive guide to using LMSkills.
+            A comprehensive guide to using LMSkills. For official Claude skills documentation, visit{" "}
+            <a
+              href="https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              Claude Docs - Agent Skills
+            </a>.
           </p>
         </div>
 
@@ -50,38 +58,72 @@ export default function Documentation() {
 
           <ul className="space-y-2 text-muted-foreground mb-6">
             <li>Public repository (private repositories are not supported)</li>
-            <li>A <code className="bg-muted px-1.5 py-0.5 rounded text-sm">SKILL.md</code> file in the root directory</li>
-            <li>Valid markdown content in your SKILL.md file</li>
+            <li>A <code className="bg-muted px-1.5 py-0.5 rounded text-sm">SKILL.md</code> file in the root directory with proper YAML frontmatter</li>
+            <li>Valid markdown content following the{" "}
+              <a
+                href="https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                official Claude skills format
+              </a>
+            </li>
           </ul>
 
           <h3 className="text-xl font-semibold mb-3 mt-6">SKILL.md Format</h3>
           <p className="text-muted-foreground mb-4">
-            Your SKILL.md file should follow standard markdown format:
+            Your SKILL.md file must include YAML frontmatter with required metadata fields:
           </p>
 
           <div className="bg-muted p-4 rounded-lg font-mono text-sm mb-6">
             <pre className="whitespace-pre-wrap">
-{`# Skill Title
+{`---
+name: my-skill-name
+description: Brief description of what this skill does and when to use it
+---
 
-Brief description of your skill.
+# Skill Instructions
 
-## Installation
+Detailed instructions for Claude on how to use this skill.
 
-Installation instructions...
+## Key Capabilities
 
-## Usage
+- Feature 1
+- Feature 2
 
-How to use the skill...
+## Usage Guidelines
+
+Step-by-step procedural guidance...
 
 ## Examples
 
-Practical examples...`}
+Practical examples and use cases...`}
             </pre>
           </div>
 
-          <div className="bg-blue-50 dark:bg-blue-950/30 border-l-4 border-blue-500 p-4 mb-6">
-            <p className="text-sm text-blue-900 dark:text-blue-100">
-              <strong>Note:</strong> Include clear examples, prerequisites, and troubleshooting information to make your skill more accessible.
+          <div className="bg-blue-50 dark:bg-blue-950/30 border-l-4 border-blue-500 p-4 mb-4">
+            <p className="text-sm text-blue-900 dark:text-blue-100 mb-2">
+              <strong>Required Frontmatter Fields:</strong>
+            </p>
+            <ul className="text-sm text-blue-900 dark:text-blue-100 space-y-1 list-disc list-inside">
+              <li><code className="bg-blue-100 dark:bg-blue-900 px-1 rounded">name</code>: Lowercase letters, numbers, and hyphens only (max 64 characters)</li>
+              <li><code className="bg-blue-100 dark:bg-blue-900 px-1 rounded">description</code>: What the skill does and when to use it (max 1024 characters)</li>
+            </ul>
+          </div>
+
+          <div className="bg-amber-50 dark:bg-amber-950/30 border-l-4 border-amber-500 p-4 mb-6">
+            <p className="text-sm text-amber-900 dark:text-amber-100">
+              <strong>Security Note:</strong> Only use skills from trusted sources. Skills can direct Claude to execute code, so verify the source before use. See{" "}
+              <a
+                href="https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:no-underline"
+              >
+                official documentation
+              </a>{" "}
+              for more details.
             </p>
           </div>
 
@@ -176,16 +218,29 @@ Practical examples...`}
         <section className="mb-12">
           <h2 className="text-2xl font-semibold mb-4 scroll-mt-24" id="api-reference">API Reference</h2>
 
-          <h3 className="text-xl font-semibold mb-3 mt-6">SKILL.md Metadata</h3>
+          <h3 className="text-xl font-semibold mb-3 mt-6">SKILL.md Architecture</h3>
           <p className="text-muted-foreground mb-4">
-            LMSkills parses your SKILL.md file to extract metadata. While most content is freeform markdown, certain conventions are recognized:
+            Claude skills use a progressive disclosure architecture with three levels:
           </p>
 
           <ul className="space-y-2 text-muted-foreground mb-6">
-            <li><strong>Title:</strong> The first H1 heading is used as the skill title</li>
-            <li><strong>Description:</strong> The first paragraph after the title becomes the skill description</li>
-            <li><strong>Sections:</strong> H2 headings create navigable sections</li>
+            <li><strong>Level 1 (Metadata):</strong> YAML frontmatter always loads (~100 tokens), containing name and description</li>
+            <li><strong>Level 2 (Instructions):</strong> Main SKILL.md content loads when triggered (&lt;5k tokens)</li>
+            <li><strong>Level 3 (Resources):</strong> Additional files (scripts, templates) load on-demand</li>
           </ul>
+
+          <p className="text-muted-foreground mb-6">
+            Learn more about the{" "}
+            <a
+              href="https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              progressive disclosure architecture
+            </a>{" "}
+            in the official documentation.
+          </p>
         </section>
 
         {/* FAQ */}
@@ -210,7 +265,16 @@ Practical examples...`}
             <div>
               <h3 className="text-lg font-semibold mb-2">What types of skills can I submit?</h3>
               <p className="text-muted-foreground">
-                LMSkills supports Claude skills including custom tools, prompts, workflows, and integrations that extend Claude's capabilities.
+                LMSkills supports Claude skills including modular packages of instructions, metadata, and optional resources (scripts, templates) that extend Claude&apos;s capabilities for specialized tasks. See the{" "}
+                <a
+                  href="https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                >
+                  official documentation
+                </a>{" "}
+                for examples.
               </p>
             </div>
 

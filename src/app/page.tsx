@@ -19,8 +19,16 @@ export default function Home() {
             <span className="text-primary">LLM Skills</span>
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground leading-relaxed mb-8">
-            A platform for sharing and discovering Claude skills.
-            Create, share, and explore powerful LLM capabilities.
+            A platform for sharing and discovering{" "}
+            <a
+              href="https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              Claude skills
+            </a>
+            . Create, share, and explore modular capabilities that extend Claude&apos;s functionality.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button asChild size="lg" variant="gradient">
@@ -58,8 +66,17 @@ export default function Home() {
               </CardHeader>
               <CardContent>
                 <CardDescription>
-                  Currently focused on Claude skills. Share and discover
-                  capabilities that extend Claude's functionality.
+                  Currently focused on{" "}
+                  <a
+                    href="https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    Claude skills
+                  </a>
+                  . Share and discover modular capabilities that package
+                  instructions, metadata, and resources for specialized tasks.
                 </CardDescription>
               </CardContent>
             </Card>
@@ -93,8 +110,17 @@ export default function Home() {
               <div>
                 <h3 className="text-lg font-medium mb-2">Submit Your Skill</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  Share your GitHub repository URL with your skill's SKILL.md
-                  file. We'll automatically parse and display it.
+                  Share your GitHub repository URL with a SKILL.md file containing
+                  instructions and metadata. Learn more in the{" "}
+                  <a
+                    href="https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    Claude skills documentation
+                  </a>
+                  .
                 </p>
               </div>
             </div>
