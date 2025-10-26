@@ -1,16 +1,24 @@
 "use client";
 
-import { useQuery } from "convex/react";
+import { useQuery, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { ExternalLink, Star, Github, Calendar, Scale, Check, X, AlertCircle } from "lucide-react";
+import { ExternalLink, Star, Github, Calendar, Scale, Check, X, AlertCircle, FileText, ChevronDown, ChevronRight } from "lucide-react";
 import { SafeMarkdown } from "@/components/safe-markdown";
 import Link from "next/link";
 import { getLicenseInfo } from "@/lib/licenses";
+import { useState, useEffect } from "react";
+
+interface SkillFile {
+  name: string;
+  path: string;
+  content: string;
+  size: number;
+}
 
 export default function SkillDetailPage() {
   const params = useParams();
@@ -18,6 +26,42 @@ export default function SkillDetailPage() {
   const name = params.name as string;
 
   const skill = useQuery(api.skills.getSkill, { owner, name });
+  const fetchSkillFiles = useAction(api.github.fetchSkillFiles);
+
+  const [files, setFiles] = useState<SkillFile[]>([]);
+  const [filesLoading, setFilesLoading] = useState(false);
+  const [filesError, setFilesError] = useState<string | null>(null);
+  const [expandedFiles, setExpandedFiles] = useState<Set<string>>(new Set());
+
+  // Fetch skill files when skill data is available
+  useEffect(() => {
+    if (skill && skill.repoUrl) {
+      setFilesLoading(true);
+      setFilesError(null);
+      fetchSkillFiles({ repoUrl: skill.repoUrl })
+        .then((fetchedFiles) => {
+          setFiles(fetchedFiles);
+          setFilesLoading(false);
+        })
+        .catch((error) => {
+          console.error("Error fetching skill files:", error);
+          setFilesError(error.message || "Failed to fetch skill files");
+          setFilesLoading(false);
+        });
+    }
+  }, [skill?.repoUrl, fetchSkillFiles]);
+
+  const toggleFile = (filePath: string) => {
+    setExpandedFiles((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(filePath)) {
+        newSet.delete(filePath);
+      } else {
+        newSet.add(filePath);
+      }
+      return newSet;
+    });
+  };
 
   if (skill === undefined) {
     return (
@@ -145,6 +189,77 @@ export default function SkillDetailPage() {
             content={skill.skillMdContent}
             className="prose prose-sm dark:prose-invert max-w-none"
           />
+        </CardContent>
+      </Card>
+
+      {/* Skill Files */}
+      <Card className="bg-[var(--surface-2)] backdrop-blur border-border/50 mb-8">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <FileText className="h-5 w-5 text-muted-foreground" />
+            <CardTitle className="text-2xl font-semibold">Skill Files</CardTitle>
+          </div>
+          <CardDescription className="text-sm">
+            All files in this skill directory
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {filesLoading && (
+            <div className="flex items-center justify-center py-8">
+              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent" />
+              <span className="ml-3 text-sm text-muted-foreground">Loading files...</span>
+            </div>
+          )}
+
+          {filesError && (
+            <div className="flex items-center gap-2 text-sm text-red-500 py-4">
+              <AlertCircle className="h-4 w-4" />
+              <span>{filesError}</span>
+            </div>
+          )}
+
+          {!filesLoading && !filesError && files.length === 0 && (
+            <div className="text-sm text-muted-foreground py-4">
+              No files found in this skill directory.
+            </div>
+          )}
+
+          {!filesLoading && !filesError && files.length > 0 && (
+            <div className="space-y-2">
+              {files.map((file) => (
+                <div
+                  key={file.path}
+                  className="border border-border/50 rounded-lg overflow-hidden"
+                >
+                  <button
+                    onClick={() => toggleFile(file.path)}
+                    className="w-full flex items-center justify-between p-3 hover:bg-accent/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      {expandedFiles.has(file.path) ? (
+                        <ChevronDown className="h-4 w-4" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4" />
+                      )}
+                      <FileText className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-mono text-sm font-medium">{file.name}</span>
+                    </div>
+                    <Badge variant="secondary" className="text-xs">
+                      {(file.size / 1024).toFixed(1)} KB
+                    </Badge>
+                  </button>
+
+                  {expandedFiles.has(file.path) && (
+                    <div className="border-t border-border/50 bg-background/50">
+                      <pre className="p-4 overflow-x-auto text-xs">
+                        <code>{file.content}</code>
+                      </pre>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
