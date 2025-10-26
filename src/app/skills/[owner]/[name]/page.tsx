@@ -189,6 +189,7 @@ export default function SkillDetailPage() {
             setFilesError(error.message || "Failed to fetch skill files");
           }
           setFilesLoading(false);
+          setAllFilesFetched(true); // Prevent retry loop on failures
         });
     }
   }, [skill?.repoUrl, files.length, fetchSkillFiles, filesLoading, allFilesFetched, selectedFile]);
