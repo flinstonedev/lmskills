@@ -4,8 +4,13 @@ import Link from "next/link";
 import { SignInButton, SignUpButton, UserButton, SignedIn, SignedOut } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Menu } from "lucide-react";
+import { useState } from "react";
 
 export function Header() {
+  const [open, setOpen] = useState(false);
+
   return (
     <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
@@ -28,18 +33,72 @@ export function Header() {
           </nav>
         </div>
 
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-2 md:space-x-4">
+          {/* Mobile Menu */}
+          <Sheet open={open} onOpenChange={setOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="md:hidden">
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">Toggle menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left">
+              <div className="flex flex-col space-y-4 mt-8">
+                <Link
+                  href="/skills"
+                  className="text-lg font-medium hover:underline"
+                  onClick={() => setOpen(false)}
+                >
+                  Browse Skills
+                </Link>
+                <Link
+                  href="/skills-lab"
+                  className="text-lg font-medium hover:underline"
+                  onClick={() => setOpen(false)}
+                >
+                  Skills Lab
+                </Link>
+                <SignedIn>
+                  <Link
+                    href="/dashboard"
+                    className="text-lg font-medium hover:underline"
+                    onClick={() => setOpen(false)}
+                  >
+                    My Skills
+                  </Link>
+                  <Link
+                    href="/skills/submit"
+                    className="text-lg font-medium hover:underline"
+                    onClick={() => setOpen(false)}
+                  >
+                    Submit Skill
+                  </Link>
+                </SignedIn>
+                <SignedOut>
+                  <div className="flex flex-col space-y-2 pt-4 border-t">
+                    <SignInButton mode="modal">
+                      <Button variant="ghost" className="justify-start">Sign In</Button>
+                    </SignInButton>
+                    <SignUpButton mode="modal">
+                      <Button className="justify-start">Sign Up</Button>
+                    </SignUpButton>
+                  </div>
+                </SignedOut>
+              </div>
+            </SheetContent>
+          </Sheet>
+
           <ThemeToggle />
           <SignedOut>
             <SignInButton mode="modal">
-              <Button variant="ghost">Sign In</Button>
+              <Button variant="ghost" className="hidden sm:inline-flex">Sign In</Button>
             </SignInButton>
             <SignUpButton mode="modal">
-              <Button>Sign Up</Button>
+              <Button className="hidden sm:inline-flex">Sign Up</Button>
             </SignUpButton>
           </SignedOut>
           <SignedIn>
-            <Button asChild variant="default">
+            <Button asChild variant="default" className="hidden md:inline-flex">
               <Link href="/skills/submit">Submit Skill</Link>
             </Button>
             <UserButton
