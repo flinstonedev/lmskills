@@ -51,13 +51,13 @@ export default function SkillDetailPage() {
     }
   }, [skill?.repoUrl, fetchSkillFiles]);
 
-  const toggleFile = (fileName: string) => {
+  const toggleFile = (filePath: string) => {
     setExpandedFiles((prev) => {
       const newSet = new Set(prev);
-      if (newSet.has(fileName)) {
-        newSet.delete(fileName);
+      if (newSet.has(filePath)) {
+        newSet.delete(filePath);
       } else {
-        newSet.add(fileName);
+        newSet.add(filePath);
       }
       return newSet;
     });
@@ -232,11 +232,11 @@ export default function SkillDetailPage() {
                   className="border border-border/50 rounded-lg overflow-hidden"
                 >
                   <button
-                    onClick={() => toggleFile(file.name)}
+                    onClick={() => toggleFile(file.path)}
                     className="w-full flex items-center justify-between p-3 hover:bg-accent/50 transition-colors"
                   >
                     <div className="flex items-center gap-2">
-                      {expandedFiles.has(file.name) ? (
+                      {expandedFiles.has(file.path) ? (
                         <ChevronDown className="h-4 w-4" />
                       ) : (
                         <ChevronRight className="h-4 w-4" />
@@ -249,7 +249,7 @@ export default function SkillDetailPage() {
                     </Badge>
                   </button>
 
-                  {expandedFiles.has(file.name) && (
+                  {expandedFiles.has(file.path) && (
                     <div className="border-t border-border/50 bg-background/50">
                       <pre className="p-4 overflow-x-auto text-xs">
                         <code>{file.content}</code>
