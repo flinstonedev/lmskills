@@ -158,16 +158,16 @@ export default function SkillDetailPage() {
     <div className="container mx-auto px-4 py-12">
       {/* Header Section */}
       <div className="mb-8">
-        <div className="flex items-start justify-between gap-4 mb-4">
+        <div className="flex flex-col sm:flex-row items-start justify-between gap-4 mb-4">
           <div className="flex-1">
-            <h1 className="text-2xl md:text-3xl font-bold mb-3 leading-tight">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3 leading-tight">
               {skill.name}
             </h1>
-            <p className="text-base text-muted-foreground leading-relaxed mb-4">
+            <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-4">
               {skill.description}
             </p>
           </div>
-          <Button variant="gradient" asChild className="flex-shrink-0">
+          <Button variant="gradient" asChild className="flex-shrink-0 w-full sm:w-auto">
             <a
               href={skill.repoUrl}
               target="_blank"
@@ -215,9 +215,9 @@ export default function SkillDetailPage() {
       </div>
 
       {/* Files Section with Sidebar Layout */}
-      <div className="flex gap-6 mb-8">
+      <div className="flex flex-col lg:flex-row gap-6 mb-8">
         {/* Left Sidebar - File Tree */}
-        <Card className="bg-[var(--surface-2)] backdrop-blur border-border/50 h-fit sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto w-[280px] flex-shrink-0">
+        <Card className="bg-[var(--surface-2)] backdrop-blur border-border/50 h-fit lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] overflow-y-auto w-full lg:w-[280px] lg:flex-shrink-0">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
               <FileText className="h-5 w-5 text-muted-foreground" />
@@ -300,7 +300,7 @@ export default function SkillDetailPage() {
         </Card>
 
         {/* Right Content Area - Selected File */}
-        <Card className="bg-[var(--surface-2)] backdrop-blur border-border/50 flex-1 min-w-0">
+        <Card className="bg-[var(--surface-2)] backdrop-blur border-border/50 w-full lg:flex-1 lg:min-w-0">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
