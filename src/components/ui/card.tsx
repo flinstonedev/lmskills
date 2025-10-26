@@ -47,7 +47,7 @@ function CardHeading({
   className,
   ...props
 }: CardHeadingProps) {
-  const Tag = `h${level}` as keyof JSX.IntrinsicElements;
+  const Tag = `h${level}` as keyof React.JSX.IntrinsicElements;
 
   return React.createElement(Tag, {
     "data-slot": "card-heading",
