@@ -2,14 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+export const dynamic = "force-dynamic";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { owner: string; name: string } }
+  { params }: { params: Promise<{ owner: string; name: string }> }
 ) {
   try {
-    const { owner, name } = params;
+    const { owner, name } = await params;
+
+    // Create Convex client
+    const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
     // Fetch skill from Convex
     const skill = await convex.query(api.skills.getSkill, {

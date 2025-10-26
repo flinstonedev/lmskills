@@ -2,10 +2,13 @@ import { NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
+    // Create Convex client
+    const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+
     // Fetch all skills
     const skills = await convex.query(api.skills.listSkills, {
       limit: 1000, // Get a large batch

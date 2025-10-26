@@ -50,11 +50,10 @@ export default clerkMiddleware(
 
 export const config = {
   matcher: [
-    // Skip Next.js internals and all static files except .md, unless found in search params
+    // Skip Next.js internals and all static files, unless found in search params
+    // Note: .md files are NOT excluded, so they will be processed by middleware
     "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
     // Always run for API routes
     "/(api|trpc)(.*)",
-    // Always run for .md files in skills routes
-    "/skills/.*\\.md",
   ],
 };
