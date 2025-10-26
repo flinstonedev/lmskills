@@ -115,7 +115,7 @@ export function Header() {
                 <UserButton.Link
                   label="My Profile"
                   labelIcon={<User className="h-4 w-4" />}
-                  href={currentUser ? `/users/${currentUser.handle}` : "/"}
+                  href={currentUser?.handle ? `/users/${currentUser.handle}` : "#"}
                 />
               </UserButton.MenuItems>
             </UserButton>
