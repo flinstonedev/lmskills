@@ -32,7 +32,8 @@ export default function SkillDetailPage() {
   const [files, setFiles] = useState<SkillFile[]>([]);
   const [filesLoading, setFilesLoading] = useState(false);
   const [filesError, setFilesError] = useState<string | null>(null);
-  const [expandedFiles, setExpandedFiles] = useState<Set<string>>(new Set());
+  const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set());
+  const [selectedFile, setSelectedFile] = useState<SkillFile | null>(null);
 
   // Fetch skill files when skill data is available
   useEffect(() => {
@@ -43,6 +44,20 @@ export default function SkillDetailPage() {
         .then((fetchedFiles) => {
           setFiles(fetchedFiles);
           setFilesLoading(false);
+
+          // Find and select SKILL.md by default
+          const skillMdFile = fetchedFiles.find(
+            (f) => f.type === "file" && (f.name === "SKILL.md" || f.name === "skill.md")
+          );
+          if (skillMdFile) {
+            setSelectedFile(skillMdFile);
+          } else if (fetchedFiles.length > 0) {
+            // If SKILL.md not found, select first file
+            const firstFile = fetchedFiles.find((f) => f.type === "file");
+            if (firstFile) {
+              setSelectedFile(firstFile);
+            }
+          }
         })
         .catch((error) => {
           console.error("Error fetching skill files:", error);
@@ -52,16 +67,22 @@ export default function SkillDetailPage() {
     }
   }, [skill?.repoUrl, fetchSkillFiles]);
 
-  const toggleFile = (filePath: string) => {
-    setExpandedFiles((prev) => {
+  const toggleDir = (dirPath: string) => {
+    setExpandedDirs((prev) => {
       const newSet = new Set(prev);
-      if (newSet.has(filePath)) {
-        newSet.delete(filePath);
+      if (newSet.has(dirPath)) {
+        newSet.delete(dirPath);
       } else {
-        newSet.add(filePath);
+        newSet.add(dirPath);
       }
       return newSet;
     });
+  };
+
+  const selectFile = (file: SkillFile) => {
+    if (file.type === "file") {
+      setSelectedFile(file);
+    }
   };
 
   // Helper function to calculate indentation level based on path depth
@@ -86,7 +107,7 @@ export default function SkillDetailPage() {
       const parentPath = pathParts.slice(0, i + 1).join('/');
       const parentDir = files.find(f => f.path === parentPath && f.type === 'dir');
 
-      if (parentDir && !expandedFiles.has(parentDir.path)) {
+      if (parentDir && !expandedDirs.has(parentDir.path)) {
         return false;
       }
     }
@@ -197,125 +218,136 @@ export default function SkillDetailPage() {
         </div>
       </div>
 
-      {/* SKILL.md Content */}
-      <Card className="bg-[var(--surface-2)] backdrop-blur border-border/50 mb-8">
-        <CardHeader>
-          <CardTitle className="text-2xl font-semibold">Documentation</CardTitle>
-          <CardDescription className="text-sm">
-            Learn how to use this skill with Claude
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <SafeMarkdown
-            content={skill.skillMdContent}
-            className="prose prose-sm dark:prose-invert max-w-none"
-          />
-        </CardContent>
-      </Card>
-
-      {/* Skill Files */}
-      <Card className="bg-[var(--surface-2)] backdrop-blur border-border/50 mb-8">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-muted-foreground" />
-            <CardTitle className="text-2xl font-semibold">Skill Files</CardTitle>
-          </div>
-          <CardDescription className="text-sm">
-            All files in this skill directory
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {filesLoading && (
-            <div className="flex items-center justify-center py-8">
-              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent" />
-              <span className="ml-3 text-sm text-muted-foreground">Loading files...</span>
+      {/* Files Section with Sidebar Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-[300px,1fr] gap-6 mb-8">
+        {/* Left Sidebar - File Tree */}
+        <Card className="bg-[var(--surface-2)] backdrop-blur border-border/50 h-fit lg:sticky lg:top-4">
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-muted-foreground" />
+              <CardTitle className="text-lg font-semibold">Files</CardTitle>
             </div>
-          )}
+          </CardHeader>
+          <CardContent className="p-0">
+            {filesLoading && (
+              <div className="flex items-center justify-center py-8 px-4">
+                <div className="inline-block h-6 w-6 animate-spin rounded-full border-4 border-solid border-current border-r-transparent" />
+              </div>
+            )}
 
-          {filesError && (
-            <div className="flex items-center gap-2 text-sm text-red-500 py-4">
-              <AlertCircle className="h-4 w-4" />
-              <span>{filesError}</span>
-            </div>
-          )}
+            {filesError && (
+              <div className="flex items-center gap-2 text-sm text-red-500 py-4 px-4">
+                <AlertCircle className="h-4 w-4" />
+                <span className="text-xs">{filesError}</span>
+              </div>
+            )}
 
-          {!filesLoading && !filesError && files.length === 0 && (
-            <div className="text-sm text-muted-foreground py-4">
-              No files found in this skill directory.
-            </div>
-          )}
+            {!filesLoading && !filesError && files.length === 0 && (
+              <div className="text-sm text-muted-foreground py-4 px-4">
+                No files found.
+              </div>
+            )}
 
-          {!filesLoading && !filesError && files.length > 0 && (
-            <div className="space-y-1">
-              {files.map((file) => {
-                const basePath = files.length > 0 ? files[0].path.split('/').slice(0, -1).join('/') : '';
-                const indentLevel = getIndentLevel(file, basePath);
-                const isVisible = isFileVisible(file, files);
+            {!filesLoading && !filesError && files.length > 0 && (
+              <div className="py-2">
+                {files.map((file) => {
+                  const basePath = files.length > 0 ? files[0].path.split('/').slice(0, -1).join('/') : '';
+                  const indentLevel = getIndentLevel(file, basePath);
+                  const isVisible = isFileVisible(file, files);
 
-                if (!isVisible) {
-                  return null;
-                }
+                  if (!isVisible) {
+                    return null;
+                  }
 
-                const isDirectory = file.type === 'dir';
-                const isExpanded = expandedFiles.has(file.path);
+                  const isDirectory = file.type === 'dir';
+                  const isExpanded = expandedDirs.has(file.path);
+                  const isSelected = selectedFile?.path === file.path;
 
-                return (
-                  <div
-                    key={file.path}
-                    className="border border-border/50 rounded-lg overflow-hidden"
-                  >
+                  return (
                     <button
-                      onClick={() => toggleFile(file.path)}
-                      className="w-full flex items-center justify-between p-3 hover:bg-accent/50 transition-colors"
-                      style={{ paddingLeft: `${12 + indentLevel * 24}px` }}
+                      key={file.path}
+                      onClick={() => {
+                        if (isDirectory) {
+                          toggleDir(file.path);
+                        } else {
+                          selectFile(file);
+                        }
+                      }}
+                      className={`w-full flex items-center gap-2 px-4 py-2 hover:bg-accent/50 transition-colors text-left ${
+                        isSelected ? 'bg-accent/70' : ''
+                      }`}
+                      style={{ paddingLeft: `${16 + indentLevel * 16}px` }}
                     >
-                      <div className="flex items-center gap-2">
-                        {isDirectory ? (
-                          <>
-                            {isExpanded ? (
-                              <ChevronDown className="h-4 w-4" />
-                            ) : (
-                              <ChevronRight className="h-4 w-4" />
-                            )}
-                            {isExpanded ? (
-                              <FolderOpen className="h-4 w-4 text-blue-500" />
-                            ) : (
-                              <Folder className="h-4 w-4 text-blue-500" />
-                            )}
-                          </>
-                        ) : (
-                          <>
-                            {isExpanded ? (
-                              <ChevronDown className="h-4 w-4" />
-                            ) : (
-                              <ChevronRight className="h-4 w-4" />
-                            )}
-                            <FileText className="h-4 w-4 text-muted-foreground" />
-                          </>
-                        )}
-                        <span className="font-mono text-sm font-medium">{file.name}</span>
-                      </div>
-                      {!isDirectory && (
-                        <Badge variant="secondary" className="text-xs">
-                          {(file.size / 1024).toFixed(1)} KB
-                        </Badge>
+                      {isDirectory ? (
+                        <>
+                          {isExpanded ? (
+                            <ChevronDown className="h-3.5 w-3.5 flex-shrink-0" />
+                          ) : (
+                            <ChevronRight className="h-3.5 w-3.5 flex-shrink-0" />
+                          )}
+                          {isExpanded ? (
+                            <FolderOpen className="h-3.5 w-3.5 text-blue-500 flex-shrink-0" />
+                          ) : (
+                            <Folder className="h-3.5 w-3.5 text-blue-500 flex-shrink-0" />
+                          )}
+                        </>
+                      ) : (
+                        <FileText className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
                       )}
+                      <span className="font-mono text-xs font-medium truncate">{file.name}</span>
                     </button>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-                    {isExpanded && !isDirectory && (
-                      <div className="border-t border-border/50 bg-background/50">
-                        <pre className="p-4 overflow-x-auto text-xs">
-                          <code>{file.content}</code>
-                        </pre>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+        {/* Right Content Area - Selected File */}
+        <Card className="bg-[var(--surface-2)] backdrop-blur border-border/50">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-2xl font-semibold">
+                  {selectedFile ? selectedFile.name : 'No file selected'}
+                </CardTitle>
+                {selectedFile && (
+                  <CardDescription className="text-sm font-mono mt-1">
+                    {selectedFile.path}
+                  </CardDescription>
+                )}
+              </div>
+              {selectedFile && selectedFile.type === "file" && (
+                <Badge variant="secondary" className="text-xs">
+                  {(selectedFile.size / 1024).toFixed(1)} KB
+                </Badge>
+              )}
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardHeader>
+          <CardContent>
+            {!selectedFile && (
+              <div className="text-sm text-muted-foreground py-8 text-center">
+                Select a file from the sidebar to view its contents
+              </div>
+            )}
+
+            {selectedFile && selectedFile.type === "file" && (
+              <>
+                {selectedFile.name.toLowerCase().endsWith('.md') ? (
+                  <SafeMarkdown
+                    content={selectedFile.content}
+                    className="prose prose-sm dark:prose-invert max-w-none"
+                  />
+                ) : (
+                  <pre className="p-4 overflow-x-auto text-xs bg-background/50 rounded-lg border border-border/30">
+                    <code>{selectedFile.content}</code>
+                  </pre>
+                )}
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       {/* License Information */}
       {licenseInfo && (
