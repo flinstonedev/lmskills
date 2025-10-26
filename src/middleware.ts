@@ -7,14 +7,25 @@ const isPublicRoute = createRouteMatcher([
   "/skills(.*)",
   "/users(.*)",
   "/docs(.*)",
+  "/terms",
+  "/privacy",
   "/api/webhooks(.*)",
 ]);
 
-export default clerkMiddleware(async (auth, req) => {
-  if (!isPublicRoute(req)) {
-    await auth.protect();
+export default clerkMiddleware(
+  async (auth, req) => {
+    if (!isPublicRoute(req)) {
+      await auth.protect();
+    }
+  },
+  {
+    authorizedParties: [
+      "https://www.lmskills.ai",
+      "https://lmskills.ai",
+      "https://accounts.lmskills.ai",
+    ],
   }
-});
+);
 
 export const config = {
   matcher: [
