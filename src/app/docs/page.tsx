@@ -2,8 +2,7 @@ import Link from "next/link";
 
 export default function Documentation() {
   return (
-    <div className="container mx-auto px-4 py-12 max-w-4xl">
-      <div className="prose prose-slate dark:prose-invert max-w-none">
+    <div className="prose prose-slate dark:prose-invert max-w-none">
         {/* Header */}
         <div className="mb-12 pb-8 border-b">
           <h1 className="text-4xl font-bold mb-3">Documentation</h1>
@@ -224,6 +223,5 @@ Practical examples...`}
           </div>
         </section>
       </div>
-    </div>
   );
 }
