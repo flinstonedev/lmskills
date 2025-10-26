@@ -37,7 +37,7 @@ export function Header() {
                   className="text-lg font-medium hover:underline"
                   onClick={() => setOpen(false)}
                 >
-                  Documentation
+                  Docs
                 </Link>
                 <SignedIn>
                   <Link
@@ -77,7 +77,7 @@ export function Header() {
               Browse Skills
             </Link>
             <Link href="/docs" className="text-sm font-medium hover:underline">
-              Documentation
+              Docs
             </Link>
             <SignedIn>
               <Link href="/dashboard" className="text-sm font-medium hover:underline">
