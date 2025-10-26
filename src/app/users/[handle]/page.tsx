@@ -5,7 +5,10 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardHeading } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardHeading } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Star, Calendar } from "lucide-react";
 import Link from "next/link";
 
 export default function UserProfilePage({
@@ -16,6 +19,7 @@ export default function UserProfilePage({
   const { handle } = use(params);
   const user = useQuery(api.users.getUserByHandle, { handle });
   const currentUser = useQuery(api.users.getCurrentUser);
+  const userSkills = useQuery(api.skills.getSkillsByOwner, { ownerHandle: handle });
 
   const isOwnProfile = currentUser && user && currentUser._id === user._id;
 
@@ -44,9 +48,8 @@ export default function UserProfilePage({
 
   return (
     <div className="container mx-auto px-4 py-12">
-      <div className="max-w-4xl mx-auto">
-        {/* Profile Header */}
-        <div className="flex items-start gap-6 mb-8">
+      {/* Profile Header */}
+      <div className="flex items-start gap-6 mb-8">
           <Avatar className="h-24 w-24">
             <AvatarImage src={user.avatarUrl} alt={user.handle} />
             <AvatarFallback>{initials}</AvatarFallback>
@@ -60,36 +63,113 @@ export default function UserProfilePage({
                 </Button>
               )}
             </div>
-            <p className="text-muted-foreground mb-2">{user.email}</p>
-            {user.bio && <p className="text-base">{user.bio}</p>}
+            {isOwnProfile && (
+              <p className="text-muted-foreground mb-2">{user.email}</p>
+            )}
+            {user.bio && <p className="text-base mb-2">{user.bio}</p>}
             <p className="text-sm text-muted-foreground mt-2">
               Joined {new Date(user.createdAt).toLocaleDateString()}
             </p>
           </div>
         </div>
 
-        {/* Skills Section - Placeholder for future */}
-        <Card>
-          <CardHeader>
-            <CardHeading level={2}>Published Skills</CardHeading>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">
-              No skills published yet. Submit your first skill to get started!
-            </p>
-          </CardContent>
-        </Card>
+        {/* Skills Section */}
+        <div className="mb-8">
+          <div className="mb-6">
+            <h2 className="text-xl md:text-2xl font-bold">Published Skills</h2>
+          </div>
 
-        {/* Favorites Section - Placeholder for future */}
-        <Card className="mt-6">
-          <CardHeader>
-            <CardHeading level={2}>Favorite Skills</CardHeading>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">No favorites yet.</p>
-          </CardContent>
-        </Card>
-      </div>
+          {userSkills === undefined ? (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {[1, 2, 3].map((i) => (
+                <Card key={i} className="h-full bg-[var(--surface-2)] backdrop-blur border-border/50">
+                  <CardHeader>
+                    <div className="flex items-start justify-between mb-2">
+                      <Skeleton className="h-7 w-3/4" />
+                      <Skeleton className="h-4 w-12 ml-2" />
+                    </div>
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-5/6 mt-1" />
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Skeleton className="h-6 w-6 rounded-full" />
+                      <Skeleton className="h-4 w-24" />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-5 w-16 rounded-full" />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : userSkills.length === 0 ? (
+            <Card className="bg-[var(--surface-2)] backdrop-blur border-border/50">
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <p className="text-lg font-semibold mb-3">No skills published yet</p>
+                <p className="text-base text-muted-foreground">
+                  {isOwnProfile
+                    ? "Submit your first skill to get started!"
+                    : `@${handle} hasn't published any skills yet.`}
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {userSkills.map((skill) => {
+                const formattedDate = new Date(skill.createdAt).toLocaleDateString(
+                  "en-US",
+                  {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  }
+                );
+
+                return (
+                  <Link
+                    key={skill._id}
+                    href={`/skills/${skill.owner?.handle}/${skill.name}`}
+                  >
+                    <Card className="h-full bg-[var(--surface-2)] backdrop-blur border-border/50 hover:shadow-lg hover:scale-[1.02] transition-all cursor-pointer">
+                      <CardHeader>
+                        <div className="flex items-start justify-between mb-2">
+                          <CardTitle className="text-xl font-semibold line-clamp-1">
+                            {skill.name}
+                          </CardTitle>
+                          {skill.stars !== undefined && (
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground ml-2">
+                              <Star className="h-3 w-3" />
+                              <span>{skill.stars}</span>
+                            </div>
+                          )}
+                        </div>
+                        <CardDescription className="text-sm line-clamp-2">
+                          {skill.description}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {/* Metadata */}
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            <span>{formattedDate}</span>
+                          </div>
+                          {skill.license && (
+                            <Badge variant="secondary" className="text-xs h-5">
+                              {skill.license}
+                            </Badge>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </div>
     </div>
   );
 }

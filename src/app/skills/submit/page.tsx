@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, ExternalLink, Star } from "lucide-react";
 import { SafeMarkdown } from "@/components/safe-markdown";
+import { SignInButton, SignUpButton } from "@clerk/nextjs";
 
 interface RepoInfo {
   owner: string;
@@ -145,6 +146,60 @@ export default function SubmitSkillPage() {
       setIsSubmitting(false);
     }
   };
+
+  // Show sign-in prompt if user is not authenticated
+  if (currentUser === undefined) {
+    // Loading state
+    return (
+      <div className="container mx-auto px-4 py-12 max-w-4xl">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </div>
+    );
+  }
+
+  if (currentUser === null) {
+    // Not authenticated
+    return (
+      <div className="container mx-auto px-4 py-12 max-w-4xl">
+        <div className="mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-3 leading-tight">
+            Submit a Skill
+          </h1>
+          <p className="text-base text-muted-foreground leading-relaxed">
+            Share your Claude skill. Provide a GitHub URL to a specific skill directory containing a SKILL.md file.
+          </p>
+        </div>
+
+        <Card className="bg-[var(--surface-2)] backdrop-blur border-border/50">
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold">Authentication Required</CardTitle>
+            <CardDescription className="text-sm">
+              You need to be signed in to submit a skill
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Create an account or sign in to share your Claude skills with the community.
+            </p>
+            <div className="flex gap-3">
+              <SignUpButton mode="modal">
+                <Button variant="default">
+                  Sign Up
+                </Button>
+              </SignUpButton>
+              <SignInButton mode="modal">
+                <Button variant="outline">
+                  Sign In
+                </Button>
+              </SignInButton>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-12 max-w-4xl">

@@ -125,25 +125,9 @@ export default function EditProfilePage({
               </div>
 
               <div className="space-y-2">
-                <Label>Email</Label>
-                <Input value={user.email} disabled />
+                <Label>Email & Avatar</Label>
                 <p className="text-sm text-muted-foreground">
-                  Email is managed by Clerk and cannot be changed here.
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Avatar</Label>
-                <p className="text-sm text-muted-foreground">
-                  Avatar is managed by Clerk.{" "}
-                  <a
-                    href="https://dashboard.clerk.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary hover:underline"
-                  >
-                    Update in Clerk Dashboard
-                  </a>
+                  To update your email or avatar, click your profile icon in the top right corner and select "Manage account".
                 </p>
               </div>
 

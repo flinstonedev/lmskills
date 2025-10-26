@@ -319,7 +319,7 @@ export default function SkillDetailPage() {
         {/* Metadata Bar */}
         <div className="flex flex-wrap items-center gap-4 mb-6">
           <Link
-            href={`/profile/${skill.owner.handle}`}
+            href={`/users/${skill.owner.handle}`}
             className="flex items-center gap-2 hover:opacity-80 transition-opacity"
           >
             <Avatar className="h-8 w-8">
