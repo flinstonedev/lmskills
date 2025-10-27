@@ -9,10 +9,25 @@ export async function GET() {
     // Create Convex client
     const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
-    // Fetch all skills
-    const skills = await convex.query(api.skills.listSkills, {
-      limit: 1000, // Get a large batch
-    });
+    // Fetch all skills - collect all pages
+    let allSkills: any[] = [];
+    let cursor: string | null = null;
+    let isDone = false;
+
+    while (!isDone) {
+      const result: any = await convex.query(api.skills.listSkills, {
+        paginationOpts: {
+          numItems: 100,
+          cursor: cursor,
+        },
+      });
+
+      allSkills = allSkills.concat(result.page);
+      isDone = result.isDone;
+      cursor = result.continueCursor || null;
+    }
+
+    const skills = allSkills;
 
     // Build llms.txt content
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://lmskills.ai";

@@ -1,11 +1,11 @@
 "use client";
 
 import { use } from "react";
-import { useQuery } from "convex/react";
+import { useQuery, usePaginatedQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardHeading } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Star, Calendar } from "lucide-react";
@@ -19,7 +19,14 @@ export default function UserProfilePage({
   const { handle } = use(params);
   const user = useQuery(api.users.getUserByHandle, { handle });
   const currentUser = useQuery(api.users.getCurrentUser);
-  const userSkills = useQuery(api.skills.getSkillsByOwner, { ownerHandle: handle });
+  const { results: userSkills, status, loadMore } = usePaginatedQuery(
+    api.skills.getSkillsByOwner,
+    { ownerHandle: handle },
+    { initialNumItems: 20 }
+  );
+
+  const isLoadingSkills = status === "LoadingFirstPage";
+  const canLoadMore = status === "CanLoadMore";
 
   const isOwnProfile = currentUser && user && currentUser._id === user._id;
 
@@ -79,7 +86,7 @@ export default function UserProfilePage({
             <h2 className="text-xl md:text-2xl font-bold">Published Skills</h2>
           </div>
 
-          {userSkills === undefined ? (
+          {isLoadingSkills ? (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {[1, 2, 3].map((i) => (
                 <Card key={i} className="h-full bg-[var(--surface-2)] backdrop-blur border-border/50">
@@ -167,6 +174,18 @@ export default function UserProfilePage({
                   </Link>
                 );
               })}
+            </div>
+          )}
+
+          {/* Load More Button */}
+          {canLoadMore && userSkills.length > 0 && (
+            <div className="mt-8 flex justify-center">
+              <Button
+                onClick={() => loadMore(20)}
+                variant="outline"
+              >
+                Load More
+              </Button>
             </div>
           )}
         </div>
