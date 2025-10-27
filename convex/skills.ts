@@ -3,6 +3,46 @@ import { mutation, query } from "./_generated/server";
 import { paginationOptsValidator } from "convex/server";
 
 /**
+ * Helper: Extract description from SKILL.md frontmatter
+ */
+function extractDescriptionFromFrontmatter(md?: string): string | undefined {
+  if (!md) return undefined;
+  const fmMatch = md.match(/^---\s*\n([\s\S]*?)\n---/);
+  if (!fmMatch) return undefined;
+  const fm = fmMatch[1];
+  const multi = fm.match(/^description:\s*[|>][-+]?\s*\n((?:[ ]{2,}.*\n?)+)/m);
+  if (multi) {
+    return multi[1]
+      .split("\n")
+      .map(l => l.replace(/^\s{2,}/, '').trim())
+      .filter(Boolean)
+      .join(' ');
+  }
+  const single = fm.match(/^description:\s*(.+)$/m);
+  return single ? single[1].trim().replace(/^['"]|['"]$/g, '') : undefined;
+}
+
+/**
+ * Helper: Convert skill to lightweight object for list views (excludes heavy skillMdContent)
+ */
+function toLightSkill(skill: any, owner: any) {
+  return {
+    _id: skill._id,
+    name: skill.name,
+    description: extractDescriptionFromFrontmatter(skill.skillMdContent) ?? skill.description ?? "",
+    license: skill.license,
+    stars: skill.stars,
+    repoUrl: skill.repoUrl,
+    createdAt: skill.createdAt,
+    updatedAt: skill.updatedAt,
+    owner: owner ? {
+      handle: owner.handle,
+      avatarUrl: owner.avatarUrl,
+    } : null,
+  };
+}
+
+/**
  * Submit a new skill
  */
 export const submitSkill = mutation({
@@ -102,13 +142,7 @@ export const listSkills = query({
       const skillsWithOwners = await Promise.all(
         paginated.map(async (skill) => {
           const owner = await ctx.db.get(skill.ownerUserId);
-          return {
-            ...skill,
-            owner: owner ? {
-              handle: owner.handle,
-              avatarUrl: owner.avatarUrl,
-            } : null,
-          };
+          return toLightSkill(skill, owner);
         })
       );
 
@@ -140,13 +174,7 @@ export const listSkills = query({
     const skillsWithOwners = await Promise.all(
       result.page.map(async (skill) => {
         const owner = await ctx.db.get(skill.ownerUserId);
-        return {
-          ...skill,
-          owner: owner ? {
-            handle: owner.handle,
-            avatarUrl: owner.avatarUrl,
-          } : null,
-        };
+        return toLightSkill(skill, owner);
       })
     );
 
@@ -240,13 +268,7 @@ export const searchSkills = query({
     const skillsWithOwners = await Promise.all(
       limited.map(async (skill) => {
         const owner = await ctx.db.get(skill.ownerUserId);
-        return {
-          ...skill,
-          owner: owner ? {
-            handle: owner.handle,
-            avatarUrl: owner.avatarUrl,
-          } : null,
-        };
+        return toLightSkill(skill, owner);
       })
     );
 
@@ -287,13 +309,9 @@ export const getSkillsByOwner = query({
         numItems: args.paginationOpts.numItems + 1,
       });
 
-    const skillsWithOwner = result.page.map((skill) => ({
-      ...skill,
-      owner: {
-        handle: owner.handle,
-        avatarUrl: owner.avatarUrl,
-      },
-    }));
+    const skillsWithOwner = result.page.map((skill) =>
+      toLightSkill(skill, owner)
+    );
 
     // If we got more items than requested, there are definitely more results
     const hasMore = skillsWithOwner.length > args.paginationOpts.numItems;
@@ -341,13 +359,7 @@ export const getMySkills = query({
       .collect();
 
     // Add owner info to each skill for consistency
-    return skills.map((skill) => ({
-      ...skill,
-      owner: {
-        handle: user.handle,
-        avatarUrl: user.avatarUrl,
-      },
-    }));
+    return skills.map((skill) => toLightSkill(skill, user));
   },
 });
 

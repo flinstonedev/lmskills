@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, usePaginatedQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
 import { useState } from "react";
@@ -25,12 +25,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Trash2, ExternalLink } from "lucide-react";
+import { Trash2, ExternalLink, Loader2 } from "lucide-react";
 import { Id } from "../../../convex/_generated/dataModel";
 
 export default function DashboardPage() {
   const { user, isLoaded } = useUser();
-  const skills = useQuery(api.skills.getMySkills);
+  const me = useQuery(api.users.getCurrentUser);
+  const { results: skills, status, loadMore } = usePaginatedQuery(
+    api.skills.getSkillsByOwner,
+    me?.handle ? { ownerHandle: me.handle } : "skip",
+    { initialNumItems: 20 }
+  );
   const deleteSkill = useMutation(api.skills.deleteSkill);
 
   const [deletingSkillId, setDeletingSkillId] = useState<Id<"skills"> | null>(
@@ -104,7 +109,7 @@ export default function DashboardPage() {
         <h1 className="text-2xl sm:text-3xl font-bold">My Skills</h1>
       </div>
 
-      {skills === undefined ? (
+      {status === "LoadingFirstPage" ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3].map((i) => (
             <Card key={i} className="flex flex-col h-full">
@@ -203,6 +208,26 @@ export default function DashboardPage() {
               </Card>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Load More Button */}
+      {(status === "CanLoadMore" || status === "LoadingMore") && skills.length > 0 && (
+        <div className="mt-8 flex justify-center">
+          <Button
+            onClick={() => loadMore(20)}
+            variant="outline"
+            disabled={status === "LoadingMore"}
+          >
+            {status === "LoadingMore" ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Loading...
+              </>
+            ) : (
+              "Load More"
+            )}
+          </Button>
         </div>
       )}
 
