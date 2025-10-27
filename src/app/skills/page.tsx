@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Star, Calendar, Plus } from "lucide-react";
+import { Search, Star, Calendar, Plus, Loader2 } from "lucide-react";
 import Link from "next/link";
 
 export default function SkillsPage() {
@@ -25,7 +25,6 @@ export default function SkillsPage() {
   );
 
   const isLoading = status === "LoadingFirstPage";
-  const canLoadMore = status === "CanLoadMore";
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -177,13 +176,21 @@ export default function SkillsPage() {
       )}
 
       {/* Load More Button */}
-      {canLoadMore && skills.length > 0 && (
+      {(status === "CanLoadMore" || status === "LoadingMore") && skills.length > 0 && (
         <div className="mt-8 flex justify-center">
           <Button
             onClick={() => loadMore(20)}
             variant="outline"
+            disabled={status === "LoadingMore"}
           >
-            Load More
+            {status === "LoadingMore" ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Loading...
+              </>
+            ) : (
+              "Load More"
+            )}
           </Button>
         </div>
       )}
