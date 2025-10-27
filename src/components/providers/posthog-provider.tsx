@@ -30,7 +30,7 @@ function PostHogPageView() {
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
   const { consent, isLoaded } = useCookieConsent();
 
-  // Initialize PostHog
+  // Initialize PostHog once on mount
   useEffect(() => {
     if (!isLoaded) return;
 
@@ -42,31 +42,42 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // Initialize PostHog with consent-based persistence
-    if (typeof window !== 'undefined') {
+    // Initialize PostHog only once, starting in opted-out state
+    if (typeof window !== 'undefined' && !posthog.__loaded) {
       posthog.init(posthogKey, {
         api_host: posthogHost,
         person_profiles: 'identified_only',
-        // Disable persistence until consent is given
-        persistence: consent === 'accepted' ? 'localStorage+cookie' : 'memory',
-        // Disable autocapture until consent is given
-        autocapture: consent === 'accepted',
-        // Capture pageviews manually
+        // Start with capturing disabled by default (privacy-first)
+        opt_out_capturing_by_default: true,
+        // Start with memory-only persistence
+        persistence: 'memory',
+        // Disable features until consent is given
+        autocapture: false,
         capture_pageview: false,
-        // Capture pageleave events
-        capture_pageleave: consent === 'accepted',
-        // Disable session recording by default (can be enabled later if needed)
+        capture_pageleave: false,
         disable_session_recording: true,
       });
-
-      // Opt out if consent was rejected
-      if (consent === 'rejected') {
-        posthog.opt_out_capturing();
-      } else if (consent === 'accepted') {
-        posthog.opt_in_capturing();
-      }
     }
   }, [isLoaded]);
+
+  // Handle consent changes separately
+  useEffect(() => {
+    if (!isLoaded || typeof window === 'undefined' || !posthog.__loaded) return;
+
+    if (consent === 'accepted') {
+      // User accepted cookies - enable tracking
+      posthog.opt_in_capturing();
+      posthog.set_config({ persistence: 'localStorage+cookie' });
+      posthog.set_config({ autocapture: true });
+      posthog.set_config({ capture_pageleave: true });
+    } else if (consent === 'rejected') {
+      // User rejected cookies - disable tracking and clear data
+      posthog.opt_out_capturing();
+      posthog.set_config({ persistence: 'memory' });
+      posthog.reset();
+    }
+    // If consent is null (no decision yet), PostHog remains opted out by default
+  }, [consent, isLoaded]);
 
   return (
     <>
