@@ -88,16 +88,16 @@ export const listSkills = query({
           skill.description.toLowerCase().includes(searchQuery)
       );
 
-      // Manual pagination for filtered results
+      // Manual pagination for filtered results using N+1 pattern
       const cursorValue = args.paginationOpts.cursor
         ? parseInt(args.paginationOpts.cursor, 10)
         : 0;
       const startIndex = isNaN(cursorValue) ? 0 : cursorValue;
       const numItems = args.paginationOpts.numItems;
-      const endIndex = startIndex + numItems;
 
+      // Fetch one extra item to determine if there are more results
+      const endIndex = startIndex + numItems + 1;
       const paginated = filtered.slice(startIndex, endIndex);
-      const hasMore = endIndex < filtered.length;
 
       const skillsWithOwners = await Promise.all(
         paginated.map(async (skill) => {
@@ -112,19 +112,29 @@ export const listSkills = query({
         })
       );
 
+      // If we got more than numItems, there are more results
+      const hasMore = skillsWithOwners.length > numItems;
+      const pageToReturn = hasMore
+        ? skillsWithOwners.slice(0, numItems)
+        : skillsWithOwners;
+
       return {
-        page: skillsWithOwners,
+        page: pageToReturn,
         isDone: !hasMore,
-        continueCursor: hasMore ? endIndex.toString() : "",
+        continueCursor: hasMore ? (startIndex + numItems).toString() : "",
       };
     }
 
     // Otherwise, return all skills with proper pagination
+    // Use N+1 pattern: fetch one extra item to know if there are more results
     const result = await ctx.db
       .query("skills")
       .withIndex("by_created_at")
       .order("desc")
-      .paginate(args.paginationOpts);
+      .paginate({
+        ...args.paginationOpts,
+        numItems: args.paginationOpts.numItems + 1,
+      });
 
     // Fetch owner info for each skill
     const skillsWithOwners = await Promise.all(
@@ -140,9 +150,18 @@ export const listSkills = query({
       })
     );
 
+    // If we got more items than requested, there are definitely more results
+    const hasMore = skillsWithOwners.length > args.paginationOpts.numItems;
+
+    // Return only the requested number of items
+    const pageToReturn = hasMore
+      ? skillsWithOwners.slice(0, args.paginationOpts.numItems)
+      : skillsWithOwners;
+
     return {
       ...result,
-      page: skillsWithOwners,
+      isDone: !hasMore,
+      page: pageToReturn,
     };
   },
 });
