@@ -277,11 +277,15 @@ export const getSkillsByOwner = query({
       };
     }
 
-    // Get their skills with pagination
+    // Get their skills with pagination using N+1 pattern
+    // Fetch one extra item to know if there are more results
     const result = await ctx.db
       .query("skills")
       .withIndex("by_owner", (q) => q.eq("ownerUserId", owner._id))
-      .paginate(args.paginationOpts);
+      .paginate({
+        ...args.paginationOpts,
+        numItems: args.paginationOpts.numItems + 1,
+      });
 
     const skillsWithOwner = result.page.map((skill) => ({
       ...skill,
@@ -291,9 +295,18 @@ export const getSkillsByOwner = query({
       },
     }));
 
+    // If we got more items than requested, there are definitely more results
+    const hasMore = skillsWithOwner.length > args.paginationOpts.numItems;
+
+    // Return only the requested number of items
+    const pageToReturn = hasMore
+      ? skillsWithOwner.slice(0, args.paginationOpts.numItems)
+      : skillsWithOwner;
+
     return {
       ...result,
-      page: skillsWithOwner,
+      isDone: !hasMore,
+      page: pageToReturn,
     };
   },
 });
