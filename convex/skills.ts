@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { paginationOptsValidator } from "convex/server";
 
 /**
  * Submit a new skill
@@ -67,12 +68,10 @@ export const submitSkill = mutation({
  */
 export const listSkills = query({
   args: {
-    limit: v.optional(v.number()),
+    paginationOpts: paginationOptsValidator,
     query: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const limit = args.limit ?? 20;
-
     // If there's a search query, filter results
     if (args.query && args.query.trim()) {
       const searchQuery = args.query.toLowerCase();
@@ -89,10 +88,18 @@ export const listSkills = query({
           skill.description.toLowerCase().includes(searchQuery)
       );
 
-      const limited = filtered.slice(0, limit);
+      // Manual pagination for filtered results
+      const startIndex = args.paginationOpts.cursor
+        ? parseInt(args.paginationOpts.cursor)
+        : 0;
+      const numItems = args.paginationOpts.numItems;
+      const endIndex = startIndex + numItems;
+
+      const paginated = filtered.slice(startIndex, endIndex);
+      const hasMore = endIndex < filtered.length;
 
       const skillsWithOwners = await Promise.all(
-        limited.map(async (skill) => {
+        paginated.map(async (skill) => {
           const owner = await ctx.db.get(skill.ownerUserId);
           return {
             ...skill,
@@ -104,19 +111,23 @@ export const listSkills = query({
         })
       );
 
-      return skillsWithOwners;
+      return {
+        page: skillsWithOwners,
+        isDone: !hasMore,
+        continueCursor: hasMore ? endIndex.toString() : "",
+      };
     }
 
-    // Otherwise, return all skills
-    const skills = await ctx.db
+    // Otherwise, return all skills with proper pagination
+    const result = await ctx.db
       .query("skills")
       .withIndex("by_created_at")
       .order("desc")
-      .take(limit);
+      .paginate(args.paginationOpts);
 
     // Fetch owner info for each skill
     const skillsWithOwners = await Promise.all(
-      skills.map(async (skill) => {
+      result.page.map(async (skill) => {
         const owner = await ctx.db.get(skill.ownerUserId);
         return {
           ...skill,
@@ -128,7 +139,10 @@ export const listSkills = query({
       })
     );
 
-    return skillsWithOwners;
+    return {
+      ...result,
+      page: skillsWithOwners,
+    };
   },
 });
 
@@ -226,6 +240,7 @@ export const searchSkills = query({
 export const getSkillsByOwner = query({
   args: {
     ownerHandle: v.string(),
+    paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, args) => {
     // Find the user
@@ -235,22 +250,31 @@ export const getSkillsByOwner = query({
       .first();
 
     if (!owner) {
-      return [];
+      return {
+        page: [],
+        isDone: true,
+        continueCursor: "",
+      };
     }
 
-    // Get their skills
-    const skills = await ctx.db
+    // Get their skills with pagination
+    const result = await ctx.db
       .query("skills")
       .withIndex("by_owner", (q) => q.eq("ownerUserId", owner._id))
-      .collect();
+      .paginate(args.paginationOpts);
 
-    return skills.map((skill) => ({
+    const skillsWithOwner = result.page.map((skill) => ({
       ...skill,
       owner: {
         handle: owner.handle,
         avatarUrl: owner.avatarUrl,
       },
     }));
+
+    return {
+      ...result,
+      page: skillsWithOwner,
+    };
   },
 });
 

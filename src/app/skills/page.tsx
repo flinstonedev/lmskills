@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "convex/react";
+import { usePaginatedQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,11 +15,17 @@ import Link from "next/link";
 export default function SkillsPage() {
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Get all skills or search results using a single unified query
-  const skills = useQuery(api.skills.listSkills, {
-    limit: 20,
-    query: searchQuery.trim() || undefined,
-  });
+  // Get all skills or search results using a single unified query with pagination
+  const { results: skills, status, loadMore } = usePaginatedQuery(
+    api.skills.listSkills,
+    {
+      query: searchQuery.trim() || undefined,
+    },
+    { initialNumItems: 20 }
+  );
+
+  const isLoading = status === "LoadingFirstPage";
+  const canLoadMore = status === "CanLoadMore";
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -56,7 +62,7 @@ export default function SkillsPage() {
       </div>
 
       {/* Skills Grid */}
-      {skills === undefined ? (
+      {isLoading ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <Card key={i} className="h-full bg-[var(--surface-2)] backdrop-blur border-border/50">
@@ -167,6 +173,18 @@ export default function SkillsPage() {
               </Link>
             );
           })}
+        </div>
+      )}
+
+      {/* Load More Button */}
+      {canLoadMore && skills.length > 0 && (
+        <div className="mt-8 flex justify-center">
+          <Button
+            onClick={() => loadMore(20)}
+            variant="outline"
+          >
+            Load More
+          </Button>
         </div>
       )}
 
