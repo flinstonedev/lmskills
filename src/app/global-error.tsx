@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { AlertTriangle, RefreshCw } from "lucide-react";
+import { AlertTriangle, RefreshCw, Home } from "lucide-react";
 
 export default function GlobalError({
   error,
@@ -152,6 +152,7 @@ export default function GlobalError({
                   e.currentTarget.style.backgroundColor = "transparent";
                 }}
               >
+                <Home style={{ width: "1rem", height: "1rem" }} />
                 Go Home
               </button>
             </div>
