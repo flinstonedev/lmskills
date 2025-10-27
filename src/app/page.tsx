@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -7,6 +8,23 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
+export const metadata: Metadata = {
+  title: "Discover, Share, and Collaborate on LLM Skills",
+  description:
+    "LMSkills is a public platform for sharing and discovering Claude skills. Browse a directory of powerful LLM capabilities, submit your own skills, and collaborate with the community.",
+  openGraph: {
+    title: "LMSkills - Discover, Share, and Collaborate on LLM Skills",
+    description:
+      "Browse, submit, and collaborate on Claude skills. A public platform for sharing powerful LLM capabilities.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "LMSkills - Discover, Share, and Collaborate on LLM Skills",
+    description:
+      "Browse, submit, and collaborate on Claude skills. A public platform for sharing powerful LLM capabilities.",
+  },
+};
 
 export default function Home() {
   return (
