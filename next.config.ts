@@ -31,7 +31,7 @@ const nextConfig: NextConfig = {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self' https:",
-              `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://clerk.com https://*.clerk.com https://*.clerk.dev https://*.clerk.accounts.dev https://clerk.lmskills.ai https://accounts.lmskills.ai https://challenges.cloudflare.com`,
+              `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://clerk.com https://*.clerk.com https://*.clerk.dev https://*.clerk.accounts.dev https://clerk.lmskills.ai https://accounts.lmskills.ai https://challenges.cloudflare.com https://*.i.posthog.com https://eu-assets.i.posthog.com https://us-assets.i.posthog.com`,
               "worker-src 'self' blob:",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' data: https://fonts.gstatic.com",
