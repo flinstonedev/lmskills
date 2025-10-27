@@ -9,15 +9,68 @@ import { Footer } from "@/components/footer";
 import { CookieConsentBanner } from "@/components/cookie-consent-banner";
 
 export const metadata: Metadata = {
-  title: "LMSkills - Skills Directory for Claude",
+  title: {
+    default: "LMSkills - Skills Directory for Claude",
+    template: "%s | LMSkills",
+  },
   description:
     "A platform for sharing and discovering Claude skills. Create, share, and explore powerful LLM capabilities.",
+  keywords: [
+    "Claude skills",
+    "LLM skills",
+    "AI skills",
+    "Claude AI",
+    "agent skills",
+    "AI capabilities",
+    "Claude Code",
+    "AI tools",
+  ],
+  authors: [{ name: "LMSkills" }],
+  creator: "LMSkills",
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL || "https://www.lmskills.ai"
+  ),
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "/",
+    siteName: "LMSkills",
+    title: "LMSkills - Skills Directory for Claude",
+    description:
+      "A platform for sharing and discovering Claude skills. Create, share, and explore powerful LLM capabilities.",
+    images: [
+      {
+        url: "/icon.svg",
+        width: 1200,
+        height: 630,
+        alt: "LMSkills - Skills Directory for Claude",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "LMSkills - Skills Directory for Claude",
+    description:
+      "A platform for sharing and discovering Claude skills. Create, share, and explore powerful LLM capabilities.",
+    images: ["/icon.svg"],
+  },
   icons: {
     icon: [
       { url: "/favicon.svg", type: "image/svg+xml" },
       { url: "/icon.svg", type: "image/svg+xml", sizes: "any" },
     ],
     apple: [{ url: "/icon.svg", type: "image/svg+xml" }],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
 };
 
