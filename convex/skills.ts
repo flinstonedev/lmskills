@@ -89,9 +89,10 @@ export const listSkills = query({
       );
 
       // Manual pagination for filtered results
-      const startIndex = args.paginationOpts.cursor
-        ? parseInt(args.paginationOpts.cursor)
+      const cursorValue = args.paginationOpts.cursor
+        ? parseInt(args.paginationOpts.cursor, 10)
         : 0;
+      const startIndex = isNaN(cursorValue) ? 0 : cursorValue;
       const numItems = args.paginationOpts.numItems;
       const endIndex = startIndex + numItems;
 
