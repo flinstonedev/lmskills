@@ -12,6 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, ExternalLink, Star } from "lucide-react";
 import { SafeMarkdown } from "@/components/safe-markdown";
 import { SignInButton, SignUpButton } from "@clerk/nextjs";
+import { toast } from "sonner";
 
 interface RepoInfo {
   owner: string;
@@ -40,6 +41,9 @@ export default function SubmitSkillPage() {
   const handleFetch = async () => {
     if (!repoUrl.trim()) {
       setError("Please enter a GitHub repository URL");
+      toast.error("URL Required", {
+        description: "Please enter a GitHub repository URL to continue.",
+      });
       return;
     }
 
@@ -50,6 +54,9 @@ export default function SubmitSkillPage() {
     try {
       const info = await fetchRepoInfo({ url: repoUrl });
       setRepoInfo(info);
+      toast.success("Repository Found", {
+        description: "SKILL.md content loaded successfully. Review and submit below.",
+      });
     } catch (err: unknown) {
       // Extract error message from Convex error
       let errorMessage = "Failed to fetch repository information";
@@ -76,6 +83,25 @@ export default function SubmitSkillPage() {
         .replace(/^Error:\s*/, '')
         .replace(/^\[CONVEX.*?\]\s*/, '')
         .trim();
+
+      // Show user-friendly error toast
+      if (errorMessage.includes("SKILL.md")) {
+        toast.error("SKILL.md Not Found", {
+          description: "The repository must contain a SKILL.md file. Please check the URL and try again.",
+        });
+      } else if (errorMessage.includes("Repository not found") || errorMessage.includes("404")) {
+        toast.error("Repository Not Found", {
+          description: "Could not find the repository at this URL. Please check the URL and try again.",
+        });
+      } else if (errorMessage.includes("Invalid")) {
+        toast.error("Invalid URL", {
+          description: errorMessage,
+        });
+      } else {
+        toast.error("Fetch Failed", {
+          description: errorMessage || "An unexpected error occurred. Please try again.",
+        });
+      }
 
       setError(errorMessage);
     } finally {
@@ -106,6 +132,11 @@ export default function SubmitSkillPage() {
       if (!currentUser?.handle) {
         throw new Error("User handle not found");
       }
+
+      // Show success toast
+      toast.success("Skill submitted successfully!", {
+        description: "Redirecting to your skill page...",
+      });
 
       const redirectUrl = `/skills/${currentUser.handle}/${repoInfo.name}`;
       console.log("Redirecting to:", redirectUrl);
@@ -141,6 +172,25 @@ export default function SubmitSkillPage() {
         .replace(/^Error:\s*/, '')
         .replace(/^\[CONVEX.*?\]\s*/, '')
         .trim();
+
+      // Show user-friendly error toast with specific messages
+      if (errorMessage.includes("already been submitted")) {
+        toast.error("Skill Already Exists", {
+          description: "This skill has already been submitted to LMSkills. Try submitting a different skill directory.",
+        });
+      } else if (errorMessage.includes("Not authenticated")) {
+        toast.error("Authentication Required", {
+          description: "Please sign in to submit a skill.",
+        });
+      } else if (errorMessage.includes("User not found")) {
+        toast.error("User Error", {
+          description: "Your user profile could not be found. Please try signing out and back in.",
+        });
+      } else {
+        toast.error("Submission Failed", {
+          description: errorMessage || "An unexpected error occurred. Please try again.",
+        });
+      }
 
       setError(errorMessage);
       setIsSubmitting(false);
