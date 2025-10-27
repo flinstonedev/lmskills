@@ -123,9 +123,9 @@ export default function RootLayout({
                     <main className="flex-1 min-h-[calc(100vh-theme(spacing.32))]">{children}</main>
                     <Footer />
                   </div>
-                  <CookieConsentBanner />
-                  <Toaster />
                 </ErrorBoundary>
+                <CookieConsentBanner />
+                <Toaster />
               </PostHogProvider>
             </ConvexClientProvider>
           </ThemeProvider>
