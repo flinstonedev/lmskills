@@ -8,6 +8,7 @@ import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { CookieConsentBanner } from "@/components/cookie-consent-banner";
 import { ErrorBoundary } from "@/components/error-boundary";
+import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
   title: {
@@ -123,6 +124,7 @@ export default function RootLayout({
                     <Footer />
                   </div>
                   <CookieConsentBanner />
+                  <Toaster />
                 </ErrorBoundary>
               </PostHogProvider>
             </ConvexClientProvider>
