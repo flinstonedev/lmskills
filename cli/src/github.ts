@@ -149,8 +149,9 @@ export async function downloadGitHubDirectory(
   const tree = await fetchGitTree(owner, repo, treeSha);
 
   // Filter tree items that are within the target subdirectory
+  // Must match exact path or be inside the directory (with trailing slash)
   const relevantItems = tree.tree.filter(item =>
-    item.path.startsWith(subPath)
+    item.path === subPath || item.path.startsWith(subPath + '/')
   );
 
   if (relevantItems.length === 0) {
