@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardHeading 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ExternalLink, Star, Github, Calendar, Scale, Check, X, AlertCircle, FileText, ChevronDown, ChevronRight, Folder, FolderOpen, Loader2, Copy, Download, CheckCheck } from "lucide-react";
+import { ExternalLink, Star, Github, Calendar, Scale, Check, X, AlertCircle, FileText, ChevronDown, ChevronRight, Folder, FolderOpen, Loader2, Copy, Download, CheckCheck, Terminal } from "lucide-react";
 import { SafeMarkdown } from "@/components/safe-markdown";
 import Link from "next/link";
 import { getLicenseInfo } from "@/lib/licenses";
@@ -134,6 +134,7 @@ export default function SkillDetailPage() {
   const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set());
   const [selectedFile, setSelectedFile] = useState<SkillFile | null>(null);
   const [copied, setCopied] = useState(false);
+  const [cliCommandCopied, setCliCommandCopied] = useState(false);
 
   // Debug theme
   useEffect(() => {
@@ -237,6 +238,16 @@ export default function SkillDetailPage() {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  };
+
+  const copyCliCommand = async (command: string) => {
+    try {
+      await navigator.clipboard.writeText(command);
+      setCliCommandCopied(true);
+      setTimeout(() => setCliCommandCopied(false), 2000);
+    } catch (error) {
+      console.error("Failed to copy:", error);
+    }
   };
 
   // Helper function to calculate indentation level based on path depth
@@ -415,6 +426,42 @@ export default function SkillDetailPage() {
           )}
         </div>
       </div>
+
+      {/* CLI Install Section */}
+      <Card className="bg-[var(--surface-2)] backdrop-blur border-border/50 mb-6">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Terminal className="h-5 w-5 text-muted-foreground" />
+            <CardHeading level={2} className="text-xl">Install with CLI</CardHeading>
+          </div>
+          <CardDescription className="text-sm">
+            Use the LMSkills CLI to install this skill to your local or global .claude directory
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="flex-1 bg-background/50 rounded-lg border border-border/30 p-3 font-mono text-xs overflow-x-auto">
+              <code>npx lmskills-cli install {skill.repoUrl}</code>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => copyCliCommand(`npx lmskills-cli install ${skill.repoUrl}`)}
+              className="h-9 px-3 flex-shrink-0"
+              title="Copy command"
+            >
+              {cliCommandCopied ? (
+                <CheckCheck className="h-4 w-4" />
+              ) : (
+                <Copy className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2 text-xs text-muted-foreground">
+            <span>Add <code className="px-1.5 py-0.5 bg-background/50 rounded border border-border/30">--global</code> to install globally, or omit it to install locally</span>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Files Section with Sidebar Layout */}
       <div className="flex flex-col lg:flex-row gap-6 mb-8">
