@@ -4,7 +4,7 @@ import Link from "next/link";
 import { SignInButton, SignUpButton, UserButton, SignedIn, SignedOut } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger, VisuallyHidden } from "@/components/ui/sheet";
 import { Menu, User } from "lucide-react";
 import { useState } from "react";
 import { useQuery } from "convex/react";
@@ -27,6 +27,9 @@ export function Header() {
               </Button>
             </SheetTrigger>
             <SheetContent side="left">
+              <VisuallyHidden>
+                <SheetTitle>Navigation Menu</SheetTitle>
+              </VisuallyHidden>
               <nav aria-label="Mobile navigation" className="flex flex-col space-y-4 mt-8">
                 <Link
                   href="/skills"
