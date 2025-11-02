@@ -8,6 +8,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardHeading 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
 import { ExternalLink, Star, Github, Calendar, Scale, Check, X, AlertCircle, FileText, ChevronDown, ChevronRight, Folder, FolderOpen, Loader2, Copy, Download, CheckCheck, Terminal } from "lucide-react";
 import { SafeMarkdown } from "@/components/safe-markdown";
 import Link from "next/link";
@@ -389,6 +397,43 @@ export default function SkillDetailPage() {
                 View as Markdown
               </Link>
             </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon" className="flex-shrink-0">
+                  <Download className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-[400px]">
+                <DropdownMenuLabel className="flex items-center gap-2">
+                  <Terminal className="h-4 w-4" />
+                  Install with CLI
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <div className="px-2 py-2">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="flex-1 bg-muted rounded-md p-2 font-mono text-xs overflow-x-auto">
+                      <code>npx lmskills-cli install {skill.repoUrl}</code>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => copyCliCommand(`npx lmskills-cli install ${skill.repoUrl}`)}
+                      className="h-8 w-8 p-0 flex-shrink-0"
+                      title="Copy command"
+                    >
+                      {cliCommandCopied ? (
+                        <CheckCheck className="h-4 w-4" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Add <code className="px-1 py-0.5 bg-muted rounded text-xs">--global</code> to install globally
+                  </p>
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
@@ -426,42 +471,6 @@ export default function SkillDetailPage() {
           )}
         </div>
       </div>
-
-      {/* CLI Install Section */}
-      <Card className="bg-[var(--surface-2)] backdrop-blur border-border/50 mb-6">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Terminal className="h-5 w-5 text-muted-foreground" />
-            <CardHeading level={2} className="text-xl">Install with CLI</CardHeading>
-          </div>
-          <CardDescription className="text-sm">
-            Use the LMSkills CLI to install this skill to your local or global .claude directory
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex items-center gap-2">
-            <div className="flex-1 bg-background/50 rounded-lg border border-border/30 p-3 font-mono text-xs overflow-x-auto">
-              <code>npx lmskills-cli install {skill.repoUrl}</code>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => copyCliCommand(`npx lmskills-cli install ${skill.repoUrl}`)}
-              className="h-9 px-3 flex-shrink-0"
-              title="Copy command"
-            >
-              {cliCommandCopied ? (
-                <CheckCheck className="h-4 w-4" />
-              ) : (
-                <Copy className="h-4 w-4" />
-              )}
-            </Button>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-2 text-xs text-muted-foreground">
-            <span>Add <code className="px-1.5 py-0.5 bg-background/50 rounded border border-border/30">--global</code> to install globally, or omit it to install locally</span>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Files Section with Sidebar Layout */}
       <div className="flex flex-col lg:flex-row gap-6 mb-8">
