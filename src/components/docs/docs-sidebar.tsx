@@ -33,6 +33,12 @@ const navigation: DocSection[] = [
     ],
   },
   {
+    title: "CLI Tool",
+    items: [
+      { title: "Overview", href: "/docs#cli-tool" },
+    ],
+  },
+  {
     title: "Best Practices",
     items: [
       { title: "Overview", href: "/docs#best-practices" },
