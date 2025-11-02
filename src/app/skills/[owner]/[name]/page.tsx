@@ -403,32 +403,38 @@ export default function SkillDetailPage() {
                   <Download className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-[400px]">
+              <DropdownMenuContent align="end" className="w-[calc(100vw-2rem)] sm:w-[400px] max-w-[400px]">
                 <DropdownMenuLabel className="flex items-center gap-2">
                   <Terminal className="h-4 w-4" />
                   Install with CLI
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <div className="px-2 py-2">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="flex-1 bg-muted rounded-md p-2 font-mono text-xs overflow-x-auto">
-                      <code>npx lmskills-cli install {skill.repoUrl}</code>
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mb-2">
+                    <div className="flex-1 bg-muted rounded-md p-2 font-mono text-xs overflow-x-auto min-w-0">
+                      <code className="break-all sm:break-normal">npx lmskills-cli install {skill.repoUrl}</code>
                     </div>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => copyCliCommand(`npx lmskills-cli install ${skill.repoUrl}`)}
-                      className="h-8 w-8 p-0 flex-shrink-0"
+                      className="h-8 w-full sm:w-8 sm:p-0 px-3 flex-shrink-0"
                       title="Copy command"
                     >
                       {cliCommandCopied ? (
-                        <CheckCheck className="h-4 w-4" />
+                        <>
+                          <CheckCheck className="h-4 w-4" />
+                          <span className="sm:hidden ml-2">Copied!</span>
+                        </>
                       ) : (
-                        <Copy className="h-4 w-4" />
+                        <>
+                          <Copy className="h-4 w-4" />
+                          <span className="sm:hidden ml-2">Copy</span>
+                        </>
                       )}
                     </Button>
                   </div>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-muted-foreground leading-relaxed">
                     Add <code className="px-1 py-0.5 bg-muted rounded text-xs">--global</code> to install globally
                   </p>
                 </div>
