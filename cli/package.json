@@ -20,6 +20,15 @@
   ],
   "author": "",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/flinstonedev/lmskills.git",
+    "directory": "cli"
+  },
+  "homepage": "https://github.com/flinstonedev/lmskills/tree/main/cli#readme",
+  "bugs": {
+    "url": "https://github.com/flinstonedev/lmskills/issues"
+  },
   "dependencies": {
     "commander": "^12.1.0",
     "chalk": "^4.1.2",

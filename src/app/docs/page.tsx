@@ -185,6 +185,94 @@ Practical examples and use cases...`}
           </ul>
         </section>
 
+        {/* CLI Tool */}
+        <section className="mb-12">
+          <h2 className="text-2xl font-semibold mb-4 scroll-mt-24" id="cli-tool">CLI Tool</h2>
+
+          <p className="text-muted-foreground mb-4">
+            The LMSkills CLI tool makes it easy to install skills directly to your <code>.claude</code> directory from GitHub repositories.
+          </p>
+
+          <h3 className="text-xl font-semibold mb-3 mt-6">Installation</h3>
+          <p className="text-muted-foreground mb-4">
+            You can use the CLI without installing it globally via npx, or install it globally for the <code>lmskills</code> command:
+          </p>
+
+          <div className="bg-muted p-4 rounded-lg font-mono text-sm mb-6">
+            <pre className="whitespace-pre-wrap">
+{`# Use with npx (no installation required)
+npx lmskills-cli <command>
+
+# Or install globally
+npm install -g lmskills-cli`}
+            </pre>
+          </div>
+
+          <h3 className="text-xl font-semibold mb-3 mt-6">Commands</h3>
+
+          <div className="space-y-6 mb-6">
+            <div>
+              <h4 className="text-lg font-semibold mb-2">Install a Skill</h4>
+              <p className="text-muted-foreground mb-3">
+                Install a skill from a GitHub subdirectory URL to your local or global <code>.claude/skills/</code> directory:
+              </p>
+              <div className="bg-muted p-4 rounded-lg font-mono text-sm mb-3">
+                <pre className="whitespace-pre-wrap">
+{`# Install locally (project-specific)
+npx lmskills-cli install https://github.com/owner/repo/tree/main/path/to/skill
+
+# Install globally (user-wide)
+npx lmskills-cli install https://github.com/owner/repo/tree/main/path/to/skill --global`}
+                </pre>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="text-lg font-semibold mb-2">List Installed Skills</h4>
+              <p className="text-muted-foreground mb-3">
+                View all installed skills with their source URLs and installation details:
+              </p>
+              <div className="bg-muted p-4 rounded-lg font-mono text-sm mb-3">
+                <pre className="whitespace-pre-wrap">
+{`# List local skills
+npx lmskills-cli list
+
+# List global skills
+npx lmskills-cli list --global`}
+                </pre>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="text-lg font-semibold mb-2">Remove a Skill</h4>
+              <p className="text-muted-foreground mb-3">
+                Uninstall a skill by name:
+              </p>
+              <div className="bg-muted p-4 rounded-lg font-mono text-sm mb-3">
+                <pre className="whitespace-pre-wrap">
+{`# Remove local skill
+npx lmskills-cli remove <skill-name>
+
+# Remove global skill
+npx lmskills-cli remove <skill-name> --global`}
+                </pre>
+              </div>
+            </div>
+          </div>
+
+          <h3 className="text-xl font-semibold mb-3 mt-6">Installation Locations</h3>
+          <ul className="space-y-2 text-muted-foreground mb-6">
+            <li><strong>Local:</strong> <code>./claude/skills/</code> in your current project directory</li>
+            <li><strong>Global:</strong> <code>~/.claude/skills/</code> in your home directory</li>
+          </ul>
+
+          <div className="bg-accent/10 border-l-4 border-accent p-4 mb-4">
+            <p className="text-sm">
+              <strong>Quick Tip:</strong> Each skill detail page has an "Install with CLI" button that provides the exact command to install that skill.
+            </p>
+          </div>
+        </section>
+
         {/* Best Practices */}
         <section className="mb-12">
           <h2 className="text-2xl font-semibold mb-4 scroll-mt-24" id="best-practices">Best Practices</h2>

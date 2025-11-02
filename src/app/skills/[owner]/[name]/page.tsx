@@ -8,7 +8,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardHeading 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ExternalLink, Star, Github, Calendar, Scale, Check, X, AlertCircle, FileText, ChevronDown, ChevronRight, Folder, FolderOpen, Loader2, Copy, Download, CheckCheck } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
+import { ExternalLink, Star, Github, Calendar, Scale, Check, X, AlertCircle, FileText, ChevronDown, ChevronRight, Folder, FolderOpen, Loader2, Copy, Download, CheckCheck, Terminal } from "lucide-react";
 import { SafeMarkdown } from "@/components/safe-markdown";
 import Link from "next/link";
 import { getLicenseInfo } from "@/lib/licenses";
@@ -134,6 +142,7 @@ export default function SkillDetailPage() {
   const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set());
   const [selectedFile, setSelectedFile] = useState<SkillFile | null>(null);
   const [copied, setCopied] = useState(false);
+  const [cliCommandCopied, setCliCommandCopied] = useState(false);
 
   // Debug theme
   useEffect(() => {
@@ -237,6 +246,16 @@ export default function SkillDetailPage() {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  };
+
+  const copyCliCommand = async (command: string) => {
+    try {
+      await navigator.clipboard.writeText(command);
+      setCliCommandCopied(true);
+      setTimeout(() => setCliCommandCopied(false), 2000);
+    } catch (error) {
+      console.error("Failed to copy:", error);
+    }
   };
 
   // Helper function to calculate indentation level based on path depth
@@ -361,23 +380,64 @@ export default function SkillDetailPage() {
               {skill.description}
             </p>
           </div>
-          <div className="flex gap-2 flex-shrink-0 w-full sm:w-auto">
-            <Button variant="gradient" asChild className="flex-1 sm:flex-initial">
-              <a
-                href={skill.repoUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Github className="mr-2 h-4 w-4" />
-                View on GitHub
-              </a>
-            </Button>
-            <Button variant="outline" asChild className="flex-1 sm:flex-initial">
-              <Link href={`/skills/${owner}/${name}.md`}>
-                <FileText className="mr-2 h-4 w-4" />
-                View as Markdown
-              </Link>
-            </Button>
+          <div className="flex flex-col sm:flex-row gap-2 flex-shrink-0 w-full sm:w-auto">
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button variant="gradient" asChild className="flex-1 sm:flex-initial">
+                <a
+                  href={skill.repoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Github className="mr-2 h-4 w-4" />
+                  View on GitHub
+                </a>
+              </Button>
+              <Button variant="outline" asChild className="flex-1 sm:flex-initial">
+                <Link href={`/skills/${owner}/${name}.md`}>
+                  <FileText className="mr-2 h-4 w-4" />
+                  View as Markdown
+                </Link>
+              </Button>
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-full sm:w-auto">
+                  <Download className="mr-2 h-4 w-4" />
+                  <span>Install with CLI</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-[calc(100vw-2rem)] sm:w-[400px] max-w-[400px]">
+                <div className="p-3">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mb-2">
+                    <div className="flex-1 bg-muted rounded-md p-2 font-mono text-xs overflow-x-auto min-w-0">
+                      <code className="break-all sm:break-normal">npx lmskills-cli install {skill.repoUrl}</code>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => copyCliCommand(`npx lmskills-cli install ${skill.repoUrl}`)}
+                      className="h-8 w-full sm:w-8 sm:p-0 px-3 flex-shrink-0"
+                      title="Copy command"
+                    >
+                      {cliCommandCopied ? (
+                        <>
+                          <CheckCheck className="h-4 w-4" />
+                          <span className="sm:hidden ml-2">Copied!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="h-4 w-4" />
+                          <span className="sm:hidden ml-2">Copy</span>
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Add <code className="px-1 py-0.5 bg-muted rounded text-xs">--global</code> to install globally
+                  </p>
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
