@@ -380,27 +380,30 @@ export default function SkillDetailPage() {
               {skill.description}
             </p>
           </div>
-          <div className="flex gap-2 flex-shrink-0 w-full sm:w-auto">
-            <Button variant="gradient" asChild className="flex-1 sm:flex-initial">
-              <a
-                href={skill.repoUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Github className="mr-2 h-4 w-4" />
-                View on GitHub
-              </a>
-            </Button>
-            <Button variant="outline" asChild className="flex-1 sm:flex-initial">
-              <Link href={`/skills/${owner}/${name}.md`}>
-                <FileText className="mr-2 h-4 w-4" />
-                View as Markdown
-              </Link>
-            </Button>
+          <div className="flex flex-col sm:flex-row gap-2 flex-shrink-0 w-full sm:w-auto">
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button variant="gradient" asChild className="flex-1 sm:flex-initial">
+                <a
+                  href={skill.repoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Github className="mr-2 h-4 w-4" />
+                  View on GitHub
+                </a>
+              </Button>
+              <Button variant="outline" asChild className="flex-1 sm:flex-initial">
+                <Link href={`/skills/${owner}/${name}.md`}>
+                  <FileText className="mr-2 h-4 w-4" />
+                  View as Markdown
+                </Link>
+              </Button>
+            </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon" className="flex-shrink-0">
-                  <Download className="h-4 w-4" />
+                <Button variant="outline" className="w-full sm:w-auto">
+                  <Download className="mr-2 h-4 w-4" />
+                  <span>Install with CLI</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-[calc(100vw-2rem)] sm:w-[400px] max-w-[400px]">
