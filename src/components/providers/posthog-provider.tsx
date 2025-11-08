@@ -11,9 +11,10 @@ function PostHogPageView() {
   const { consent, isLoaded } = useCookieConsent();
 
   useEffect(() => {
-    if (!isLoaded || consent !== 'accepted') return;
+    // Track pageviews for all users unless they explicitly rejected
+    if (!isLoaded || consent === 'rejected') return;
 
-    if (pathname) {
+    if (pathname && typeof window !== 'undefined' && posthog.__loaded) {
       let url = window.origin + pathname;
       if (searchParams && searchParams.toString()) {
         url = url + '?' + searchParams.toString();
@@ -42,19 +43,20 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // Initialize PostHog only once, starting in opted-out state
+    // Initialize PostHog only once with anonymous tracking enabled
     if (typeof window !== 'undefined' && !posthog.__loaded) {
       posthog.init(posthogKey, {
         api_host: posthogHost,
         person_profiles: 'identified_only',
-        // Start with capturing disabled by default (privacy-first)
-        opt_out_capturing_by_default: true,
-        // Start with memory-only persistence
+        // Enable basic anonymous tracking by default
+        opt_out_capturing_by_default: false,
+        // Start with memory-only persistence (no cookies until consent)
         persistence: 'memory',
-        // Disable features until consent is given
-        autocapture: false,
-        capture_pageview: false,
-        capture_pageleave: false,
+        // Enable basic tracking features
+        autocapture: false, // Keep autocapture off for privacy
+        capture_pageview: false, // We manually capture pageviews
+        capture_pageleave: true,
+        // Disable intrusive features until consent
         disable_session_recording: true,
       });
     }
@@ -65,18 +67,16 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
     if (!isLoaded || typeof window === 'undefined' || !posthog.__loaded) return;
 
     if (consent === 'accepted') {
-      // User accepted cookies - enable tracking
-      posthog.opt_in_capturing();
+      // User accepted cookies - enable full tracking with persistence
       posthog.set_config({ persistence: 'localStorage+cookie' });
       posthog.set_config({ autocapture: true });
-      posthog.set_config({ capture_pageleave: true });
     } else if (consent === 'rejected') {
       // User rejected cookies - disable tracking and clear data
       posthog.opt_out_capturing();
       posthog.set_config({ persistence: 'memory' });
       posthog.reset();
     }
-    // If consent is null (no decision yet), PostHog remains opted out by default
+    // If consent is null (no decision yet), continue with anonymous tracking in memory
   }, [consent, isLoaded]);
 
   return (
