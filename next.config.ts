@@ -36,7 +36,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' data: https://fonts.gstatic.com",
               "img-src 'self' data: https: blob:",
-              "connect-src 'self' https://accounts.lmskills.ai https://clerk.lmskills.ai https://*.clerk.accounts.dev https://*.clerk.com https://*.convex.cloud https://*.posthog.com https://*.i.posthog.com wss:",
+              "connect-src 'self' https://accounts.lmskills.ai https://clerk.lmskills.ai https://*.clerk.accounts.dev https://*.clerk.com https://clerk-telemetry.com https://*.convex.cloud https://*.posthog.com https://*.i.posthog.com wss:",
               "frame-src 'self' https://accounts.lmskills.ai https://clerk.lmskills.ai https://*.clerk.accounts.dev https:",
               "object-src 'none'",
               "base-uri 'self'",
