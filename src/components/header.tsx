@@ -68,32 +68,46 @@ export function Header() {
                 >
                   Docs
                 </Link>
-                <SignedIn>
-                  <Link
-                    href="/dashboard"
-                    className="text-lg font-medium hover:underline"
-                    onClick={() => setOpen(false)}
-                  >
-                    My Skills
-                  </Link>
-                  <Link
-                    href="/skills/submit"
-                    className="text-lg font-medium hover:underline"
-                    onClick={() => setOpen(false)}
-                  >
-                    Submit Skill
-                  </Link>
-                </SignedIn>
-                <SignedOut>
+                {!isPublicRoute && (
+                  <>
+                    <SignedIn>
+                      <Link
+                        href="/dashboard"
+                        className="text-lg font-medium hover:underline"
+                        onClick={() => setOpen(false)}
+                      >
+                        My Skills
+                      </Link>
+                      <Link
+                        href="/skills/submit"
+                        className="text-lg font-medium hover:underline"
+                        onClick={() => setOpen(false)}
+                      >
+                        Submit Skill
+                      </Link>
+                    </SignedIn>
+                    <SignedOut>
+                      <div className="flex flex-col space-y-2 pt-4 border-t">
+                        <SignInButton mode="modal">
+                          <Button variant="ghost" className="justify-start">Sign In</Button>
+                        </SignInButton>
+                        <SignUpButton mode="modal">
+                          <Button className="justify-start">Sign Up</Button>
+                        </SignUpButton>
+                      </div>
+                    </SignedOut>
+                  </>
+                )}
+                {isPublicRoute && (
                   <div className="flex flex-col space-y-2 pt-4 border-t">
-                    <SignInButton mode="modal">
-                      <Button variant="ghost" className="justify-start">Sign In</Button>
-                    </SignInButton>
-                    <SignUpButton mode="modal">
-                      <Button className="justify-start">Sign Up</Button>
-                    </SignUpButton>
+                    <Link href="/sign-in">
+                      <Button variant="ghost" className="w-full justify-start">Sign In</Button>
+                    </Link>
+                    <Link href="/sign-up">
+                      <Button className="w-full justify-start">Sign Up</Button>
+                    </Link>
                   </div>
-                </SignedOut>
+                )}
               </nav>
             </SheetContent>
           </Sheet>
@@ -108,44 +122,60 @@ export function Header() {
             <Link href="/docs" className="text-sm font-medium hover:underline">
               Docs
             </Link>
-            <SignedIn>
-              <Link href="/dashboard" className="text-sm font-medium hover:underline">
-                My Skills
-              </Link>
-            </SignedIn>
+            {!isPublicRoute && (
+              <SignedIn>
+                <Link href="/dashboard" className="text-sm font-medium hover:underline">
+                  My Skills
+                </Link>
+              </SignedIn>
+            )}
           </nav>
         </div>
 
         <div className="flex items-center space-x-2 md:space-x-4">
           <ThemeToggle />
-          <SignedOut>
-            <SignInButton mode="modal">
-              <Button variant="ghost" className="hidden sm:inline-flex">Sign In</Button>
-            </SignInButton>
-            <SignUpButton mode="modal">
-              <Button className="hidden sm:inline-flex">Sign Up</Button>
-            </SignUpButton>
-          </SignedOut>
-          <SignedIn>
-            <Button asChild variant="default" className="hidden md:inline-flex">
-              <Link href="/skills/submit">Submit Skill</Link>
-            </Button>
-            <UserButton
-              appearance={{
-                elements: {
-                  avatarBox: "h-10 w-10",
-                },
-              }}
-            >
-              <UserButton.MenuItems>
-                <UserButton.Link
-                  label="My Profile"
-                  labelIcon={<User className="h-4 w-4" />}
-                  href={currentUser?.handle ? `/users/${currentUser.handle}` : "#"}
-                />
-              </UserButton.MenuItems>
-            </UserButton>
-          </SignedIn>
+          {!isPublicRoute && (
+            <>
+              <SignedOut>
+                <SignInButton mode="modal">
+                  <Button variant="ghost" className="hidden sm:inline-flex">Sign In</Button>
+                </SignInButton>
+                <SignUpButton mode="modal">
+                  <Button className="hidden sm:inline-flex">Sign Up</Button>
+                </SignUpButton>
+              </SignedOut>
+              <SignedIn>
+                <Button asChild variant="default" className="hidden md:inline-flex">
+                  <Link href="/skills/submit">Submit Skill</Link>
+                </Button>
+                <UserButton
+                  appearance={{
+                    elements: {
+                      avatarBox: "h-10 w-10",
+                    },
+                  }}
+                >
+                  <UserButton.MenuItems>
+                    <UserButton.Link
+                      label="My Profile"
+                      labelIcon={<User className="h-4 w-4" />}
+                      href={currentUser?.handle ? `/users/${currentUser.handle}` : "#"}
+                    />
+                  </UserButton.MenuItems>
+                </UserButton>
+              </SignedIn>
+            </>
+          )}
+          {isPublicRoute && (
+            <>
+              <Link href="/sign-in">
+                <Button variant="ghost" className="hidden sm:inline-flex">Sign In</Button>
+              </Link>
+              <Link href="/sign-up">
+                <Button className="hidden sm:inline-flex">Sign Up</Button>
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </header>
