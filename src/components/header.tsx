@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { SignInButton, SignUpButton, UserButton, SignedIn, SignedOut } from "@clerk/nextjs";
+import { SignInButton, SignUpButton, UserButton, SignedIn, SignedOut, useAuth } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger, VisuallyHidden } from "@/components/ui/sheet";
@@ -9,10 +9,33 @@ import { Menu, User } from "lucide-react";
 import { useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { usePathname } from "next/navigation";
+
+// Define public routes that don't require authentication
+const PUBLIC_ROUTES = [
+  "/",
+  "/docs",
+  "/skills",
+  "/users",
+  "/terms",
+  "/privacy",
+];
 
 export function Header() {
   const [open, setOpen] = useState(false);
-  const currentUser = useQuery(api.users.getCurrentUser);
+  const pathname = usePathname();
+  const { isLoaded } = useAuth();
+  
+  // Check if current route is public
+  const isPublicRoute = PUBLIC_ROUTES.some(route => 
+    pathname === route || pathname.startsWith(`${route}/`)
+  );
+  
+  // Only fetch current user if not on a public route and auth is loaded
+  const currentUser = useQuery(
+    api.users.getCurrentUser,
+    isPublicRoute || !isLoaded ? "skip" : undefined
+  );
 
   return (
     <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
