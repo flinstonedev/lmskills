@@ -1,13 +1,41 @@
 "use client";
 
-import { ClerkProvider, useAuth } from "@clerk/nextjs";
+import { useAuth } from "@clerk/nextjs";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
-import { ConvexReactClient } from "convex/react";
+import { ConvexProvider, ConvexReactClient } from "convex/react";
 import { ReactNode } from "react";
+import { usePathname } from "next/navigation";
 
 const convex = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
+// Define public routes that don't require authentication
+const PUBLIC_ROUTES = [
+  "/",
+  "/docs",
+  "/skills",
+  "/users",
+  "/terms",
+  "/privacy",
+];
+
 export function ConvexClientProvider({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  
+  // Check if current route is public
+  const isPublicRoute = PUBLIC_ROUTES.some(route => 
+    pathname === route || pathname.startsWith(`${route}/`)
+  );
+
+  // For public routes, use ConvexProvider without authentication
+  // For protected routes, use ConvexProviderWithClerk
+  if (isPublicRoute) {
+    return (
+      <ConvexProvider client={convex}>
+        {children}
+      </ConvexProvider>
+    );
+  }
+
   return (
     <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
       {children}
