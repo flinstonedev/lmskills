@@ -5,7 +5,7 @@ const isPublicRoute = createRouteMatcher([
   "/",
   "/sign-in(.*)",
   "/sign-up(.*)",
-  "/skills(.*)",
+  "/skills(?!/submit)(.*)",  // Allow all /skills/* EXCEPT /skills/submit
   "/users(.*)",
   "/docs(.*)",
   "/terms",
