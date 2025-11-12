@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useAction, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +13,7 @@ import { Loader2, ExternalLink, Star } from "lucide-react";
 import { SafeMarkdown } from "@/components/safe-markdown";
 import { SignInButton, SignUpButton } from "@clerk/nextjs";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 interface RepoInfo {
   owner: string;
@@ -235,14 +236,14 @@ export default function SubmitSkillPage() {
             </p>
             <div className="flex gap-3">
               <SignUpButton mode="modal">
-                <Button variant="default">
+                <button className={cn(buttonVariants({ variant: "default" }))}>
                   Sign Up
-                </Button>
+                </button>
               </SignUpButton>
               <SignInButton mode="modal">
-                <Button variant="outline">
+                <button className={cn(buttonVariants({ variant: "outline" }))}>
                   Sign In
-                </Button>
+                </button>
               </SignInButton>
             </div>
           </CardContent>
