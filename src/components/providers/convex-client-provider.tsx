@@ -20,9 +20,18 @@ const PUBLIC_ROUTES = [
 
 export function ConvexClientProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  
+
+  // /skills/submit is protected, even though /skills/* is public
+  if (pathname === "/skills/submit") {
+    return (
+      <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
+        {children}
+      </ConvexProviderWithClerk>
+    );
+  }
+
   // Check if current route is public
-  const isPublicRoute = PUBLIC_ROUTES.some(route => 
+  const isPublicRoute = PUBLIC_ROUTES.some(route =>
     pathname === route || pathname.startsWith(`${route}/`)
   );
 
