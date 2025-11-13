@@ -5,7 +5,7 @@ const isPublicRoute = createRouteMatcher([
   "/",
   "/sign-in(.*)",
   "/sign-up(.*)",
-  "/skills(?!/submit)(.*)",  // Allow all /skills/* EXCEPT /skills/submit
+  "/skills(.*)",  // All skills routes (we'll protect /skills/submit explicitly below)
   "/users(.*)",
   "/docs(.*)",
   "/terms",
@@ -35,7 +35,10 @@ export default clerkMiddleware(
       });
     }
 
-    if (!isPublicRoute(req)) {
+    // Explicitly protect /skills/submit even though /skills(.*)is public
+    if (pathname === "/skills/submit") {
+      await auth.protect();
+    } else if (!isPublicRoute(req)) {
       await auth.protect();
     }
   },
