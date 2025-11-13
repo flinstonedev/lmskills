@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, ExternalLink, Star } from "lucide-react";
 import { SafeMarkdown } from "@/components/safe-markdown";
-import { SignInButton, SignUpButton } from "@clerk/nextjs";
+import { SignInButton, SignUpButton, useAuth } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -28,6 +28,7 @@ interface RepoInfo {
 
 export default function SubmitSkillPage() {
   const router = useRouter();
+  const { isLoaded: authLoaded, isSignedIn } = useAuth();
   const currentUser = useQuery(api.users.getCurrentUser);
 
   const [repoUrl, setRepoUrl] = useState("");
@@ -198,9 +199,8 @@ export default function SubmitSkillPage() {
     }
   };
 
-  // Show sign-in prompt if user is not authenticated
-  if (currentUser === undefined) {
-    // Loading state
+  // Show loading state while auth is loading
+  if (!authLoaded) {
     return (
       <div className="container mx-auto px-4 py-12 max-w-4xl">
         <div className="flex items-center justify-center min-h-[400px]">
@@ -210,8 +210,8 @@ export default function SubmitSkillPage() {
     );
   }
 
-  if (currentUser === null) {
-    // Not authenticated
+  // Show sign-in prompt if not authenticated (should not happen due to middleware)
+  if (!isSignedIn) {
     return (
       <div className="container mx-auto px-4 py-12 max-w-4xl">
         <div className="mb-8">
@@ -246,6 +246,41 @@ export default function SubmitSkillPage() {
                 </button>
               </SignInButton>
             </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show loading state while Convex user is syncing
+  if (currentUser === undefined) {
+    return (
+      <div className="container mx-auto px-4 py-12 max-w-4xl">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </div>
+    );
+  }
+
+  // If authenticated but no Convex user, show error (webhook issue)
+  if (currentUser === null) {
+    return (
+      <div className="container mx-auto px-4 py-12 max-w-4xl">
+        <Card className="bg-[var(--surface-2)] backdrop-blur border-border/50">
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold">Profile Sync in Progress</CardTitle>
+            <CardDescription className="text-sm">
+              Your account is being set up
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Your profile is being synced. Please refresh the page in a moment.
+            </p>
+            <Button onClick={() => window.location.reload()}>
+              Refresh Page
+            </Button>
           </CardContent>
         </Card>
       </div>

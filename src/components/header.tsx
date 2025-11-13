@@ -134,48 +134,34 @@ export function Header() {
 
         <div className="flex items-center space-x-2 md:space-x-4">
           <ThemeToggle />
-          {!isPublicRoute && (
-            <>
-              <SignedOut>
-                <SignInButton mode="modal">
-                  <Button variant="ghost" className="hidden sm:inline-flex">Sign In</Button>
-                </SignInButton>
-                <SignUpButton mode="modal">
-                  <Button className="hidden sm:inline-flex">Sign Up</Button>
-                </SignUpButton>
-              </SignedOut>
-              <SignedIn>
-                <Button asChild variant="default" className="hidden md:inline-flex">
-                  <Link href="/skills/submit">Submit Skill</Link>
-                </Button>
-                <UserButton
-                  appearance={{
-                    elements: {
-                      avatarBox: "h-10 w-10",
-                    },
-                  }}
-                >
-                  <UserButton.MenuItems>
-                    <UserButton.Link
-                      label="My Profile"
-                      labelIcon={<User className="h-4 w-4" />}
-                      href={currentUser?.handle ? `/users/${currentUser.handle}` : "#"}
-                    />
-                  </UserButton.MenuItems>
-                </UserButton>
-              </SignedIn>
-            </>
-          )}
-          {isPublicRoute && (
-            <>
-              <Link href="/sign-in">
-                <Button variant="ghost" className="hidden sm:inline-flex">Sign In</Button>
-              </Link>
-              <Link href="/sign-up">
-                <Button className="hidden sm:inline-flex">Sign Up</Button>
-              </Link>
-            </>
-          )}
+          <SignedOut>
+            <SignInButton mode="modal">
+              <Button variant="ghost" className="hidden sm:inline-flex">Sign In</Button>
+            </SignInButton>
+            <SignUpButton mode="modal">
+              <Button className="hidden sm:inline-flex">Sign Up</Button>
+            </SignUpButton>
+          </SignedOut>
+          <SignedIn>
+            <Button asChild variant="default" className="hidden md:inline-flex">
+              <Link href="/skills/submit">Submit Skill</Link>
+            </Button>
+            <UserButton
+              appearance={{
+                elements: {
+                  avatarBox: "h-10 w-10",
+                },
+              }}
+            >
+              <UserButton.MenuItems>
+                <UserButton.Link
+                  label="My Profile"
+                  labelIcon={<User className="h-4 w-4" />}
+                  href={currentUser?.handle ? `/users/${currentUser.handle}` : "#"}
+                />
+              </UserButton.MenuItems>
+            </UserButton>
+          </SignedIn>
         </div>
       </div>
     </header>
