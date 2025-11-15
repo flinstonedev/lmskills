@@ -18,8 +18,8 @@ export function CookieConsentBanner() {
           <div className="flex-1">
             <p className="text-sm text-foreground">
               We use cookies to enhance your browsing experience, analyze site
-              traffic, and personalize content. By clicking "Accept", you
-              consent to our use of cookies.{' '}
+              traffic, and personalize content. Cookies are enabled by default.
+              Click &quot;Reject&quot; if you prefer to opt out.{' '}
               <Link
                 href="/privacy"
                 className="font-medium text-primary underline-offset-4 hover:underline"
