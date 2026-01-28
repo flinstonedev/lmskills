@@ -1,6 +1,6 @@
 {
   "name": "lmskills-cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "CLI tool to fetch and install Claude skills from GitHub",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
