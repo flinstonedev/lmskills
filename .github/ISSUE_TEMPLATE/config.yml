@@ -1,0 +1,6 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security policy
+    url: https://github.com/flinstonedev/lmskills/security/policy
+    about: Please report security issues via GitHub Security Advisories.
+
