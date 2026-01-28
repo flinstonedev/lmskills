@@ -6,12 +6,14 @@ import { installSkill } from './install';
 import { listSkills } from './list';
 import { removeSkill } from './remove';
 
+const packageJson = require('../package.json') as { version: string };
+
 const program = new Command();
 
 program
   .name('lmskills')
   .description('CLI tool to fetch and install Claude skills from GitHub')
-  .version('0.1.0');
+  .version(packageJson.version);
 
 program
   .command('install <github-url>')
