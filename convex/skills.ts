@@ -400,15 +400,26 @@ export const getSkillWithVersions = query({
       return null;
     }
 
-    if (skill.visibility !== "public") {
+    const identity = await ctx.auth.getUserIdentity();
+    const isOwner = identity
+      ? await ctx.db
+          .query("users")
+          .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+          .first()
+          .then((u) => u?._id === skill.ownerUserId)
+      : false;
+
+    const isPublic = skill.visibility === "public";
+    if (!isPublic && !(skill.visibility === "unlisted" && isOwner)) {
       return null;
     }
 
-    const versions = await ctx.db
+    const versionsQuery = ctx.db
       .query("skillVersions")
-      .withIndex("by_skill", (q) => q.eq("skillId", skill._id))
-      .filter((q) => q.eq(q.field("status"), "verified"))
-      .collect();
+      .withIndex("by_skill", (q) => q.eq("skillId", skill._id));
+    const versions = isPublic
+      ? await versionsQuery.filter((q) => q.eq(q.field("status"), "verified")).collect()
+      : await versionsQuery.collect();
 
     // Sanitize versions - remove sensitive fields
     const sanitizedVersions = versions.map((version) => ({
@@ -455,7 +466,21 @@ export const getSkillVersion = query({
   },
   handler: async (ctx, args) => {
     const skill = await ctx.db.get(args.skillId);
-    if (!skill || skill.visibility !== "public") {
+    if (!skill) {
+      return null;
+    }
+
+    const identity = await ctx.auth.getUserIdentity();
+    const isOwner = identity
+      ? await ctx.db
+          .query("users")
+          .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+          .first()
+          .then((u) => u?._id === skill.ownerUserId)
+      : false;
+
+    const isPublic = skill.visibility === "public";
+    if (!isPublic && !(skill.visibility === "unlisted" && isOwner)) {
       return null;
     }
 
@@ -466,7 +491,7 @@ export const getSkillVersion = query({
       )
       .first();
 
-    if (!version || version.status !== "verified") {
+    if (!version || (isPublic && version.status !== "verified")) {
       return null;
     }
 
