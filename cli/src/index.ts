@@ -5,6 +5,9 @@ import chalk from 'chalk';
 import { installSkill } from './install';
 import { listSkills } from './list';
 import { removeSkill } from './remove';
+import { initSkill } from './init';
+import { publishSkill } from './publish';
+import { listVersions } from './versions';
 
 import packageJson from '../package.json';
 
@@ -38,6 +41,27 @@ program
   .option('-g, --global', 'Remove from global skills instead of local')
   .action((skillName: string, options: { global?: boolean }) => {
     removeSkill(skillName, options);
+  });
+
+program
+  .command('init')
+  .description('Create a skill.json template in the current directory')
+  .action(async () => {
+    await initSkill();
+  });
+
+program
+  .command('publish')
+  .description('Package and validate the current skill for publishing')
+  .action(async () => {
+    await publishSkill();
+  });
+
+program
+  .command('versions')
+  .description('List locally published versions for the current skill')
+  .action(async () => {
+    await listVersions();
   });
 
 // Handle unknown commands with helpful error messages

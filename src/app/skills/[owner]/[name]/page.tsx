@@ -84,18 +84,20 @@ export default function SkillDetailPage() {
               {skill.description}
             </p>
           </div>
-          <div className="flex flex-col sm:flex-row gap-2 flex-shrink-0 w-full sm:w-auto">
-            <Button variant="gradient" asChild className="flex-1 sm:flex-initial">
-              <a
-                href={skill.repoUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Github className="mr-2 h-4 w-4" />
-                View on GitHub
-              </a>
-            </Button>
-          </div>
+          {skill.repoUrl && (
+            <div className="flex flex-col sm:flex-row gap-2 flex-shrink-0 w-full sm:w-auto">
+              <Button variant="gradient" asChild className="flex-1 sm:flex-initial">
+                <a
+                  href={skill.repoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Github className="mr-2 h-4 w-4" />
+                  View on GitHub
+                </a>
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Metadata Bar */}
@@ -133,57 +135,61 @@ export default function SkillDetailPage() {
         </div>
       </div>
 
-      {/* View on GitHub Card */}
-      <Card className="bg-[var(--surface-2)] backdrop-blur border-border/50 mb-8">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Github className="h-5 w-5 text-muted-foreground" />
-            <CardHeading level={2} className="text-xl">View Skill Content</CardHeading>
-          </div>
-          <CardDescription className="text-sm">
-            Skill content is hosted on GitHub for security and transparency
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            To view the full SKILL.md content and all associated files, please visit the GitHub repository directly.
-            This ensures you&apos;re always viewing the latest version from the source.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Button variant="gradient" asChild>
-              <a
-                href={skill.repoUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <ExternalLink className="mr-2 h-4 w-4" />
-                View SKILL.md on GitHub
-              </a>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {skill.repoUrl && (
+        <>
+          {/* View on GitHub Card */}
+          <Card className="bg-[var(--surface-2)] backdrop-blur border-border/50 mb-8">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Github className="h-5 w-5 text-muted-foreground" />
+                <CardHeading level={2} className="text-xl">View Skill Content</CardHeading>
+              </div>
+              <CardDescription className="text-sm">
+                Skill content is hosted on GitHub for security and transparency
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                To view the full SKILL.md content and all associated files, please visit the GitHub repository directly.
+                This ensures you&apos;re always viewing the latest version from the source.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button variant="gradient" asChild>
+                  <a
+                    href={skill.repoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    View SKILL.md on GitHub
+                  </a>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
 
-      {/* CLI Installation Card */}
-      <Card className="bg-[var(--surface-2)] backdrop-blur border-border/50 mb-8">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Terminal className="h-5 w-5 text-muted-foreground" />
-            <CardHeading level={2} className="text-xl">Install with CLI</CardHeading>
-          </div>
-          <CardDescription className="text-sm">
-            Use the LMSkills CLI to install this skill directly
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="bg-muted rounded-md p-3 font-mono text-sm overflow-x-auto">
-            <code>npx lmskills-cli install {skill.repoUrl}</code>
-          </div>
-          <p className="text-xs text-muted-foreground mt-2">
-            Add <code className="px-1 py-0.5 bg-muted rounded">--global</code> to install globally
-          </p>
-        </CardContent>
-      </Card>
+          {/* CLI Installation Card */}
+          <Card className="bg-[var(--surface-2)] backdrop-blur border-border/50 mb-8">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Terminal className="h-5 w-5 text-muted-foreground" />
+                <CardHeading level={2} className="text-xl">Install with CLI</CardHeading>
+              </div>
+              <CardDescription className="text-sm">
+                Use the LMSkills CLI to install this skill directly
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-muted rounded-md p-3 font-mono text-sm overflow-x-auto">
+                <code>npx lmskills-cli install {skill.repoUrl}</code>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                Add <code className="px-1 py-0.5 bg-muted rounded">--global</code> to install globally
+              </p>
+            </CardContent>
+          </Card>
+        </>
+      )}
 
       {/* License Information */}
       {licenseInfo && (

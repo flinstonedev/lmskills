@@ -28,3 +28,33 @@ export interface ParsedGitHubUrl {
   branch: string;
   path: string;
 }
+
+export interface SkillManifest {
+  name: string;
+  slug: string;
+  version: string;
+  description: string;
+  author: string;
+  license: string;
+  entry: string;
+  files: string[];
+}
+
+export interface PublishedSkillVersion {
+  version: string;
+  changelog?: string;
+  hash: string;
+  sizeBytes: number;
+  artifactPath: string;
+  publishedAt: string;
+}
+
+export interface PublishedSkillRecord {
+  slug: string;
+  name: string;
+  versions: PublishedSkillVersion[];
+}
+
+export interface VersionsRegistry {
+  skills: PublishedSkillRecord[];
+}
