@@ -159,6 +159,7 @@ export default function DashboardPage() {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="shrink-0"
+                        aria-label={`Open ${skill.name} on GitHub`}
                         onClick={(e) => {
                           e.stopPropagation();
                         }}

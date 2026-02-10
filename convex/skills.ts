@@ -35,6 +35,9 @@ const GITHUB_URL_PATTERN = /^https:\/\/github\.com\/[\w.-]+\/[\w.-]+(\/tree\/[\w
 const SLUG_PATTERN = /^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/;
 const SUBMIT_RATE_LIMIT = { limit: 5, windowMs: 60_000 };
 const DELETE_RATE_LIMIT = { limit: 10, windowMs: 60_000 };
+const SEMVER_PATTERN = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
+const SHA256_PATTERN = /^[a-f0-9]{64}$/i;
+const MAX_SKILL_SIZE = 10 * 1024 * 1024; // 10MB
 
 /**
  * Validate GitHub URL format
@@ -251,6 +254,26 @@ export const publishSkillVersion = mutation({
 
     if (!user) {
       throw new Error("User not found");
+    }
+
+    // Validate version format (semver)
+    if (!SEMVER_PATTERN.test(args.version)) {
+      throw new Error("Version must be valid semver");
+    }
+
+    // Validate size is non-negative and within limit
+    if (args.sizeBytes < 0 || args.sizeBytes > MAX_SKILL_SIZE) {
+      throw new Error("sizeBytes must be between 0 and 10MB");
+    }
+
+    // Validate contentHash is a valid SHA-256 hex digest
+    if (!SHA256_PATTERN.test(args.contentHash)) {
+      throw new Error("contentHash must be a valid SHA-256 hex digest");
+    }
+
+    // Validate storageKey is non-empty
+    if (!args.storageKey || args.storageKey.trim().length === 0) {
+      throw new Error("storageKey is required");
     }
 
     const skill = await ctx.db.get(args.skillId);

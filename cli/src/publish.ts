@@ -69,7 +69,7 @@ function normalizeRelativePath(filePath: string): string {
   if (normalized.includes('\u0000')) {
     throw new Error(`Invalid file path: ${filePath}`);
   }
-  return normalized.replace(/^\\.\\//, '');
+  return normalized.replace(/^\.\//, '');
 }
 
 function collectFiles(manifest: SkillManifest, baseDir: string): string[] {
