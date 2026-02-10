@@ -294,6 +294,9 @@ export const cleanupBrokenSkills = internalAction({
     };
 
     for (const skill of skills) {
+      if (skill.source !== "github" || !skill.repoUrl) {
+        continue;
+      }
       results.checked++;
       const delay = backoffMs > 0 ? backoffMs : BASE_DELAY_MS;
       await wait(delay);
@@ -433,6 +436,9 @@ export const cleanupLowEngagementSkills = internalAction({
     };
 
     for (const skill of skills) {
+      if (skill.source !== "github" || !skill.repoUrl) {
+        continue;
+      }
       results.checked++;
 
       // Parse the GitHub URL to get owner and repo

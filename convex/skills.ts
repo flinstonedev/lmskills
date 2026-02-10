@@ -30,7 +30,9 @@ const MAX_NAME_LENGTH = 100;
 const MAX_DESCRIPTION_LENGTH = 1000;
 const MAX_LICENSE_LENGTH = 50;
 const MAX_SEARCH_QUERY_LENGTH = 200;
+const MAX_SLUG_LENGTH = 100;
 const GITHUB_URL_PATTERN = /^https:\/\/github\.com\/[\w.-]+\/[\w.-]+(\/tree\/[\w.-]+\/[\w./-]+)?$/;
+const SLUG_PATTERN = /^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/;
 const SUBMIT_RATE_LIMIT = { limit: 5, windowMs: 60_000 };
 const DELETE_RATE_LIMIT = { limit: 10, windowMs: 60_000 };
 
@@ -40,6 +42,26 @@ const DELETE_RATE_LIMIT = { limit: 10, windowMs: 60_000 };
 function isValidGitHubUrl(url: string): boolean {
   if (url.includes("..")) return false;
   return GITHUB_URL_PATTERN.test(url);
+}
+
+function normalizeSlug(rawSlug: string) {
+  return rawSlug
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+function assertValidSlug(slug: string) {
+  if (!slug) {
+    throw new Error("Slug is required");
+  }
+  if (slug.length > MAX_SLUG_LENGTH) {
+    throw new Error("Slug is too long");
+  }
+  if (!SLUG_PATTERN.test(slug)) {
+    throw new Error("Slug can only contain lowercase letters, numbers, and hyphens");
+  }
 }
 
 function sanitizeSearchQuery(query: string) {
@@ -105,7 +127,24 @@ export const submitSkill = mutation({
 
     const now = Date.now();
 
+    const normalizedSlug = normalizeSlug(args.name);
+    assertValidSlug(normalizedSlug);
+
+    const fullName = `${user.handle}/${normalizedSlug}`;
+    const existingFullName = await ctx.db
+      .query("skills")
+      .withIndex("by_full_name", (q) => q.eq("fullName", fullName))
+      .first();
+
+    if (existingFullName) {
+      throw new Error("A skill with this handle and slug already exists");
+    }
+
     const skillId = await ctx.db.insert("skills", {
+      source: "github",
+      handle: user.handle,
+      slug: normalizedSlug,
+      fullName,
       repoUrl: args.repoUrl,
       name: args.name,
       description: args.description,
@@ -119,6 +158,231 @@ export const submitSkill = mutation({
     });
 
     return skillId;
+  },
+});
+
+/**
+ * Create a hosted skill entry
+ */
+export const createHostedSkill = mutation({
+  args: {
+    name: v.string(),
+    slug: v.string(),
+    description: v.string(),
+    visibility: v.union(v.literal("public"), v.literal("unlisted")),
+  },
+  handler: async (ctx, args) => {
+    if (args.name.length > MAX_NAME_LENGTH) {
+      throw new Error("Skill name is too long");
+    }
+    if (args.description.length > MAX_DESCRIPTION_LENGTH) {
+      throw new Error("Description is too long");
+    }
+
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .first();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const normalizedSlug = normalizeSlug(args.slug);
+    assertValidSlug(normalizedSlug);
+
+    const fullName = `${user.handle}/${normalizedSlug}`;
+    const existingSkill = await ctx.db
+      .query("skills")
+      .withIndex("by_full_name", (q) => q.eq("fullName", fullName))
+      .first();
+
+    if (existingSkill) {
+      throw new Error("A skill with this handle and slug already exists");
+    }
+
+    const now = Date.now();
+
+    const skillId = await ctx.db.insert("skills", {
+      source: "hosted",
+      handle: user.handle,
+      slug: normalizedSlug,
+      fullName,
+      name: args.name,
+      description: args.description,
+      ownerUserId: user._id,
+      visibility: args.visibility,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    return skillId;
+  },
+});
+
+/**
+ * Publish a hosted skill version (metadata only)
+ */
+export const publishSkillVersion = mutation({
+  args: {
+    skillId: v.id("skills"),
+    version: v.string(),
+    changelog: v.optional(v.string()),
+    storageKey: v.string(),
+    contentHash: v.string(),
+    sizeBytes: v.number(),
+    manifest: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .first();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const skill = await ctx.db.get(args.skillId);
+    if (!skill) {
+      throw new Error("Skill not found");
+    }
+
+    if (skill.ownerUserId !== user._id) {
+      throw new Error("Not authorized to publish this skill");
+    }
+
+    if (skill.source !== "hosted") {
+      throw new Error("Only hosted skills can publish versions");
+    }
+
+    const existingVersion = await ctx.db
+      .query("skillVersions")
+      .withIndex("by_skill_and_version", (q) =>
+        q.eq("skillId", args.skillId).eq("version", args.version)
+      )
+      .first();
+
+    if (existingVersion) {
+      throw new Error("This version already exists");
+    }
+
+    const versionId = await ctx.db.insert("skillVersions", {
+      skillId: args.skillId,
+      version: args.version,
+      changelog: args.changelog,
+      storageKey: args.storageKey,
+      contentHash: args.contentHash,
+      sizeBytes: args.sizeBytes,
+      manifest: args.manifest,
+      publishedBy: user._id,
+      status: "pending",
+    });
+
+    return versionId;
+  },
+});
+
+/**
+ * Set the default hosted skill version
+ */
+export const setDefaultVersion = mutation({
+  args: {
+    skillId: v.id("skills"),
+    versionId: v.id("skillVersions"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .first();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const skill = await ctx.db.get(args.skillId);
+    if (!skill) {
+      throw new Error("Skill not found");
+    }
+
+    if (skill.ownerUserId !== user._id) {
+      throw new Error("Not authorized to update this skill");
+    }
+
+    const version = await ctx.db.get(args.versionId);
+    if (!version || version.skillId !== args.skillId) {
+      throw new Error("Skill version not found");
+    }
+
+    await ctx.db.patch(args.skillId, {
+      defaultVersionId: args.versionId,
+      updatedAt: Date.now(),
+    });
+
+    return { success: true };
+  },
+});
+
+/**
+ * Get a skill by full name with its versions
+ */
+export const getSkillWithVersions = query({
+  args: {
+    fullName: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const skill = await ctx.db
+      .query("skills")
+      .withIndex("by_full_name", (q) => q.eq("fullName", args.fullName))
+      .first();
+
+    if (!skill) {
+      return null;
+    }
+
+    const versions = await ctx.db
+      .query("skillVersions")
+      .withIndex("by_skill", (q) => q.eq("skillId", skill._id))
+      .collect();
+
+    return {
+      skill,
+      versions,
+    };
+  },
+});
+
+/**
+ * Get a specific skill version
+ */
+export const getSkillVersion = query({
+  args: {
+    skillId: v.id("skills"),
+    version: v.string(),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("skillVersions")
+      .withIndex("by_skill_and_version", (q) =>
+        q.eq("skillId", args.skillId).eq("version", args.version)
+      )
+      .first();
   },
 });
 
@@ -545,4 +809,3 @@ export const deleteSkillInternal = internalMutation({
     return { success: true };
   },
 });
-

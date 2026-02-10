@@ -34,6 +34,12 @@ export async function GET(
       acceptHeader.includes("text/plain");
 
     if (wantsMarkdown) {
+      if (!skill.repoUrl) {
+        return NextResponse.json(
+          { error: "Skill content is not hosted on GitHub" },
+          { status: 404 }
+        );
+      }
       // Validate URL is a GitHub URL before redirecting (prevent open redirect)
       let repoUrl: URL;
       try {
