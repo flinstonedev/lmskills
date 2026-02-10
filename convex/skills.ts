@@ -373,7 +373,9 @@ export const setDefaultVersion = mutation({
 });
 
 /**
- * Get a skill by full name with its versions
+ * Get a skill by full name with its versions (public-safe)
+ * - Sanitizes versions (no storageKey, contentHash)
+ * - Respects visibility (unlisted only visible to owner)
  */
 export const getSkillWithVersions = query({
   args: {
@@ -389,15 +391,52 @@ export const getSkillWithVersions = query({
       return null;
     }
 
+    // Check visibility - unlisted skills only visible to owner
+    const identity = await ctx.auth.getUserIdentity();
+    const isOwner = identity ? await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .first().then(u => u?._id === skill.ownerUserId) : false;
+
+    if (skill.visibility === "unlisted" && !isOwner) {
+      return null;
+    }
+
     const versions = await ctx.db
       .query("skillVersions")
       .withIndex("by_skill", (q) => q.eq("skillId", skill._id))
       .collect();
 
+    // Sanitize versions - remove sensitive fields
+    const sanitizedVersions = versions.map(v => ({
+      _id: v._id,
+      skillId: v.skillId,
+      version: v.version,
+      changelog: v.changelog,
+      sizeBytes: v.sizeBytes,
+      status: v.status,
+      publishedBy: v.publishedBy,
+    }));
+
     return {
       skill,
-      versions,
+      versions: sanitizedVersions,
     };
+  },
+});
+
+/**
+ * Get full skill versions with storage keys (owner/internal only)
+ */
+export const getSkillVersionsInternal = internalQuery({
+  args: {
+    skillId: v.id("skills"),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("skillVersions")
+      .withIndex("by_skill", (q) => q.eq("skillId", args.skillId))
+      .collect();
   },
 });
 
@@ -421,6 +460,7 @@ export const getSkillVersion = query({
 
 /**
  * Get all skills (paginated) with optional search
+ * - Only returns public skills (unlisted skills excluded from listings)
  */
 export const listSkills = query({
   args: {
@@ -444,10 +484,12 @@ export const listSkills = query({
         .order("desc")
         .collect();
 
+      // Filter by search query AND visibility (public only)
       const filtered = allSkills.filter(
         (skill) =>
-          skill.name.toLowerCase().includes(searchQuery) ||
-          skill.description.toLowerCase().includes(searchQuery)
+          skill.visibility === "public" &&
+          (skill.name.toLowerCase().includes(searchQuery) ||
+           skill.description.toLowerCase().includes(searchQuery))
       );
 
       // Manual pagination for filtered results using N+1 pattern
@@ -481,7 +523,7 @@ export const listSkills = query({
       };
     }
 
-    // Otherwise, return all skills with proper pagination
+    // Otherwise, return public skills with proper pagination
     // Use N+1 pattern: fetch one extra item to know if there are more results
     const result = await ctx.db
       .query("skills")
@@ -492,9 +534,12 @@ export const listSkills = query({
         numItems: args.paginationOpts.numItems + 1,
       });
 
+    // Filter to public skills only
+    const publicSkills = result.page.filter((skill) => skill.visibility === "public");
+
     // Fetch owner info for each skill
     const skillsWithOwners = await Promise.all(
-      result.page.map(async (skill) => {
+      publicSkills.map(async (skill) => {
         const owner = await ctx.db.get(skill.ownerUserId);
         return toSkillWithOwner(skill, owner);
       })
@@ -518,6 +563,7 @@ export const listSkills = query({
 
 /**
  * Get a single skill by owner and name
+ * - Respects visibility (unlisted only visible to owner)
  */
 export const getSkill = query({
   args: {
@@ -547,6 +593,17 @@ export const getSkill = query({
       return null;
     }
 
+    // Check visibility - unlisted skills only visible to owner
+    const identity = await ctx.auth.getUserIdentity();
+    const isOwner = identity ? await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .first().then(u => u?._id === skill.ownerUserId) : false;
+
+    if (skill.visibility === "unlisted" && !isOwner) {
+      return null;
+    }
+
     return {
       ...skill,
       owner: {
@@ -559,6 +616,7 @@ export const getSkill = query({
 
 /**
  * Search skills by name or description
+ * - Only returns public skills (unlisted skills excluded from search)
  */
 export const searchSkills = query({
   args: {
@@ -580,11 +638,12 @@ export const searchSkills = query({
       .order("desc")
       .collect();
 
-    // Filter by name or description
+    // Filter by search query AND visibility (public only)
     const filtered = allSkills.filter(
       (skill) =>
-        skill.name.toLowerCase().includes(searchQuery) ||
-        skill.description.toLowerCase().includes(searchQuery)
+        skill.visibility === "public" &&
+        (skill.name.toLowerCase().includes(searchQuery) ||
+         skill.description.toLowerCase().includes(searchQuery))
     );
 
     // Take only the limit
@@ -604,6 +663,8 @@ export const searchSkills = query({
 
 /**
  * Get skills by owner (user handle)
+ * - Shows public skills to everyone
+ * - Shows unlisted skills only to the owner
  */
 export const getSkillsByOwner = query({
   args: {
@@ -625,6 +686,13 @@ export const getSkillsByOwner = query({
       };
     }
 
+    // Check if viewer is the owner
+    const identity = await ctx.auth.getUserIdentity();
+    const isOwner = identity ? await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .first().then(u => u?._id === owner._id) : false;
+
     // Get their skills with pagination using N+1 pattern
     // Fetch one extra item to know if there are more results
     const result = await ctx.db
@@ -635,7 +703,12 @@ export const getSkillsByOwner = query({
         numItems: args.paginationOpts.numItems + 1,
       });
 
-    const skillsWithOwner = result.page.map((skill) =>
+    // Filter skills by visibility (public only unless viewer is owner)
+    const visibleSkills = result.page.filter((skill) =>
+      skill.visibility === "public" || isOwner
+    );
+
+    const skillsWithOwner = visibleSkills.map((skill) =>
       toSkillWithOwner(skill, owner)
     );
 
