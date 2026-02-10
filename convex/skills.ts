@@ -441,7 +441,8 @@ export const getSkillVersionsInternal = internalQuery({
 });
 
 /**
- * Get a specific skill version
+ * Get a specific skill version (public-safe)
+ * - Sanitizes output (no storageKey, contentHash)
  */
 export const getSkillVersion = query({
   args: {
@@ -449,12 +450,27 @@ export const getSkillVersion = query({
     version: v.string(),
   },
   handler: async (ctx, args) => {
-    return await ctx.db
+    const version = await ctx.db
       .query("skillVersions")
       .withIndex("by_skill_and_version", (q) =>
         q.eq("skillId", args.skillId).eq("version", args.version)
       )
       .first();
+
+    if (!version) {
+      return null;
+    }
+
+    // Return sanitized version (no sensitive fields)
+    return {
+      _id: version._id,
+      skillId: version.skillId,
+      version: version.version,
+      changelog: version.changelog,
+      sizeBytes: version.sizeBytes,
+      status: version.status,
+      publishedBy: version.publishedBy,
+    };
   },
 });
 
