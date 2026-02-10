@@ -86,14 +86,78 @@ function collectFiles(manifest: SkillManifest, baseDir: string): string[] {
     if (!absPath.startsWith(resolvedBase)) {
       throw new Error(`Invalid file path outside skill directory: ${normalized}`);
     }
-    const stat = fs.statSync(absPath);
-    if (!stat.isFile()) {
+    const lstat = fs.lstatSync(absPath);
+    if (lstat.isSymbolicLink()) {
+      throw new Error(`Symlinks are not allowed: ${normalized}`);
+    }
+    if (!lstat.isFile()) {
       throw new Error(`Expected file but found directory: ${normalized}`);
     }
     files.push(normalized);
   }
 
   return files;
+}
+
+type SemverParts = {
+  major: number;
+  minor: number;
+  patch: number;
+  prerelease: Array<string>;
+};
+
+function parseSemver(version: string): SemverParts {
+  const [withoutBuild] = version.split('+', 2);
+  const [core, prereleasePart] = withoutBuild.split('-', 2);
+  const [major, minor, patch] = core.split('.').map((value) => Number(value));
+  const prerelease = prereleasePart ? prereleasePart.split('.') : [];
+  return { major, minor, patch, prerelease };
+}
+
+function compareIdentifiers(a: string, b: string): number {
+  const aNum = Number(a);
+  const bNum = Number(b);
+  const aIsNum = Number.isInteger(aNum) && String(aNum) === a;
+  const bIsNum = Number.isInteger(bNum) && String(bNum) === b;
+
+  if (aIsNum && bIsNum) {
+    return aNum - bNum;
+  }
+  if (aIsNum) {
+    return -1;
+  }
+  if (bIsNum) {
+    return 1;
+  }
+  return a.localeCompare(b);
+}
+
+function compareSemver(a: string, b: string): number {
+  const left = parseSemver(a);
+  const right = parseSemver(b);
+
+  if (left.major !== right.major) return left.major - right.major;
+  if (left.minor !== right.minor) return left.minor - right.minor;
+  if (left.patch !== right.patch) return left.patch - right.patch;
+
+  const leftPre = left.prerelease;
+  const rightPre = right.prerelease;
+
+  if (leftPre.length === 0 && rightPre.length === 0) return 0;
+  if (leftPre.length === 0) return 1;
+  if (rightPre.length === 0) return -1;
+
+  const maxLen = Math.max(leftPre.length, rightPre.length);
+  for (let i = 0; i < maxLen; i += 1) {
+    const leftId = leftPre[i];
+    const rightId = rightPre[i];
+    if (leftId === undefined) return -1;
+    if (rightId === undefined) return 1;
+    const diff = compareIdentifiers(leftId, rightId);
+    if (diff !== 0) return diff;
+  }
+
+  return 0;
 }
 
 function writeString(buffer: Buffer, value: string, offset: number, length: number) {
@@ -224,7 +288,7 @@ export async function publishSkill(): Promise<void> {
     };
 
     record.versions.push(publishedVersion);
-    record.versions.sort((a, b) => a.version.localeCompare(b.version));
+    record.versions.sort((a, b) => compareSemver(a.version, b.version));
 
     writeRegistry(registryPath, registry);
 

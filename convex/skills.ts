@@ -271,9 +271,9 @@ export const publishSkillVersion = mutation({
       throw new Error("Version must be valid semver");
     }
 
-    // Validate size is non-negative and within limit
-    if (args.sizeBytes < 0 || args.sizeBytes > MAX_SKILL_SIZE) {
-      throw new Error("sizeBytes must be between 0 and 10MB");
+    // Validate size is positive and within limit
+    if (args.sizeBytes <= 0 || args.sizeBytes > MAX_SKILL_SIZE) {
+      throw new Error("sizeBytes must be between 1 byte and 10MB");
     }
 
     // Validate contentHash is a valid SHA-256 hex digest
@@ -340,6 +340,11 @@ export const setDefaultVersion = mutation({
       throw new Error("Not authenticated");
     }
 
+    await enforceRateLimitWithDb(ctx, {
+      key: `user:${identity.subject}:setDefaultVersion`,
+      ...SUBMIT_RATE_LIMIT,
+    });
+
     const user = await ctx.db
       .query("users")
       .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
@@ -361,6 +366,10 @@ export const setDefaultVersion = mutation({
     const version = await ctx.db.get(args.versionId);
     if (!version || version.skillId !== args.skillId) {
       throw new Error("Skill version not found");
+    }
+
+    if (version.status !== "verified") {
+      throw new Error("Only verified versions can be set as default");
     }
 
     await ctx.db.patch(args.skillId, {
@@ -391,23 +400,14 @@ export const getSkillWithVersions = query({
       return null;
     }
 
-    // Check visibility - unlisted skills only visible to owner
-    const identity = await ctx.auth.getUserIdentity();
-    const isOwner = identity
-      ? await ctx.db
-          .query("users")
-          .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-          .first()
-          .then((u) => u?._id === skill.ownerUserId)
-      : false;
-
-    if (skill.visibility === "unlisted" && !isOwner) {
+    if (skill.visibility !== "public") {
       return null;
     }
 
     const versions = await ctx.db
       .query("skillVersions")
       .withIndex("by_skill", (q) => q.eq("skillId", skill._id))
+      .filter((q) => q.eq(q.field("status"), "verified"))
       .collect();
 
     // Sanitize versions - remove sensitive fields
@@ -454,6 +454,11 @@ export const getSkillVersion = query({
     version: v.string(),
   },
   handler: async (ctx, args) => {
+    const skill = await ctx.db.get(args.skillId);
+    if (!skill || skill.visibility !== "public") {
+      return null;
+    }
+
     const version = await ctx.db
       .query("skillVersions")
       .withIndex("by_skill_and_version", (q) =>
@@ -461,25 +466,7 @@ export const getSkillVersion = query({
       )
       .first();
 
-    if (!version) {
-      return null;
-    }
-
-    const skill = await ctx.db.get(args.skillId);
-    if (!skill) {
-      return null;
-    }
-
-    const identity = await ctx.auth.getUserIdentity();
-    const isOwner = identity
-      ? await ctx.db
-          .query("users")
-          .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-          .first()
-          .then((u) => u?._id === skill.ownerUserId)
-      : false;
-
-    if (skill.visibility === "unlisted" && !isOwner) {
+    if (!version || version.status !== "verified") {
       return null;
     }
 
@@ -809,6 +796,22 @@ export const deleteSkill = mutation({
     }
 
     // Delete related data first
+    // Delete skill verifications and versions (hosted skills)
+    const skillVersions = await ctx.db
+      .query("skillVersions")
+      .withIndex("by_skill", (q) => q.eq("skillId", args.skillId))
+      .collect();
+    for (const version of skillVersions) {
+      const verifications = await ctx.db
+        .query("skillVerifications")
+        .filter((q) => q.eq(q.field("skillVersionId"), version._id))
+        .collect();
+      for (const verification of verifications) {
+        await ctx.db.delete(verification._id);
+      }
+      await ctx.db.delete(version._id);
+    }
+
     // Delete skill tags
     const skillTags = await ctx.db
       .query("skillTags")
@@ -916,6 +919,22 @@ export const deleteSkillInternal = internalMutation({
     }
 
     // Delete related data first
+    // Delete skill verifications and versions (hosted skills)
+    const skillVersions = await ctx.db
+      .query("skillVersions")
+      .withIndex("by_skill", (q) => q.eq("skillId", args.skillId))
+      .collect();
+    for (const version of skillVersions) {
+      const verifications = await ctx.db
+        .query("skillVerifications")
+        .filter((q) => q.eq(q.field("skillVersionId"), version._id))
+        .collect();
+      for (const verification of verifications) {
+        await ctx.db.delete(verification._id);
+      }
+      await ctx.db.delete(version._id);
+    }
+
     // Delete skill tags
     const skillTags = await ctx.db
       .query("skillTags")
