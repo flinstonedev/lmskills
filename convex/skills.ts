@@ -187,6 +187,11 @@ export const createHostedSkill = mutation({
       throw new Error("Not authenticated");
     }
 
+    await enforceRateLimitWithDb(ctx, {
+      key: `user:${identity.subject}:createHostedSkill`,
+      ...SUBMIT_RATE_LIMIT,
+    });
+
     const user = await ctx.db
       .query("users")
       .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
@@ -246,6 +251,11 @@ export const publishSkillVersion = mutation({
     if (!identity) {
       throw new Error("Not authenticated");
     }
+
+    await enforceRateLimitWithDb(ctx, {
+      key: `user:${identity.subject}:publishSkillVersion`,
+      ...SUBMIT_RATE_LIMIT,
+    });
 
     const user = await ctx.db
       .query("users")
