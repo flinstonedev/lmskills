@@ -36,7 +36,7 @@ export default defineSchema({
     ownerUserId: v.id("users"),
     ownerOrg: v.optional(v.string()), // For GitHub org repos
     defaultVersionId: v.optional(v.id("skillVersions")),
-    visibility: v.union(v.literal("public"), v.literal("unlisted")),
+    visibility: v.optional(v.union(v.literal("public"), v.literal("unlisted"))),
     stars: v.optional(v.number()), // GitHub stars count
     lastSyncedAt: v.optional(v.number()),
     createdAt: v.number(),
@@ -45,7 +45,9 @@ export default defineSchema({
     .index("by_repo_url", ["repoUrl"])
     .index("by_owner", ["ownerUserId"])
     .index("by_created_at", ["createdAt"])
-    .index("by_full_name", ["fullName"]),
+    .index("by_full_name", ["fullName"])
+    .index("by_visibility_created_at", ["visibility", "createdAt"])
+    .index("by_owner_visibility", ["ownerUserId", "visibility"]),
 
   // Hosted skill versions (content stored in object storage)
   skillVersions: defineTable({

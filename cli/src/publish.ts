@@ -117,6 +117,9 @@ function createTarball(files: string[], baseDir: string): Buffer {
     const header = Buffer.alloc(512, 0);
 
     const entryName = file.replace(/\\/g, '/');
+    if (Buffer.byteLength(entryName, 'utf-8') > 100) {
+      throw new Error(`File path too long for tar: ${file}`);
+    }
     writeString(header, entryName, 0, 100);
     writeOctal(header, 0o644, 100, 8);
     writeOctal(header, 0, 108, 8);
