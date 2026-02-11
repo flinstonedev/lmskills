@@ -25,18 +25,13 @@ export default defineSchema({
 
   // Skills table - metadata only, no content stored for security
   skills: defineTable({
-    source: v.optional(v.union(v.literal("github"), v.literal("hosted"))),
-    handle: v.optional(v.string()), // Owner handle
-    slug: v.optional(v.string()), // Skill slug
-    fullName: v.optional(v.string()), // handle/slug
-    repoUrl: v.optional(v.string()), // GitHub repo URL (unique)
+    repoUrl: v.string(), // GitHub repo URL (unique)
     name: v.string(),
     description: v.string(),
     license: v.optional(v.string()),
     ownerUserId: v.id("users"),
     ownerOrg: v.optional(v.string()), // For GitHub org repos
-    defaultVersionId: v.optional(v.id("skillVersions")),
-    visibility: v.optional(v.union(v.literal("public"), v.literal("unlisted"))),
+    visibility: v.string(), // "public" only
     stars: v.optional(v.number()), // GitHub stars count
     lastSyncedAt: v.optional(v.number()),
     createdAt: v.number(),
@@ -44,37 +39,7 @@ export default defineSchema({
   })
     .index("by_repo_url", ["repoUrl"])
     .index("by_owner", ["ownerUserId"])
-    .index("by_created_at", ["createdAt"])
-    .index("by_full_name", ["fullName"])
-    .index("by_visibility_created_at", ["visibility", "createdAt"])
-    .index("by_owner_visibility", ["ownerUserId", "visibility"]),
-
-  // Hosted skill versions (content stored in object storage)
-  skillVersions: defineTable({
-    skillId: v.id("skills"),
-    version: v.string(), // semver
-    changelog: v.optional(v.string()),
-    storageKey: v.string(), // R2/S3 key
-    contentHash: v.string(), // sha256
-    sizeBytes: v.number(),
-    manifest: v.optional(v.string()), // JSON string
-    publishedBy: v.id("users"),
-    status: v.union(v.literal("pending"), v.literal("verified"), v.literal("rejected")),
-    verificationId: v.optional(v.id("skillVerifications")),
-  })
-    .index("by_skill", ["skillId"])
-    .index("by_skill_and_version", ["skillId", "version"])
-    .index("by_status", ["status"]),
-
-  // Verification runs for hosted skills
-  skillVerifications: defineTable({
-    skillVersionId: v.id("skillVersions"),
-    status: v.union(v.literal("running"), v.literal("passed"), v.literal("failed")),
-    checks: v.optional(v.string()), // JSON of check results
-    errors: v.optional(v.array(v.string())),
-    startedAt: v.number(),
-    completedAt: v.optional(v.number()),
-  }),
+    .index("by_created_at", ["createdAt"]),
 
   // Tags for categorizing skills
   tags: defineTable({

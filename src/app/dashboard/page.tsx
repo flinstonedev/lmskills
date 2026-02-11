@@ -153,20 +153,17 @@ export default function DashboardPage() {
                     >
                       {skill.name}
                     </Link>
-                    {skill.repoUrl && (
-                      <a
-                        href={skill.repoUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="shrink-0"
-                        aria-label={`Open ${skill.name} on GitHub`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                        }}
-                      >
-                        <ExternalLink className="h-4 w-4 text-muted-foreground hover:text-foreground" />
-                      </a>
-                    )}
+                    <a
+                      href={skill.repoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="shrink-0"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                      }}
+                    >
+                      <ExternalLink className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                    </a>
                   </CardTitle>
                   <CardDescription className="line-clamp-2">
                     {skill.description}

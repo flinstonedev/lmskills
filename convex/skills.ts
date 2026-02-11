@@ -30,14 +30,9 @@ const MAX_NAME_LENGTH = 100;
 const MAX_DESCRIPTION_LENGTH = 1000;
 const MAX_LICENSE_LENGTH = 50;
 const MAX_SEARCH_QUERY_LENGTH = 200;
-const MAX_SLUG_LENGTH = 100;
 const GITHUB_URL_PATTERN = /^https:\/\/github\.com\/[\w.-]+\/[\w.-]+(\/tree\/[\w.-]+\/[\w./-]+)?$/;
-const SLUG_PATTERN = /^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/;
 const SUBMIT_RATE_LIMIT = { limit: 5, windowMs: 60_000 };
 const DELETE_RATE_LIMIT = { limit: 10, windowMs: 60_000 };
-const SEMVER_PATTERN = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
-const SHA256_PATTERN = /^[a-f0-9]{64}$/i;
-const MAX_SKILL_SIZE = 10 * 1024 * 1024; // 10MB
 
 /**
  * Validate GitHub URL format
@@ -45,26 +40,6 @@ const MAX_SKILL_SIZE = 10 * 1024 * 1024; // 10MB
 function isValidGitHubUrl(url: string): boolean {
   if (url.includes("..")) return false;
   return GITHUB_URL_PATTERN.test(url);
-}
-
-function normalizeSlug(rawSlug: string) {
-  return rawSlug
-    .toLowerCase()
-    .replace(/[^a-z0-9-]/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
-}
-
-function assertValidSlug(slug: string) {
-  if (!slug) {
-    throw new Error("Slug is required");
-  }
-  if (slug.length > MAX_SLUG_LENGTH) {
-    throw new Error("Slug is too long");
-  }
-  if (!SLUG_PATTERN.test(slug)) {
-    throw new Error("Slug can only contain lowercase letters, numbers, and hyphens");
-  }
 }
 
 function sanitizeSearchQuery(query: string) {
@@ -130,24 +105,7 @@ export const submitSkill = mutation({
 
     const now = Date.now();
 
-    const normalizedSlug = normalizeSlug(args.name);
-    assertValidSlug(normalizedSlug);
-
-    const fullName = `${user.handle}/${normalizedSlug}`;
-    const existingFullName = await ctx.db
-      .query("skills")
-      .withIndex("by_full_name", (q) => q.eq("fullName", fullName))
-      .first();
-
-    if (existingFullName) {
-      throw new Error("A skill with this handle and slug already exists");
-    }
-
     const skillId = await ctx.db.insert("skills", {
-      source: "github",
-      handle: user.handle,
-      slug: normalizedSlug,
-      fullName,
       repoUrl: args.repoUrl,
       name: args.name,
       description: args.description,
@@ -165,352 +123,7 @@ export const submitSkill = mutation({
 });
 
 /**
- * Create a hosted skill entry
- */
-export const createHostedSkill = mutation({
-  args: {
-    name: v.string(),
-    slug: v.string(),
-    description: v.string(),
-    visibility: v.union(v.literal("public"), v.literal("unlisted")),
-  },
-  handler: async (ctx, args) => {
-    if (args.name.length > MAX_NAME_LENGTH) {
-      throw new Error("Skill name is too long");
-    }
-    if (args.description.length > MAX_DESCRIPTION_LENGTH) {
-      throw new Error("Description is too long");
-    }
-
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Not authenticated");
-    }
-
-    await enforceRateLimitWithDb(ctx, {
-      key: `user:${identity.subject}:createHostedSkill`,
-      ...SUBMIT_RATE_LIMIT,
-    });
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-      .first();
-
-    if (!user) {
-      throw new Error("User not found");
-    }
-
-    const normalizedSlug = normalizeSlug(args.slug);
-    assertValidSlug(normalizedSlug);
-
-    const fullName = `${user.handle}/${normalizedSlug}`;
-    const existingSkill = await ctx.db
-      .query("skills")
-      .withIndex("by_full_name", (q) => q.eq("fullName", fullName))
-      .first();
-
-    if (existingSkill) {
-      throw new Error("A skill with this handle and slug already exists");
-    }
-
-    const now = Date.now();
-
-    const skillId = await ctx.db.insert("skills", {
-      source: "hosted",
-      handle: user.handle,
-      slug: normalizedSlug,
-      fullName,
-      name: args.name,
-      description: args.description,
-      ownerUserId: user._id,
-      visibility: args.visibility,
-      createdAt: now,
-      updatedAt: now,
-    });
-
-    return skillId;
-  },
-});
-
-/**
- * Publish a hosted skill version (metadata only)
- */
-export const publishSkillVersion = mutation({
-  args: {
-    skillId: v.id("skills"),
-    version: v.string(),
-    changelog: v.optional(v.string()),
-    storageKey: v.string(),
-    contentHash: v.string(),
-    sizeBytes: v.number(),
-    manifest: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Not authenticated");
-    }
-
-    await enforceRateLimitWithDb(ctx, {
-      key: `user:${identity.subject}:publishSkillVersion`,
-      ...SUBMIT_RATE_LIMIT,
-    });
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-      .first();
-
-    if (!user) {
-      throw new Error("User not found");
-    }
-
-    // Validate version format (semver)
-    if (!SEMVER_PATTERN.test(args.version)) {
-      throw new Error("Version must be valid semver");
-    }
-
-    // Validate size is positive and within limit
-    if (args.sizeBytes <= 0 || args.sizeBytes > MAX_SKILL_SIZE) {
-      throw new Error("sizeBytes must be between 1 byte and 10MB");
-    }
-
-    // Validate contentHash is a valid SHA-256 hex digest
-    if (!SHA256_PATTERN.test(args.contentHash)) {
-      throw new Error("contentHash must be a valid SHA-256 hex digest");
-    }
-
-    // Validate storageKey is non-empty
-    if (!args.storageKey || args.storageKey.trim().length === 0) {
-      throw new Error("storageKey is required");
-    }
-
-    const skill = await ctx.db.get(args.skillId);
-    if (!skill) {
-      throw new Error("Skill not found");
-    }
-
-    if (skill.ownerUserId !== user._id) {
-      throw new Error("Not authorized to publish this skill");
-    }
-
-    if (skill.source !== "hosted") {
-      throw new Error("Only hosted skills can publish versions");
-    }
-
-    const existingVersion = await ctx.db
-      .query("skillVersions")
-      .withIndex("by_skill_and_version", (q) =>
-        q.eq("skillId", args.skillId).eq("version", args.version)
-      )
-      .first();
-
-    if (existingVersion) {
-      throw new Error("This version already exists");
-    }
-
-    const versionId = await ctx.db.insert("skillVersions", {
-      skillId: args.skillId,
-      version: args.version,
-      changelog: args.changelog,
-      storageKey: args.storageKey,
-      contentHash: args.contentHash,
-      sizeBytes: args.sizeBytes,
-      manifest: args.manifest,
-      publishedBy: user._id,
-      status: "pending",
-    });
-
-    return versionId;
-  },
-});
-
-/**
- * Set the default hosted skill version
- */
-export const setDefaultVersion = mutation({
-  args: {
-    skillId: v.id("skills"),
-    versionId: v.id("skillVersions"),
-  },
-  handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Not authenticated");
-    }
-
-    await enforceRateLimitWithDb(ctx, {
-      key: `user:${identity.subject}:setDefaultVersion`,
-      ...SUBMIT_RATE_LIMIT,
-    });
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-      .first();
-
-    if (!user) {
-      throw new Error("User not found");
-    }
-
-    const skill = await ctx.db.get(args.skillId);
-    if (!skill) {
-      throw new Error("Skill not found");
-    }
-
-    if (skill.ownerUserId !== user._id) {
-      throw new Error("Not authorized to update this skill");
-    }
-
-    const version = await ctx.db.get(args.versionId);
-    if (!version || version.skillId !== args.skillId) {
-      throw new Error("Skill version not found");
-    }
-
-    if (version.status !== "verified") {
-      throw new Error("Only verified versions can be set as default");
-    }
-
-    await ctx.db.patch(args.skillId, {
-      defaultVersionId: args.versionId,
-      updatedAt: Date.now(),
-    });
-
-    return { success: true };
-  },
-});
-
-/**
- * Get a skill by full name with its versions (public-safe)
- * - Sanitizes versions (no storageKey, contentHash)
- * - Respects visibility (unlisted only visible to owner)
- */
-export const getSkillWithVersions = query({
-  args: {
-    fullName: v.string(),
-  },
-  handler: async (ctx, args) => {
-    const skill = await ctx.db
-      .query("skills")
-      .withIndex("by_full_name", (q) => q.eq("fullName", args.fullName))
-      .first();
-
-    if (!skill) {
-      return null;
-    }
-
-    const identity = await ctx.auth.getUserIdentity();
-    const isOwner = identity
-      ? await ctx.db
-          .query("users")
-          .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-          .first()
-          .then((u) => u?._id === skill.ownerUserId)
-      : false;
-
-    const isPublic = skill.visibility === "public";
-    if (!isPublic && !(skill.visibility === "unlisted" && isOwner)) {
-      return null;
-    }
-
-    const versionsQuery = ctx.db
-      .query("skillVersions")
-      .withIndex("by_skill", (q) => q.eq("skillId", skill._id));
-    const versions = isPublic
-      ? await versionsQuery.filter((q) => q.eq(q.field("status"), "verified")).collect()
-      : await versionsQuery.collect();
-
-    // Sanitize versions - remove sensitive fields
-    const sanitizedVersions = versions.map((version) => ({
-      _id: version._id,
-      skillId: version.skillId,
-      version: version.version,
-      changelog: version.changelog,
-      sizeBytes: version.sizeBytes,
-      status: version.status,
-      publishedBy: version.publishedBy,
-    }));
-
-    return {
-      skill,
-      versions: sanitizedVersions,
-    };
-  },
-});
-
-/**
- * Get full skill versions with storage keys (owner/internal only)
- */
-export const getSkillVersionsInternal = internalQuery({
-  args: {
-    skillId: v.id("skills"),
-  },
-  handler: async (ctx, args) => {
-    return await ctx.db
-      .query("skillVersions")
-      .withIndex("by_skill", (q) => q.eq("skillId", args.skillId))
-      .collect();
-  },
-});
-
-/**
- * Get a specific skill version (public-safe)
- * - Sanitizes output (no storageKey, contentHash)
- * - Respects visibility (unlisted only visible to owner)
- */
-export const getSkillVersion = query({
-  args: {
-    skillId: v.id("skills"),
-    version: v.string(),
-  },
-  handler: async (ctx, args) => {
-    const skill = await ctx.db.get(args.skillId);
-    if (!skill) {
-      return null;
-    }
-
-    const identity = await ctx.auth.getUserIdentity();
-    const isOwner = identity
-      ? await ctx.db
-          .query("users")
-          .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-          .first()
-          .then((u) => u?._id === skill.ownerUserId)
-      : false;
-
-    const isPublic = skill.visibility === "public";
-    if (!isPublic && !(skill.visibility === "unlisted" && isOwner)) {
-      return null;
-    }
-
-    const version = await ctx.db
-      .query("skillVersions")
-      .withIndex("by_skill_and_version", (q) =>
-        q.eq("skillId", args.skillId).eq("version", args.version)
-      )
-      .first();
-
-    if (!version || (isPublic && version.status !== "verified")) {
-      return null;
-    }
-
-    // Return sanitized version (no sensitive fields)
-    return {
-      _id: version._id,
-      skillId: version.skillId,
-      version: version.version,
-      changelog: version.changelog,
-      sizeBytes: version.sizeBytes,
-      status: version.status,
-      publishedBy: version.publishedBy,
-    };
-  },
-});
-
-/**
  * Get all skills (paginated) with optional search
- * - Only returns public skills (unlisted skills excluded from listings)
  */
 export const listSkills = query({
   args: {
@@ -523,32 +136,33 @@ export const listSkills = query({
     if (sanitizedQuery && sanitizedQuery.length > MAX_SEARCH_QUERY_LENGTH) {
       throw new Error("Search query is too long");
     }
-    const searchQuery = sanitizedQuery.toLowerCase();
 
+    // If there's a search query, filter results
     if (sanitizedQuery) {
+      const searchQuery = sanitizedQuery.toLowerCase();
+
       const allSkills = await ctx.db
         .query("skills")
         .withIndex("by_created_at")
         .order("desc")
         .collect();
 
-      const visibleSkills = allSkills.filter(
-        (skill) => (skill.visibility ?? "public") === "public"
-      );
-
-      const filtered = visibleSkills.filter(
+      const filtered = allSkills.filter(
         (skill) =>
           skill.name.toLowerCase().includes(searchQuery) ||
           skill.description.toLowerCase().includes(searchQuery)
       );
 
+      // Manual pagination for filtered results using N+1 pattern
       const cursorValue = args.paginationOpts.cursor
         ? parseInt(args.paginationOpts.cursor, 10)
         : 0;
       const startIndex = isNaN(cursorValue) ? 0 : cursorValue;
       const numItems = args.paginationOpts.numItems;
 
-      const paginated = filtered.slice(startIndex, startIndex + numItems);
+      // Fetch one extra item to determine if there are more results
+      const endIndex = startIndex + numItems + 1;
+      const paginated = filtered.slice(startIndex, endIndex);
 
       const skillsWithOwners = await Promise.all(
         paginated.map(async (skill) => {
@@ -557,23 +171,31 @@ export const listSkills = query({
         })
       );
 
-      const hasMore = filtered.length > startIndex + numItems;
+      // If we got more than numItems, there are more results
+      const hasMore = skillsWithOwners.length > numItems;
+      const pageToReturn = hasMore
+        ? skillsWithOwners.slice(0, numItems)
+        : skillsWithOwners;
 
       return {
-        page: skillsWithOwners,
+        page: pageToReturn,
         isDone: !hasMore,
         continueCursor: hasMore ? (startIndex + numItems).toString() : "",
       };
     }
 
+    // Otherwise, return all skills with proper pagination
+    // Use N+1 pattern: fetch one extra item to know if there are more results
     const result = await ctx.db
       .query("skills")
-      .withIndex("by_visibility_created_at", (q) =>
-        q.eq("visibility", "public")
-      )
+      .withIndex("by_created_at")
       .order("desc")
-      .paginate(args.paginationOpts);
+      .paginate({
+        ...args.paginationOpts,
+        numItems: args.paginationOpts.numItems + 1,
+      });
 
+    // Fetch owner info for each skill
     const skillsWithOwners = await Promise.all(
       result.page.map(async (skill) => {
         const owner = await ctx.db.get(skill.ownerUserId);
@@ -581,16 +203,24 @@ export const listSkills = query({
       })
     );
 
+    // If we got more items than requested, there are definitely more results
+    const hasMore = skillsWithOwners.length > args.paginationOpts.numItems;
+
+    // Return only the requested number of items
+    const pageToReturn = hasMore
+      ? skillsWithOwners.slice(0, args.paginationOpts.numItems)
+      : skillsWithOwners;
+
     return {
       ...result,
-      page: skillsWithOwners,
+      isDone: !hasMore,
+      page: pageToReturn,
     };
   },
 });
 
 /**
  * Get a single skill by owner and name
- * - Respects visibility (unlisted only visible to owner)
  */
 export const getSkill = query({
   args: {
@@ -620,20 +250,6 @@ export const getSkill = query({
       return null;
     }
 
-    // Check visibility - unlisted skills only visible to owner
-    const identity = await ctx.auth.getUserIdentity();
-    const isOwner = identity
-      ? await ctx.db
-          .query("users")
-          .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-          .first()
-          .then((u) => u?._id === skill.ownerUserId)
-      : false;
-
-    if (skill.visibility === "unlisted" && !isOwner) {
-      return null;
-    }
-
     return {
       ...skill,
       owner: {
@@ -646,7 +262,6 @@ export const getSkill = query({
 
 /**
  * Search skills by name or description
- * - Only returns public skills (unlisted skills excluded from search)
  */
 export const searchSkills = query({
   args: {
@@ -668,12 +283,11 @@ export const searchSkills = query({
       .order("desc")
       .collect();
 
-    // Filter by search query AND visibility (public only)
+    // Filter by name or description
     const filtered = allSkills.filter(
       (skill) =>
-        (skill.visibility ?? "public") === "public" &&
-        (skill.name.toLowerCase().includes(searchQuery) ||
-          skill.description.toLowerCase().includes(searchQuery))
+        skill.name.toLowerCase().includes(searchQuery) ||
+        skill.description.toLowerCase().includes(searchQuery)
     );
 
     // Take only the limit
@@ -693,8 +307,6 @@ export const searchSkills = query({
 
 /**
  * Get skills by owner (user handle)
- * - Shows public skills to everyone
- * - Shows unlisted skills only to the owner
  */
 export const getSkillsByOwner = query({
   args: {
@@ -716,33 +328,32 @@ export const getSkillsByOwner = query({
       };
     }
 
-    // Check if viewer is the owner
-    const identity = await ctx.auth.getUserIdentity();
-    const isOwner = identity
-      ? await ctx.db
-          .query("users")
-          .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-          .first()
-          .then((u) => u?._id === owner._id)
-      : false;
-
-    const query = isOwner
-      ? ctx.db
-          .query("skills")
-          .withIndex("by_owner", (q) => q.eq("ownerUserId", owner._id))
-      : ctx.db.query("skills").withIndex("by_owner_visibility", (q) =>
-          q.eq("ownerUserId", owner._id).eq("visibility", "public")
-        );
-
-    const result = await query.paginate(args.paginationOpts);
+    // Get their skills with pagination using N+1 pattern
+    // Fetch one extra item to know if there are more results
+    const result = await ctx.db
+      .query("skills")
+      .withIndex("by_owner", (q) => q.eq("ownerUserId", owner._id))
+      .paginate({
+        ...args.paginationOpts,
+        numItems: args.paginationOpts.numItems + 1,
+      });
 
     const skillsWithOwner = result.page.map((skill) =>
       toSkillWithOwner(skill, owner)
     );
 
+    // If we got more items than requested, there are definitely more results
+    const hasMore = skillsWithOwner.length > args.paginationOpts.numItems;
+
+    // Return only the requested number of items
+    const pageToReturn = hasMore
+      ? skillsWithOwner.slice(0, args.paginationOpts.numItems)
+      : skillsWithOwner;
+
     return {
       ...result,
-      page: skillsWithOwner,
+      isDone: !hasMore,
+      page: pageToReturn,
     };
   },
 });
@@ -821,22 +432,6 @@ export const deleteSkill = mutation({
     }
 
     // Delete related data first
-    // Delete skill verifications and versions (hosted skills)
-    const skillVersions = await ctx.db
-      .query("skillVersions")
-      .withIndex("by_skill", (q) => q.eq("skillId", args.skillId))
-      .collect();
-    for (const version of skillVersions) {
-      const verifications = await ctx.db
-        .query("skillVerifications")
-        .filter((q) => q.eq(q.field("skillVersionId"), version._id))
-        .collect();
-      for (const verification of verifications) {
-        await ctx.db.delete(verification._id);
-      }
-      await ctx.db.delete(version._id);
-    }
-
     // Delete skill tags
     const skillTags = await ctx.db
       .query("skillTags")
@@ -891,42 +486,6 @@ export const getAllSkills = internalQuery({
 });
 
 /**
- * Internal mutation to backfill missing visibility to public.
- */
-export const backfillSkillVisibility = internalMutation({
-  args: {
-    dryRun: v.optional(v.boolean()),
-  },
-  handler: async (ctx, args) => {
-    logSecurityEvent("skills.backfill_visibility", {
-      dryRun: args.dryRun ?? false,
-    });
-
-    const dryRun = args.dryRun ?? false;
-    const skills = await ctx.db.query("skills").collect();
-    let updated = 0;
-
-    for (const skill of skills) {
-      if (!skill.visibility) {
-        updated += 1;
-        if (!dryRun) {
-          await ctx.db.patch(skill._id, {
-            visibility: "public",
-            updatedAt: Date.now(),
-          });
-        }
-      }
-    }
-
-    return {
-      scanned: skills.length,
-      updated,
-      dryRun,
-    };
-  },
-});
-
-/**
  * Internal mutation to delete a skill by ID (bypasses auth for admin operations)
  */
 export const deleteSkillInternal = internalMutation({
@@ -944,22 +503,6 @@ export const deleteSkillInternal = internalMutation({
     }
 
     // Delete related data first
-    // Delete skill verifications and versions (hosted skills)
-    const skillVersions = await ctx.db
-      .query("skillVersions")
-      .withIndex("by_skill", (q) => q.eq("skillId", args.skillId))
-      .collect();
-    for (const version of skillVersions) {
-      const verifications = await ctx.db
-        .query("skillVerifications")
-        .filter((q) => q.eq(q.field("skillVersionId"), version._id))
-        .collect();
-      for (const verification of verifications) {
-        await ctx.db.delete(verification._id);
-      }
-      await ctx.db.delete(version._id);
-    }
-
     // Delete skill tags
     const skillTags = await ctx.db
       .query("skillTags")
@@ -1002,3 +545,4 @@ export const deleteSkillInternal = internalMutation({
     return { success: true };
   },
 });
+
