@@ -297,6 +297,7 @@ export const createRepository = mutation({
     slug: v.string(),
     description: v.string(),
     visibility: v.union(v.literal("public"), v.literal("unlisted")),
+    license: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     if (args.name.length > MAX_NAME_LENGTH) {
@@ -347,6 +348,7 @@ export const createRepository = mutation({
       fullName,
       name: args.name,
       description: args.description,
+      license: args.license,
       ownerUserId: user._id,
       visibility: args.visibility,
       createdAt: now,
