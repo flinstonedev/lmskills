@@ -33,7 +33,6 @@ export interface PublishOptions {
   setDefault?: boolean;
   visibility?: HostedVisibility;
   convexUrl?: string;
-  authToken?: string;
   changelog?: string;
 }
 
@@ -290,7 +289,7 @@ function resolveRemotePublishConfig(
     options.convexUrl ??
     process.env.LMSKILLS_CONVEX_URL ??
     process.env.NEXT_PUBLIC_CONVEX_URL;
-  const authToken = options.authToken ?? process.env.LMSKILLS_AUTH_TOKEN;
+  const authToken = process.env.LMSKILLS_AUTH_TOKEN;
 
   if (!convexUrl) {
     throw new Error(
@@ -299,7 +298,7 @@ function resolveRemotePublishConfig(
   }
   if (!authToken) {
     throw new Error(
-      'Remote publish requested but auth token is missing. Set LMSKILLS_AUTH_TOKEN or pass --auth-token.'
+      'Remote publish requested but auth token is missing. Set LMSKILLS_AUTH_TOKEN.'
     );
   }
 

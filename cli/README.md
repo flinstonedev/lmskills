@@ -99,7 +99,7 @@ lmskills publish --remote --set-default
 Remote publish requires:
 
 - `LMSKILLS_CONVEX_URL` (or `--convex-url`)
-- `LMSKILLS_AUTH_TOKEN` (or `--auth-token`)
+- `LMSKILLS_AUTH_TOKEN`
 
 Optional settings:
 

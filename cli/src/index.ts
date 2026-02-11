@@ -58,14 +58,12 @@ program
   .option('--no-set-default', 'Do not set the published version as default')
   .option('--visibility <visibility>', 'Visibility for auto-created hosted skills (public|unlisted)')
   .option('--convex-url <url>', 'Convex deployment URL for remote publishing')
-  .option('--auth-token <token>', 'Auth token for remote publishing')
   .option('--changelog <text>', 'Optional changelog text for this version')
   .action(async (options: {
     remote?: boolean;
     setDefault?: boolean;
     visibility?: string;
     convexUrl?: string;
-    authToken?: string;
     changelog?: string;
   }) => {
     await publishSkill({
@@ -74,7 +72,6 @@ program
       visibility:
         options.visibility === 'unlisted' ? 'unlisted' : 'public',
       convexUrl: options.convexUrl,
-      authToken: options.authToken,
       changelog: options.changelog,
     });
   });
