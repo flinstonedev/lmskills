@@ -112,8 +112,6 @@ Optional settings:
 - `--no-set-default`
 - `--api-url <url>` (override API base URL)
 
-Non-interactive environments can set `LMSKILLS_AUTH_TOKEN` directly.
-
 ### List Local Published Versions
 
 ```bash

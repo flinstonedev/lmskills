@@ -285,11 +285,11 @@ function resolveRemotePublishConfig(
       savedConfig.apiUrl ??
       getDefaultApiUrl()
   );
-  const authToken = process.env.LMSKILLS_AUTH_TOKEN ?? savedConfig.authToken;
+  const authToken = savedConfig.authToken;
 
   if (!authToken) {
     throw new Error(
-      'Remote publish requested but auth token is missing. Run "lmskills login" or set LMSKILLS_AUTH_TOKEN.'
+      'Remote publish requested but auth token is missing. Run "lmskills login".'
     );
   }
 

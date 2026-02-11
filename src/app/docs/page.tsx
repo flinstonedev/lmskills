@@ -329,8 +329,7 @@ npx lmskills-cli publish --remote --set-default
             and remote publish sends it as a Bearer token to Clerk-protected LMSkills API endpoints.
           </p>
           <p className="text-muted-foreground mb-6">
-            For non-interactive environments (for example CI), you can still provide{" "}
-            <code>LMSKILLS_AUTH_TOKEN</code> directly.
+            The CLI uses the stored authenticated session from <code>lmskills login</code>.
           </p>
 
           <h3 className="text-xl font-semibold mb-3 mt-6">4. Verification and Default Version</h3>
@@ -360,7 +359,6 @@ npx lmskills-cli publish --remote --set-default
           </p>
           <ul className="space-y-2 text-muted-foreground mb-6">
             <li><code>LMSKILLS_API_URL</code>: LMSkills base URL (defaults to <code>https://www.lmskills.ai</code>)</li>
-            <li><code>LMSKILLS_AUTH_TOKEN</code>: optional auth token override (otherwise the token saved by <code>lmskills login</code> is used)</li>
             <li><code>NEXT_PUBLIC_APP_URL</code>: fallback base URL if <code>LMSKILLS_API_URL</code>{" "}
               is not set</li>
             <li><code>LMSKILLS_REMOTE_PUBLISH=true</code>: optional default to enable remote mode without passing <code>--remote</code></li>
@@ -403,8 +401,8 @@ npx lmskills-cli publish --remote --set-default
             <div>
               <h3 className="text-lg font-semibold mb-2">Remote publish fails with missing auth token</h3>
               <p className="text-muted-foreground">
-                Run <code>lmskills login</code> first, or set{" "}
-                <code>LMSKILLS_AUTH_TOKEN</code> manually for non-interactive environments.
+                Run <code>lmskills login</code> first, then run{" "}
+                <code>publish --remote</code> again.
               </p>
             </div>
 
