@@ -3,8 +3,7 @@ import * as path from 'path';
 import * as crypto from 'crypto';
 import chalk from 'chalk';
 import ora from 'ora';
-import fetch from 'node-fetch';
-import { ConvexHttpClient } from 'convex/browser';
+import fetch, { Response } from 'node-fetch';
 import {
   SkillManifest,
   VersionsRegistry,
@@ -32,21 +31,17 @@ export interface PublishOptions {
   remote?: boolean;
   setDefault?: boolean;
   visibility?: HostedVisibility;
-  convexUrl?: string;
+  apiUrl?: string;
+  convexUrl?: string; // Deprecated alias for --api-url
   changelog?: string;
 }
 
 interface RemotePublishConfig {
-  convexUrl: string;
+  apiUrl: string;
   authToken: string;
   setDefault: boolean;
   visibility: HostedVisibility;
   changelog?: string;
-}
-
-interface HostedSkillLookup {
-  _id: string;
-  fullName?: string;
 }
 
 interface RemotePublishResult {
@@ -56,11 +51,6 @@ interface RemotePublishResult {
   storageId: string;
   defaultSet: boolean;
   defaultSetMessage?: string;
-}
-
-interface ConvexStringClient {
-  query(name: string, args: Record<string, unknown>): Promise<unknown>;
-  mutation(name: string, args: Record<string, unknown>): Promise<unknown>;
 }
 
 function readManifest(manifestPath: string): SkillManifest {
@@ -285,20 +275,18 @@ function resolveRemotePublishConfig(
     return null;
   }
 
-  const convexUrl =
-    options.convexUrl ??
-    process.env.LMSKILLS_CONVEX_URL ??
-    process.env.NEXT_PUBLIC_CONVEX_URL;
+  const apiUrl = normalizeBaseUrl(
+    options.apiUrl ??
+      options.convexUrl ??
+      process.env.LMSKILLS_API_URL ??
+      process.env.NEXT_PUBLIC_APP_URL ??
+      'https://www.lmskills.ai'
+  );
   const authToken = process.env.LMSKILLS_AUTH_TOKEN;
 
-  if (!convexUrl) {
-    throw new Error(
-      'Remote publish requested but Convex URL is missing. Set LMSKILLS_CONVEX_URL or pass --convex-url.'
-    );
-  }
   if (!authToken) {
     throw new Error(
-      'Remote publish requested but auth token is missing. Set LMSKILLS_AUTH_TOKEN.'
+      'Remote publish requested but auth token is missing. Set LMSKILLS_AUTH_TOKEN (Clerk session token).'
     );
   }
 
@@ -308,7 +296,7 @@ function resolveRemotePublishConfig(
   }
 
   return {
-    convexUrl,
+    apiUrl,
     authToken,
     setDefault: options.setDefault ?? true,
     visibility,
@@ -316,32 +304,42 @@ function resolveRemotePublishConfig(
   };
 }
 
-async function findOrCreateHostedSkill(
-  convex: ConvexHttpClient,
-  manifest: SkillManifest,
-  visibility: HostedVisibility
-): Promise<HostedSkillLookup> {
-  const client = convex as unknown as ConvexStringClient;
-  const lookup = (await client.query('skills:getMyHostedSkillBySlug', {
-    slug: manifest.slug,
-  })) as HostedSkillLookup | null;
+function normalizeBaseUrl(value: string): string {
+  return value.replace(/\/+$/, '');
+}
 
-  if (lookup) {
-    return lookup;
+async function parseApiError(response: Response): Promise<string> {
+  try {
+    const payload = (await response.json()) as { error?: string };
+    if (payload.error) {
+      return payload.error;
+    }
+  } catch {
+    // Ignore JSON parsing errors and fallback to status text
+  }
+  return response.statusText || 'Unknown API error';
+}
+
+async function requestJson<T>(
+  url: string,
+  authToken: string,
+  payload: Record<string, unknown>
+): Promise<T> {
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${authToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const message = await parseApiError(response);
+    throw new Error(`Remote API request failed (${response.status}): ${message}`);
   }
 
-  const createdSkillId = (await client.mutation('skills:createHostedSkill', {
-    name: manifest.name,
-    slug: manifest.slug,
-    description: manifest.description,
-    visibility,
-  })) as string;
-
-  const created = (await client.query('skills:getMyHostedSkillBySlug', {
-    slug: manifest.slug,
-  })) as HostedSkillLookup | null;
-
-  return created ?? { _id: createdSkillId };
+  return (await response.json()) as T;
 }
 
 async function publishRemoteHostedVersion(args: {
@@ -352,20 +350,17 @@ async function publishRemoteHostedVersion(args: {
   sizeBytes: number;
 }): Promise<RemotePublishResult> {
   const { remote, manifest, tarball, hash, sizeBytes } = args;
-  const convex = new ConvexHttpClient(remote.convexUrl);
-  convex.setAuth(remote.authToken);
-  const client = convex as unknown as ConvexStringClient;
-
-  const hostedSkill = await findOrCreateHostedSkill(
-    convex,
-    manifest,
-    remote.visibility
-  );
-
-  const upload = (await client.mutation('skills:generateHostedSkillUploadUrl', {
-    skillId: hostedSkill._id,
+  const upload = await requestJson<{
+    skillId: string;
+    skillFullName?: string;
+    uploadUrl: string;
+  }>(`${remote.apiUrl}/api/cli/hosted/upload`, remote.authToken, {
+    name: manifest.name,
+    slug: manifest.slug,
+    description: manifest.description,
+    visibility: remote.visibility,
     version: manifest.version,
-  })) as { uploadUrl: string };
+  });
 
   const uploadResponse = await fetch(upload.uploadUrl, {
     method: 'POST',
@@ -384,39 +379,29 @@ async function publishRemoteHostedVersion(args: {
     throw new Error('Artifact upload did not return a storageId');
   }
 
-  const versionId = (await client.mutation('skills:publishSkillVersion', {
-    skillId: hostedSkill._id,
+  const publishResult = await requestJson<{
+    skillId: string;
+    versionId: string;
+    defaultSet: boolean;
+    defaultSetMessage?: string;
+  }>(`${remote.apiUrl}/api/cli/hosted/publish`, remote.authToken, {
+    skillId: upload.skillId,
     version: manifest.version,
     changelog: remote.changelog,
     storageKey: payload.storageId,
     contentHash: hash,
     sizeBytes,
     manifest: JSON.stringify(manifest),
-  })) as string;
-
-  let defaultSet = false;
-  let defaultSetMessage: string | undefined;
-
-  if (remote.setDefault) {
-    try {
-      await client.mutation('skills:setDefaultVersion', {
-        skillId: hostedSkill._id,
-        versionId,
-      });
-      defaultSet = true;
-    } catch (error) {
-      defaultSetMessage =
-        error instanceof Error ? error.message : 'Failed to set default version';
-    }
-  }
+    setDefault: remote.setDefault,
+  });
 
   return {
-    skillId: hostedSkill._id,
-    skillFullName: hostedSkill.fullName,
-    versionId,
+    skillId: publishResult.skillId,
+    skillFullName: upload.skillFullName,
+    versionId: publishResult.versionId,
     storageId: payload.storageId,
-    defaultSet,
-    defaultSetMessage,
+    defaultSet: publishResult.defaultSet,
+    defaultSetMessage: publishResult.defaultSetMessage,
   };
 }
 
@@ -487,7 +472,7 @@ export async function publishSkill(options: PublishOptions = {}): Promise<void> 
 
     const remoteConfig = resolveRemotePublishConfig(options);
     if (remoteConfig) {
-      spinner.start('Publishing hosted version to Convex...');
+      spinner.start('Publishing hosted version via LMSkills API...');
       const remoteResult = await publishRemoteHostedVersion({
         remote: remoteConfig,
         manifest,

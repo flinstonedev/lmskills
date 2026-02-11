@@ -98,14 +98,15 @@ lmskills publish --remote --set-default
 
 Remote publish requires:
 
-- `LMSKILLS_CONVEX_URL` (or `--convex-url`)
-- `LMSKILLS_AUTH_TOKEN`
+- `LMSKILLS_API_URL` (optional, defaults to `https://www.lmskills.ai`)
+- `LMSKILLS_AUTH_TOKEN` (Bearer token for Clerk-protected LMSkills API requests)
 
 Optional settings:
 
 - `--visibility public|unlisted` (used if hosted skill must be auto-created)
 - `--changelog \"...\"`
 - `--no-set-default`
+- `--api-url <url>` (override API base URL)
 
 ### List Local Published Versions
 

@@ -311,20 +311,22 @@ npx lmskills-cli publish`}
           </p>
           <div className="bg-muted p-4 rounded-lg font-mono text-sm mb-6">
             <pre className="whitespace-pre-wrap">
-{`export LMSKILLS_CONVEX_URL=https://<your-deployment>.convex.cloud
-export LMSKILLS_AUTH_TOKEN=<your-auth-token>
+{`export LMSKILLS_API_URL=https://www.lmskills.ai
+export LMSKILLS_AUTH_TOKEN=<your-clerk-session-token>
 
 npx lmskills-cli publish --remote --set-default
 
 # Optional flags:
 # --no-set-default
 # --visibility public|unlisted
+# --api-url https://staging.lmskills.ai
 # --changelog "What changed"`}
             </pre>
           </div>
           <p className="text-muted-foreground mb-6">
-            <strong>Important:</strong> Auth is read from <code>LMSKILLS_AUTH_TOKEN</code>. There
-            is no <code>--auth-token</code> CLI flag.
+            <strong>Important:</strong> Auth is read from <code>LMSKILLS_AUTH_TOKEN</code> (Bearer
+            token) and sent to Clerk-protected LMSkills API endpoints. There is no{" "}
+            <code>--auth-token</code> CLI flag.
           </p>
 
           <h3 className="text-xl font-semibold mb-3 mt-6">4. Verification and Default Version</h3>
@@ -353,9 +355,9 @@ npx lmskills-cli publish --remote --set-default
             Remote publishing uses these environment variables:
           </p>
           <ul className="space-y-2 text-muted-foreground mb-6">
-            <li><code>LMSKILLS_CONVEX_URL</code>: Convex deployment URL used by the CLI</li>
-            <li><code>LMSKILLS_AUTH_TOKEN</code>: auth token required for remote publish actions</li>
-            <li><code>NEXT_PUBLIC_CONVEX_URL</code>: fallback URL if <code>LMSKILLS_CONVEX_URL</code>{" "}
+            <li><code>LMSKILLS_API_URL</code>: LMSkills base URL (defaults to <code>https://www.lmskills.ai</code>)</li>
+            <li><code>LMSKILLS_AUTH_TOKEN</code>: auth token required for Clerk-protected remote publish API requests</li>
+            <li><code>NEXT_PUBLIC_APP_URL</code>: fallback base URL if <code>LMSKILLS_API_URL</code>{" "}
               is not set</li>
             <li><code>LMSKILLS_REMOTE_PUBLISH=true</code>: optional default to enable remote mode without passing <code>--remote</code></li>
           </ul>
@@ -383,6 +385,7 @@ npx lmskills-cli publish --remote --set-default
             <li>Public hosted skills expose only <code>verified</code> versions to non-owners</li>
             <li>Unlisted hosted skills are visible only to the owner</li>
             <li>Listings and search include public skills only</li>
+            <li>CLI remote publish uses Clerk-protected endpoints at <code>/api/cli/hosted/upload</code> and <code>/api/cli/hosted/publish</code></li>
           </ul>
         </section>
 
