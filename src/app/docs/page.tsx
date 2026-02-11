@@ -329,7 +329,8 @@ npx lmskills-cli publish --remote --set-default
             and remote publish sends it as a Bearer token to Clerk-protected LMSkills API endpoints.
           </p>
           <p className="text-muted-foreground mb-6">
-            The CLI uses the stored authenticated session from <code>lmskills login</code>.
+            By default, login auto-detects a local dev server at <code>http://127.0.0.1:3000</code>{" "}
+            or <code>http://localhost:3000</code> before falling back to production.
           </p>
 
           <h3 className="text-xl font-semibold mb-3 mt-6">4. Verification and Default Version</h3>

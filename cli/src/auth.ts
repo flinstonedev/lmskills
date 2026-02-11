@@ -5,8 +5,10 @@ import * as path from 'path';
 import * as crypto from 'crypto';
 import { spawn } from 'child_process';
 import chalk from 'chalk';
+import fetch from 'node-fetch';
 
 const DEFAULT_API_URL = 'https://www.lmskills.ai';
+const LOCAL_API_URLS = ['http://127.0.0.1:3000', 'http://localhost:3000'];
 const CLI_CONFIG_DIR = '.lmskills';
 const CLI_CONFIG_FILE = 'config.json';
 const LOGIN_TIMEOUT_MS = 120000;
@@ -35,6 +37,11 @@ export function getDefaultApiUrl(): string {
       process.env.NEXT_PUBLIC_APP_URL ??
       DEFAULT_API_URL
   );
+}
+
+function getEnvApiUrl(): string | null {
+  const value = process.env.LMSKILLS_API_URL ?? process.env.NEXT_PUBLIC_APP_URL;
+  return value ? normalizeBaseUrl(value) : null;
 }
 
 export function readCliConfig(): CliAuthConfig {
@@ -172,11 +179,60 @@ async function waitForLoginCallback(
   });
 }
 
+async function canReachAuthStart(baseUrl: string): Promise<boolean> {
+  const probeUrl = `${normalizeBaseUrl(
+    baseUrl
+  )}/api/cli/auth/start?redirect_uri=${encodeURIComponent(
+    'http://127.0.0.1:1/callback'
+  )}&state=probe`;
+
+  try {
+    const response = await fetch(probeUrl, {
+      method: 'GET',
+      redirect: 'manual',
+      timeout: 1000,
+    });
+
+    return response.status !== 404;
+  } catch {
+    return false;
+  }
+}
+
+async function resolveApiUrlForLogin(
+  optionsApiUrl: string | undefined,
+  existingApiUrl: string | undefined
+): Promise<string> {
+  if (optionsApiUrl?.trim()) {
+    return normalizeBaseUrl(optionsApiUrl.trim());
+  }
+
+  if (existingApiUrl?.trim()) {
+    return normalizeBaseUrl(existingApiUrl.trim());
+  }
+
+  const envApiUrl = getEnvApiUrl();
+  if (envApiUrl) {
+    return envApiUrl;
+  }
+
+  const checks = await Promise.all(
+    LOCAL_API_URLS.map(async (candidate) => ({
+      candidate,
+      reachable: await canReachAuthStart(candidate),
+    }))
+  );
+  const local = checks.find((entry) => entry.reachable);
+  if (local) {
+    return normalizeBaseUrl(local.candidate);
+  }
+
+  return DEFAULT_API_URL;
+}
+
 export async function login(options: LoginOptions = {}): Promise<void> {
   const existing = readCliConfig();
-  const apiUrl = normalizeBaseUrl(
-    options.apiUrl ?? existing.apiUrl ?? getDefaultApiUrl()
-  );
+  const apiUrl = await resolveApiUrlForLogin(options.apiUrl, existing.apiUrl);
 
   const state = crypto.randomBytes(16).toString('hex');
 
