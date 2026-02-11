@@ -289,9 +289,9 @@ export const submitSkill = mutation({
 });
 
 /**
- * Create a hosted skill entry
+ * Create a repository skill entry
  */
-export const createHostedSkill = mutation({
+export const createRepository = mutation({
   args: {
     name: v.string(),
     slug: v.string(),
@@ -312,7 +312,7 @@ export const createHostedSkill = mutation({
     }
 
     await enforceRateLimitWithDb(ctx, {
-      key: `user:${identity.subject}:createHostedSkill`,
+      key: `user:${identity.subject}:createRepository`,
       ...SUBMIT_RATE_LIMIT,
     });
 
@@ -341,7 +341,7 @@ export const createHostedSkill = mutation({
     const now = Date.now();
 
     const skillId = await ctx.db.insert("skills", {
-      source: "hosted",
+      source: "repository",
       handle: user.handle,
       slug: normalizedSlug,
       fullName,
@@ -358,9 +358,9 @@ export const createHostedSkill = mutation({
 });
 
 /**
- * Get one hosted skill for the current user by slug.
+ * Get one repository skill for the current user by slug.
  */
-export const getMyHostedSkillBySlug = query({
+export const getMyRepositoryBySlug = query({
   args: {
     slug: v.string(),
   },
@@ -386,7 +386,7 @@ export const getMyHostedSkillBySlug = query({
       .withIndex("by_full_name", (q) => q.eq("fullName", fullName))
       .first();
 
-    if (!skill || skill.ownerUserId !== user._id || skill.source !== "hosted") {
+    if (!skill || skill.ownerUserId !== user._id || skill.source !== "repository") {
       return null;
     }
 
@@ -404,9 +404,9 @@ export const getMyHostedSkillBySlug = query({
 });
 
 /**
- * List hosted skills and versions for the current user.
+ * List repository skills and versions for the current user.
  */
-export const getMyHostedSkills = query({
+export const getMyRepositories = query({
   args: {},
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -428,12 +428,12 @@ export const getMyHostedSkills = query({
       .withIndex("by_owner", (q) => q.eq("ownerUserId", user._id))
       .collect();
 
-    const hostedSkills = skills
-      .filter((skill) => skill.source === "hosted")
+    const repoSkills = skills
+      .filter((skill) => skill.source === "repository")
       .sort((left, right) => right.updatedAt - left.updatedAt);
 
     const records = await Promise.all(
-      hostedSkills.map(async (skill) => {
+      repoSkills.map(async (skill) => {
         const versions = await ctx.db
           .query("skillVersions")
           .withIndex("by_skill", (q) => q.eq("skillId", skill._id))
@@ -489,9 +489,9 @@ export const getMyHostedSkills = query({
 });
 
 /**
- * Generate an upload URL for a hosted skill artifact.
+ * Generate an upload URL for a repository skill artifact.
  */
-export const generateHostedSkillUploadUrl = mutation({
+export const generateRepositoryUploadUrl = mutation({
   args: {
     skillId: v.id("skills"),
     version: v.string(),
@@ -503,7 +503,7 @@ export const generateHostedSkillUploadUrl = mutation({
     }
 
     await enforceRateLimitWithDb(ctx, {
-      key: `user:${identity.subject}:generateHostedSkillUploadUrl`,
+      key: `user:${identity.subject}:generateRepositoryUploadUrl`,
       ...UPLOAD_RATE_LIMIT,
     });
 
@@ -523,8 +523,8 @@ export const generateHostedSkillUploadUrl = mutation({
     if (!skill) {
       throw new Error("Skill not found");
     }
-    if (skill.source !== "hosted") {
-      throw new Error("Only hosted skills can upload artifacts");
+    if (skill.source !== "repository") {
+      throw new Error("Only repository skills can upload artifacts");
     }
     if (skill.ownerUserId !== user._id) {
       throw new Error("Not authorized to upload for this skill");
@@ -607,8 +607,8 @@ export const publishSkillVersion = mutation({
       throw new Error("Not authorized to publish this skill");
     }
 
-    if (skill.source !== "hosted") {
-      throw new Error("Only hosted skills can publish versions");
+    if (skill.source !== "repository") {
+      throw new Error("Only repository skills can publish versions");
     }
 
     const existingVersion = await ctx.db
@@ -827,6 +827,131 @@ export const getSkillVersion = query({
 });
 
 /**
+ * Get a download URL for a skill version (requires authentication)
+ */
+export const getVersionDownloadUrl = query({
+  args: {
+    skillId: v.id("skills"),
+    version: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return null;
+    }
+
+    const skill = await ctx.db.get(args.skillId);
+    if (!skill || skill.source !== "repository") {
+      return null;
+    }
+
+    let versionDoc;
+    if (args.version) {
+      versionDoc = await ctx.db
+        .query("skillVersions")
+        .withIndex("by_skill_and_version", (q) =>
+          q.eq("skillId", args.skillId).eq("version", args.version!)
+        )
+        .first();
+    } else if (skill.defaultVersionId) {
+      versionDoc = await ctx.db.get(skill.defaultVersionId);
+    } else {
+      // Fall back to latest verified version
+      const versions = await ctx.db
+        .query("skillVersions")
+        .withIndex("by_skill", (q) => q.eq("skillId", args.skillId))
+        .collect();
+      const verified = versions
+        .filter((v) => v.status === "verified")
+        .sort((a, b) =>
+          b.version.localeCompare(a.version, undefined, {
+            numeric: true,
+            sensitivity: "base",
+          })
+        );
+      versionDoc = verified[0] ?? null;
+    }
+
+    if (!versionDoc || versionDoc.status !== "verified") {
+      return null;
+    }
+
+    const url = await ctx.storage.getUrl(
+      versionDoc.storageKey as Id<"_storage">
+    );
+
+    return {
+      url,
+      version: versionDoc.version,
+      sizeBytes: versionDoc.sizeBytes,
+      contentHash: versionDoc.contentHash,
+    };
+  },
+});
+
+/**
+ * Internal query to get version storage key for download (bypasses auth for API routes)
+ */
+export const getVersionStorageKey = internalQuery({
+  args: {
+    fullName: v.string(),
+    version: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const skill = await ctx.db
+      .query("skills")
+      .withIndex("by_full_name", (q) => q.eq("fullName", args.fullName))
+      .first();
+
+    if (!skill || skill.source !== "repository") {
+      return null;
+    }
+
+    let versionDoc;
+    if (args.version) {
+      versionDoc = await ctx.db
+        .query("skillVersions")
+        .withIndex("by_skill_and_version", (q) =>
+          q.eq("skillId", skill._id).eq("version", args.version!)
+        )
+        .first();
+    } else if (skill.defaultVersionId) {
+      versionDoc = await ctx.db.get(skill.defaultVersionId);
+    } else {
+      const versions = await ctx.db
+        .query("skillVersions")
+        .withIndex("by_skill", (q) => q.eq("skillId", skill._id))
+        .collect();
+      const verified = versions
+        .filter((v) => v.status === "verified")
+        .sort((a, b) =>
+          b.version.localeCompare(a.version, undefined, {
+            numeric: true,
+            sensitivity: "base",
+          })
+        );
+      versionDoc = verified[0] ?? null;
+    }
+
+    if (!versionDoc || versionDoc.status !== "verified") {
+      return null;
+    }
+
+    const url = await ctx.storage.getUrl(
+      versionDoc.storageKey as Id<"_storage">
+    );
+
+    return {
+      url,
+      storageKey: versionDoc.storageKey,
+      version: versionDoc.version,
+      sizeBytes: versionDoc.sizeBytes,
+      contentHash: versionDoc.contentHash,
+    };
+  },
+});
+
+/**
  * Get all skills (paginated) with optional search
  * - Only returns public skills (unlisted skills excluded from listings)
  */
@@ -926,13 +1051,22 @@ export const getSkill = query({
       return null;
     }
 
-    // Find the skill by owner and name
-    const skills = await ctx.db
+    // Find the skill by owner and name (try fullName index first, then fallback)
+    const fullName = `${owner.handle}/${args.name}`;
+    let skill = await ctx.db
       .query("skills")
-      .withIndex("by_owner", (q) => q.eq("ownerUserId", owner._id))
-      .collect();
+      .withIndex("by_full_name", (q) => q.eq("fullName", fullName))
+      .first();
 
-    const skill = skills.find((s) => s.name === args.name);
+    // Fallback: match by display name for backwards compatibility with GitHub skills
+    if (!skill) {
+      const skills = await ctx.db
+        .query("skills")
+        .withIndex("by_owner", (q) => q.eq("ownerUserId", owner._id))
+        .collect();
+
+      skill = skills.find((s) => s.name === args.name) ?? null;
+    }
 
     if (!skill) {
       return null;
@@ -1139,7 +1273,7 @@ export const deleteSkill = mutation({
     }
 
     // Delete related data first
-    // Delete skill verifications and versions (hosted skills)
+    // Delete skill verifications and versions (repository skills)
     const skillVersions = await ctx.db
       .query("skillVersions")
       .withIndex("by_skill", (q) => q.eq("skillId", args.skillId))
@@ -1199,9 +1333,9 @@ export const deleteSkill = mutation({
 });
 
 /**
- * Re-run verification for a hosted skill version (owner only).
+ * Re-run verification for a repository skill version (owner only).
  */
-export const reverifyHostedSkillVersion = mutation({
+export const reverifySkillVersion = mutation({
   args: {
     skillId: v.id("skills"),
     versionId: v.id("skillVersions"),
@@ -1213,7 +1347,7 @@ export const reverifyHostedSkillVersion = mutation({
     }
 
     await enforceRateLimitWithDb(ctx, {
-      key: `user:${identity.subject}:reverifyHostedSkillVersion`,
+      key: `user:${identity.subject}:reverifySkillVersion`,
       ...SUBMIT_RATE_LIMIT,
     });
 
@@ -1226,8 +1360,8 @@ export const reverifyHostedSkillVersion = mutation({
     }
 
     const skill = await ctx.db.get(args.skillId);
-    if (!skill || skill.source !== "hosted") {
-      throw new Error("Hosted skill not found");
+    if (!skill || skill.source !== "repository") {
+      throw new Error("Repository skill not found");
     }
     if (skill.ownerUserId !== user._id) {
       throw new Error("Not authorized to verify this skill");
@@ -1247,9 +1381,9 @@ export const reverifyHostedSkillVersion = mutation({
 });
 
 /**
- * Internal mutation that verifies pending hosted skill versions in batches.
+ * Internal mutation that verifies pending skill versions in batches.
  */
-export const runPendingHostedSkillVerifications = internalMutation({
+export const runPendingSkillVerifications = internalMutation({
   args: {
     limit: v.optional(v.number()),
   },
@@ -1344,7 +1478,7 @@ export const deleteSkillInternal = internalMutation({
     }
 
     // Delete related data first
-    // Delete skill verifications and versions (hosted skills)
+    // Delete skill verifications and versions (repository skills)
     const skillVersions = await ctx.db
       .query("skillVersions")
       .withIndex("by_skill", (q) => q.eq("skillId", args.skillId))
@@ -1400,5 +1534,41 @@ export const deleteSkillInternal = internalMutation({
     await ctx.db.delete(args.skillId);
 
     return { success: true };
+  },
+});
+
+/**
+ * Internal migration: backfill existing "hosted" skills to "repository" source.
+ */
+export const migrateHostedToRepository = internalMutation({
+  args: {
+    dryRun: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    logSecurityEvent("skills.migrate_hosted_to_repository", {
+      dryRun: args.dryRun ?? false,
+    });
+
+    const dryRun = args.dryRun ?? false;
+    const skills = await ctx.db.query("skills").collect();
+    let updated = 0;
+
+    for (const skill of skills) {
+      if ((skill.source as string) === "hosted") {
+        updated += 1;
+        if (!dryRun) {
+          await ctx.db.patch(skill._id, {
+            source: "repository",
+            updatedAt: Date.now(),
+          });
+        }
+      }
+    }
+
+    return {
+      scanned: skills.length,
+      updated,
+      dryRun,
+    };
   },
 });

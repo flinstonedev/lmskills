@@ -58,7 +58,7 @@ async function sha256Hex(file: File): Promise<string> {
 export default function DashboardPage() {
   const { user, isLoaded } = useUser();
   const me = useQuery(api.users.getCurrentUser);
-  const hostedSkills = useQuery(api.skills.getMyHostedSkills);
+  const repositories = useQuery(api.skills.getMyRepositories);
   const { results: skills, status, loadMore } = usePaginatedQuery(
     api.skills.getSkillsByOwner,
     me?.handle ? { ownerHandle: me.handle } : "skip",
@@ -66,14 +66,14 @@ export default function DashboardPage() {
   );
 
   const deleteSkill = useMutation(api.skills.deleteSkill);
-  const createHostedSkill = useMutation(api.skills.createHostedSkill);
-  const generateHostedSkillUploadUrl = useMutation(
-    api.skills.generateHostedSkillUploadUrl
+  const createRepository = useMutation(api.skills.createRepository);
+  const generateRepositoryUploadUrl = useMutation(
+    api.skills.generateRepositoryUploadUrl
   );
   const publishSkillVersion = useMutation(api.skills.publishSkillVersion);
   const setDefaultVersion = useMutation(api.skills.setDefaultVersion);
-  const reverifyHostedSkillVersion = useMutation(
-    api.skills.reverifyHostedSkillVersion
+  const reverifySkillVersion = useMutation(
+    api.skills.reverifySkillVersion
   );
 
   const [deletingSkillId, setDeletingSkillId] = useState<Id<"skills"> | null>(
@@ -83,6 +83,7 @@ export default function DashboardPage() {
 
   const [hostedName, setHostedName] = useState("");
   const [hostedSlug, setHostedSlug] = useState("");
+  const [hostedSlugManuallyEdited, setHostedSlugManuallyEdited] = useState(false);
   const [hostedDescription, setHostedDescription] = useState("");
   const [hostedVisibility, setHostedVisibility] = useState<"public" | "unlisted">(
     "public"
@@ -102,10 +103,27 @@ export default function DashboardPage() {
     Id<"skillVersions"> | null
   >(null);
 
-  const selectedHostedSkill = useMemo(
-    () => hostedSkills?.find((skill) => skill._id === selectedHostedSkillId),
-    [hostedSkills, selectedHostedSkillId]
+  const selectedRepository = useMemo(
+    () => repositories?.find((skill) => skill._id === selectedHostedSkillId),
+    [repositories, selectedHostedSkillId]
   );
+
+  const hasRepositories = repositories && repositories.length > 0;
+
+  function generateSlug(name: string): string {
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
+  }
+
+  function handleHostedNameChange(value: string) {
+    setHostedName(value);
+    if (!hostedSlugManuallyEdited) {
+      setHostedSlug(generateSlug(value));
+    }
+  }
 
   const handleDelete = (skillId: Id<"skills">) => {
     setDeletingSkillId(skillId);
@@ -137,7 +155,7 @@ export default function DashboardPage() {
 
     setIsCreatingHosted(true);
     try {
-      const skillId = await createHostedSkill({
+      const skillId = await createRepository({
         name: hostedName.trim(),
         slug: hostedSlug.trim(),
         description: hostedDescription.trim(),
@@ -145,11 +163,14 @@ export default function DashboardPage() {
       });
       setHostedName("");
       setHostedSlug("");
+      setHostedSlugManuallyEdited(false);
       setHostedDescription("");
       setSelectedHostedSkillId(skillId);
-      toast.success("Hosted skill created");
+      toast.success("Repository created", {
+        description: "You can now publish a version using the panel below.",
+      });
     } catch (error) {
-      toast.error("Failed to create hosted skill", {
+      toast.error("Failed to create repository", {
         description: formatErrorMessage(error),
       });
     } finally {
@@ -180,7 +201,7 @@ export default function DashboardPage() {
     setIsPublishingVersion(true);
     try {
       const hash = await sha256Hex(publishFile);
-      const { uploadUrl } = await generateHostedSkillUploadUrl({
+      const { uploadUrl } = await generateRepositoryUploadUrl({
         skillId: selectedHostedSkillId as Id<"skills">,
         version: publishVersion.trim(),
       });
@@ -219,9 +240,9 @@ export default function DashboardPage() {
             skillId: selectedHostedSkillId as Id<"skills">,
             versionId,
           });
-          toast.success("Hosted version published and set as default");
+          toast.success("Version published and set as default");
         } catch (error) {
-          toast.success("Hosted version published", {
+          toast.success("Version published", {
             description:
               "Version was uploaded but is not yet verified, so default version was not changed.",
           });
@@ -233,14 +254,14 @@ export default function DashboardPage() {
           }
         }
       } else {
-        toast.success("Hosted version published");
+        toast.success("Version published");
       }
 
       setPublishVersion("");
       setPublishChangelog("");
       setPublishFile(null);
     } catch (error) {
-      toast.error("Failed to publish hosted version", {
+      toast.error("Failed to publish version", {
         description: formatErrorMessage(error),
       });
     } finally {
@@ -271,7 +292,7 @@ export default function DashboardPage() {
   ) => {
     setReverifyingVersionId(versionId);
     try {
-      const result = await reverifyHostedSkillVersion({ skillId, versionId });
+      const result = await reverifySkillVersion({ skillId, versionId });
       toast.success("Verification completed", {
         description:
           result?.status === "verified"
@@ -335,12 +356,13 @@ export default function DashboardPage() {
         <h1 className="text-2xl sm:text-3xl font-bold">My Skills</h1>
       </div>
 
+      <h2 className="text-lg font-semibold mb-4">Repositories</h2>
       <div className="grid gap-6 lg:grid-cols-2 mb-8">
         <Card>
           <CardHeader>
-            <CardTitle>Create Hosted Skill</CardTitle>
+            <CardTitle>1. Create Repository</CardTitle>
             <CardDescription>
-              Create a hosted skill entry, then publish versioned artifacts.
+              Register a new skill repository, then publish versioned artifacts.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -349,7 +371,7 @@ export default function DashboardPage() {
               <Input
                 id="hosted-name"
                 value={hostedName}
-                onChange={(event) => setHostedName(event.target.value)}
+                onChange={(event) => handleHostedNameChange(event.target.value)}
                 placeholder="Weather Skill"
                 disabled={isCreatingHosted}
               />
@@ -359,10 +381,16 @@ export default function DashboardPage() {
               <Input
                 id="hosted-slug"
                 value={hostedSlug}
-                onChange={(event) => setHostedSlug(event.target.value)}
-                placeholder="weather"
+                onChange={(event) => {
+                  setHostedSlug(event.target.value);
+                  setHostedSlugManuallyEdited(true);
+                }}
+                placeholder="weather-skill"
                 disabled={isCreatingHosted}
               />
+              <p className="text-xs text-muted-foreground">
+                URL-safe identifier. Auto-generated from name.
+              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="hosted-description">Description</Label>
@@ -396,7 +424,7 @@ export default function DashboardPage() {
                   Creating
                 </>
               ) : (
-                "Create Hosted Skill"
+                "Create Repository"
               )}
             </Button>
           </CardContent>
@@ -404,29 +432,37 @@ export default function DashboardPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Publish Hosted Version</CardTitle>
+            <CardTitle>2. Publish Version</CardTitle>
             <CardDescription>
               Upload a tar artifact, verify it, and optionally set it as default.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {!hasRepositories ? (
+              <p className="text-sm text-muted-foreground">
+                Create a repository first to publish a version.
+              </p>
+            ) : (
             <div className="space-y-2">
-              <Label htmlFor="publish-skill">Hosted skill</Label>
+              <Label htmlFor="publish-skill">Repository</Label>
               <select
                 id="publish-skill"
                 value={selectedHostedSkillId}
                 onChange={(event) => setSelectedHostedSkillId(event.target.value)}
                 className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
-                disabled={isPublishingVersion || !hostedSkills || hostedSkills.length === 0}
+                disabled={isPublishingVersion}
               >
-                <option value="">Select a hosted skill</option>
-                {hostedSkills?.map((skill) => (
+                <option value="">Select a repository</option>
+                {repositories?.map((skill) => (
                   <option key={skill._id} value={skill._id}>
                     {skill.fullName}
                   </option>
                 ))}
               </select>
             </div>
+            )}
+            {hasRepositories && (
+            <>
             <div className="space-y-2">
               <Label htmlFor="publish-version">Version</Label>
               <Input
@@ -470,7 +506,7 @@ export default function DashboardPage() {
             </label>
             <Button
               onClick={handlePublishHostedVersion}
-              disabled={isPublishingVersion || !selectedHostedSkill}
+              disabled={isPublishingVersion || !selectedRepository}
             >
               {isPublishingVersion ? (
                 <>
@@ -487,23 +523,30 @@ export default function DashboardPage() {
             <p className="text-xs text-muted-foreground">
               Generate a tar artifact with <code>lmskills publish</code>, then upload it here.
             </p>
+            </>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      {hostedSkills && hostedSkills.length > 0 && (
+      {hasRepositories && (
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle>Hosted Skills</CardTitle>
+            <CardTitle>Repositories</CardTitle>
             <CardDescription>
               Review version status, set defaults, and re-run verification.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {hostedSkills.map((skill) => (
+            {repositories.map((skill) => (
               <div key={skill._id} className="rounded-lg border p-4">
                 <div className="flex flex-wrap items-center gap-2 mb-3">
-                  <h3 className="font-semibold">{skill.fullName}</h3>
+                  <Link
+                    href={`/skills/${me?.handle}/${skill.slug}`}
+                    className="font-semibold hover:underline"
+                  >
+                    {skill.fullName}
+                  </Link>
                   <Badge variant="secondary">{skill.visibility}</Badge>
                   <span className="text-xs text-muted-foreground">
                     Updated {new Date(skill.updatedAt).toLocaleDateString()}
@@ -599,6 +642,7 @@ export default function DashboardPage() {
         </Card>
       )}
 
+      <h2 className="text-lg font-semibold mb-4">All Skills</h2>
       {status === "LoadingFirstPage" ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3].map((i) => (
@@ -638,7 +682,7 @@ export default function DashboardPage() {
                 <CardHeader>
                   <CardTitle className="flex items-start justify-between gap-2">
                     <Link
-                      href={`/skills/${skill.owner?.handle}/${skill.name}`}
+                      href={`/skills/${skill.owner?.handle}/${encodeURIComponent(skill.slug ?? skill.name)}`}
                       className="line-clamp-2 hover:underline"
                     >
                       {skill.name}

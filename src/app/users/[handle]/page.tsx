@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Star, Calendar } from "lucide-react";
+import { Star, Calendar, Github, Package } from "lucide-react";
 import Link from "next/link";
 import { useUser } from "@clerk/nextjs";
 
@@ -139,7 +139,7 @@ export default function UserProfilePage({
                 return (
                   <Link
                     key={skill._id}
-                    href={`/skills/${skill.owner?.handle}/${skill.name}`}
+                    href={`/skills/${skill.owner?.handle}/${encodeURIComponent(skill.slug ?? skill.name)}`}
                   >
                     <Card className="h-full bg-[var(--surface-2)] backdrop-blur border-border/50 hover:shadow-lg hover:scale-[1.02] transition-all cursor-pointer">
                       <CardHeader>
@@ -159,6 +159,19 @@ export default function UserProfilePage({
                         </CardDescription>
                       </CardHeader>
                       <CardContent className="space-y-4">
+                        {/* Source badge */}
+                        {skill.source === "repository" ? (
+                          <Badge variant="secondary" className="text-xs">
+                            <Package className="mr-1 h-3 w-3" />
+                            Repository
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary" className="text-xs">
+                            <Github className="mr-1 h-3 w-3" />
+                            GitHub
+                          </Badge>
+                        )}
+
                         {/* Metadata */}
                         <div className="flex items-center justify-between text-xs text-muted-foreground">
                           <div className="flex items-center gap-1">

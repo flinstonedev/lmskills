@@ -10,11 +10,11 @@ crons.interval(
   internal.github.cleanupBrokenSkills
 );
 
-// Continuously process hosted skill version verification queue.
+// Continuously process skill version verification queue.
 crons.interval(
-  "verify hosted skill versions",
+  "verify skill versions",
   { minutes: 5 },
-  internal.skills.runPendingHostedSkillVerifications,
+  internal.skills.runPendingSkillVerifications,
   { limit: 25 }
 );
 

@@ -14,10 +14,11 @@ export async function GET(
     // Create Convex client
     const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
-    // Fetch skill from Convex
+    // Fetch skill from Convex (name param may be a slug or display name)
+    const decodedName = decodeURIComponent(name);
     const skill = await convex.query(api.skills.getSkill, {
       owner,
-      name,
+      name: decodedName,
     });
 
     if (!skill) {
@@ -38,8 +39,8 @@ export async function GET(
         return NextResponse.json(
           {
             error:
-              skill.source === "hosted"
-                ? "Hosted skills expose versioned artifacts; markdown redirect is only available for GitHub-backed skills"
+              skill.source === "repository"
+                ? "Repository skills expose versioned artifacts; markdown redirect is only available for GitHub-backed skills"
                 : "Skill content is not hosted on GitHub",
           },
           { status: 406 }

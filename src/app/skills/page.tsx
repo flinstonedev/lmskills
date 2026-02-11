@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Star, Calendar, Plus, Loader2 } from "lucide-react";
+import { Search, Star, Calendar, Plus, Loader2, Github, Package } from "lucide-react";
 import Link from "next/link";
 
 export default function SkillsPage() {
@@ -42,7 +42,7 @@ export default function SkillsPage() {
           <Button variant="gradient" asChild>
             <Link href="/skills/submit">
               <Plus className="mr-2 h-4 w-4" />
-              Submit Skill
+              Create Repository
             </Link>
           </Button>
         </div>
@@ -99,7 +99,7 @@ export default function SkillsPage() {
               <Button variant="gradient" asChild>
                 <Link href="/skills/submit">
                   <Plus className="mr-2 h-4 w-4" />
-                  Submit Skill
+                  Create Repository
                 </Link>
               </Button>
             )}
@@ -120,7 +120,7 @@ export default function SkillsPage() {
             return (
               <Link
                 key={skill._id}
-                href={`/skills/${skill.owner?.handle}/${skill.name}`}
+                href={`/skills/${skill.owner?.handle}/${encodeURIComponent(skill.slug ?? skill.name)}`}
               >
                 <Card className="h-full bg-[var(--surface-2)] backdrop-blur border-border/50 hover:shadow-lg hover:scale-[1.02] transition-all cursor-pointer">
                   <CardHeader>
@@ -140,6 +140,19 @@ export default function SkillsPage() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
+                    {/* Source badge */}
+                    {skill.source === "repository" ? (
+                      <Badge variant="secondary" className="text-xs">
+                        <Package className="mr-1 h-3 w-3" />
+                        Repository
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="text-xs">
+                        <Github className="mr-1 h-3 w-3" />
+                        GitHub
+                      </Badge>
+                    )}
+
                     {/* Owner */}
                     {skill.owner && (
                       <div className="flex items-center gap-2">

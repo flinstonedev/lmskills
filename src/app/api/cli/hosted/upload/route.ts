@@ -4,14 +4,17 @@ import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 
-type HostedVisibility = "public" | "unlisted";
+type HostedVisibility = "public";
 
 function asString(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
-function asVisibility(value: unknown): HostedVisibility {
-  return value === "unlisted" ? "unlisted" : "public";
+function asVisibility(value: unknown): HostedVisibility | null {
+  if (value === undefined || value === null || value === "public") {
+    return "public";
+  }
+  return null;
 }
 
 function errorResponse(status: number, error: string) {
@@ -62,22 +65,25 @@ export async function POST(request: NextRequest) {
         "Missing required fields: name, slug, description, version"
       );
     }
+    if (!visibility) {
+      return errorResponse(400, 'Visibility must be "public"');
+    }
 
     const convex = new ConvexHttpClient(convexUrl);
     convex.setAuth(convexToken);
 
-    const lookup = await convex.query(api.skills.getMyHostedSkillBySlug, { slug });
+    const lookup = await convex.query(api.skills.getMyRepositoryBySlug, { slug });
 
     const skillId: Id<"skills"> = lookup?._id
       ? lookup._id
-      : await convex.mutation(api.skills.createHostedSkill, {
+      : await convex.mutation(api.skills.createRepository, {
           name,
           slug,
           description,
           visibility,
         });
 
-    const upload = await convex.mutation(api.skills.generateHostedSkillUploadUrl, {
+    const upload = await convex.mutation(api.skills.generateRepositoryUploadUrl, {
       skillId,
       version,
     });

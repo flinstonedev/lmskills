@@ -2,15 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
-import { Id } from "@/convex/_generated/dataModel";
 
 function asString(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
-}
-
-function asOptionalString(value: unknown): string | undefined {
-  const normalized = asString(value);
-  return normalized.length > 0 ? normalized : undefined;
 }
 
 function errorResponse(status: number, error: string) {
@@ -49,63 +43,34 @@ export async function POST(request: NextRequest) {
     }
 
     const body = (await request.json()) as Record<string, unknown>;
-    const skillId = asString(body.skillId) as Id<"skills">;
-    const version = asString(body.version);
-    const storageKey = asString(body.storageKey);
-    const contentHash = asString(body.contentHash);
-    const manifest = asOptionalString(body.manifest);
-    const changelog = asOptionalString(body.changelog);
-    const rawSize = body.sizeBytes;
-    const sizeBytes = typeof rawSize === "number" ? rawSize : Number(rawSize);
-    const setDefault = body.setDefault !== false;
+    const name = asString(body.name);
+    const slug = asString(body.slug);
+    const description = asString(body.description);
 
-    if (
-      !skillId ||
-      !version ||
-      !storageKey ||
-      !contentHash ||
-      !Number.isFinite(sizeBytes) ||
-      sizeBytes <= 0
-    ) {
+    if (!name || !slug || !description) {
       return errorResponse(
         400,
-        "Missing required fields: skillId, version, storageKey, contentHash, sizeBytes"
+        "Missing required fields: name, slug, description"
       );
     }
 
     const convex = new ConvexHttpClient(convexUrl);
     convex.setAuth(convexToken);
 
-    const versionId = await convex.mutation(api.skills.publishSkillVersion, {
-      skillId,
-      version,
-      changelog,
-      storageKey,
-      contentHash,
-      sizeBytes,
-      manifest,
+    const skillId = await convex.mutation(api.skills.createRepository, {
+      name,
+      slug,
+      description,
+      visibility: "public",
     });
 
-    let defaultSet = false;
-    let defaultSetMessage: string | undefined;
-
-    if (setDefault) {
-      try {
-        await convex.mutation(api.skills.setDefaultVersion, {
-          skillId,
-          versionId,
-        });
-        defaultSet = true;
-      } catch (error) {
-        defaultSetMessage = parseErrorMessage(error);
-      }
-    }
+    const skill = await convex.query(api.skills.getMyRepositoryBySlug, {
+      slug,
+    });
 
     return NextResponse.json({
-      skillId,
-      versionId,
-      defaultSet,
-      defaultSetMessage,
+      repositoryId: skillId,
+      fullName: skill?.fullName ?? `${slug}`,
     });
   } catch (error) {
     return errorResponse(500, parseErrorMessage(error));

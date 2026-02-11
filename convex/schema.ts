@@ -25,7 +25,7 @@ export default defineSchema({
 
   // Skills table - metadata only, no content stored for security
   skills: defineTable({
-    source: v.optional(v.union(v.literal("github"), v.literal("hosted"))),
+    source: v.optional(v.union(v.literal("github"), v.literal("repository"))),
     handle: v.optional(v.string()), // Owner handle
     slug: v.optional(v.string()), // Skill slug
     fullName: v.optional(v.string()), // handle/slug

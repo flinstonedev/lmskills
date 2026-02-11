@@ -3,19 +3,23 @@
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useParams } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { useAuth } from "@clerk/nextjs";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardHeading } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ExternalLink, Star, Github, Calendar, Scale, Check, X, AlertCircle, Terminal } from "lucide-react";
+import { ExternalLink, Star, Github, Calendar, Scale, Check, X, AlertCircle, Terminal, Package, Lock, Download } from "lucide-react";
+import { SignInButton, SignUpButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { getLicenseInfo } from "@/lib/licenses";
+import { cn } from "@/lib/utils";
 
 export default function SkillDetailPage() {
   const params = useParams();
   const owner = params.owner as string;
   const name = params.name as string;
+  const { isSignedIn } = useAuth();
 
   const skill = useQuery(api.skills.getSkill, { owner, name });
   const skillWithVersions = useQuery(
@@ -74,6 +78,7 @@ export default function SkillDetailPage() {
   });
 
   const licenseInfo = getLicenseInfo(skill.license);
+  const isRepository = skill.source === "repository";
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -81,9 +86,22 @@ export default function SkillDetailPage() {
       <div className="mb-8">
         <div className="flex flex-col sm:flex-row items-start justify-between gap-4 mb-4">
           <div className="flex-1">
-            <h1 className="text-2xl sm:text-3xl font-bold mb-3 leading-tight">
-              {skill.name}
-            </h1>
+            <div className="flex items-center gap-2 mb-3">
+              <h1 className="text-2xl sm:text-3xl font-bold leading-tight">
+                {skill.name}
+              </h1>
+              {isRepository ? (
+                <Badge variant="secondary" className="text-xs">
+                  <Package className="mr-1 h-3 w-3" />
+                  Repository
+                </Badge>
+              ) : (
+                <Badge variant="secondary" className="text-xs">
+                  <Github className="mr-1 h-3 w-3" />
+                  GitHub
+                </Badge>
+              )}
+            </div>
             <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-4">
               {skill.description}
             </p>
@@ -139,6 +157,7 @@ export default function SkillDetailPage() {
         </div>
       </div>
 
+      {/* GitHub skill content */}
       {skill.repoUrl && (
         <>
           {/* View on GitHub Card */}
@@ -195,56 +214,129 @@ export default function SkillDetailPage() {
         </>
       )}
 
-      {skill.source === "hosted" && (
-        <Card className="bg-[var(--surface-2)] backdrop-blur border-border/50 mb-8">
-          <CardHeader>
-            <CardHeading level={2} className="text-xl">
-              Hosted Versions
-            </CardHeading>
-            <CardDescription className="text-sm">
-              {skill.visibility === "public"
-                ? "Showing verified public versions."
-                : "Showing versions visible to the owner."}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {skillWithVersions === undefined ? (
-              <Skeleton className="h-16 w-full" />
-            ) : !skillWithVersions || skillWithVersions.versions.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                No hosted versions are available yet.
+      {/* Repository skill content */}
+      {isRepository && (
+        <>
+          {/* CLI Install Card */}
+          <Card className="bg-[var(--surface-2)] backdrop-blur border-border/50 mb-8">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Terminal className="h-5 w-5 text-muted-foreground" />
+                <CardHeading level={2} className="text-xl">Install with CLI</CardHeading>
+              </div>
+              <CardDescription className="text-sm">
+                Use the LMSkills CLI to install this skill
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-muted rounded-md p-3 font-mono text-sm overflow-x-auto">
+                <code>npx lmskills-cli install {skill.fullName ?? `${owner}/${name}`}</code>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                Add <code className="px-1 py-0.5 bg-muted rounded">--global</code> to install globally
               </p>
-            ) : (
-              skillWithVersions.versions.map((version) => (
-                <div
-                  key={version._id}
-                  className="flex items-center justify-between gap-3 rounded border px-3 py-2"
-                >
-                  <div>
-                    <p className="font-mono text-sm">{version.version}</p>
-                    {version.publishedAt && (
-                      <p className="text-xs text-muted-foreground">
-                        Published{" "}
-                        {new Date(version.publishedAt).toLocaleDateString()}
-                      </p>
-                    )}
-                  </div>
-                  <Badge
-                    variant={
-                      version.status === "verified"
-                        ? "default"
-                        : version.status === "rejected"
-                          ? "destructive"
-                          : "secondary"
-                    }
+            </CardContent>
+          </Card>
+
+          {/* Version List */}
+          <Card className="bg-[var(--surface-2)] backdrop-blur border-border/50 mb-8">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Package className="h-5 w-5 text-muted-foreground" />
+                <CardHeading level={2} className="text-xl">Versions</CardHeading>
+              </div>
+              <CardDescription className="text-sm">
+                Published versions of this skill repository
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {skillWithVersions === undefined ? (
+                <Skeleton className="h-16 w-full" />
+              ) : !skillWithVersions || skillWithVersions.versions.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  No versions published yet.
+                </p>
+              ) : (
+                skillWithVersions.versions.map((version) => (
+                  <div
+                    key={version._id}
+                    className="flex items-center justify-between gap-3 rounded border px-3 py-2"
                   >
-                    {version.status}
-                  </Badge>
+                    <div>
+                      <p className="font-mono text-sm">{version.version}</p>
+                      {version.publishedAt && (
+                        <p className="text-xs text-muted-foreground">
+                          Published{" "}
+                          {new Date(version.publishedAt).toLocaleDateString()}
+                        </p>
+                      )}
+                      {version.changelog && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {version.changelog}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge
+                        variant={
+                          version.status === "verified"
+                            ? "default"
+                            : version.status === "rejected"
+                              ? "destructive"
+                              : "secondary"
+                        }
+                      >
+                        {version.status}
+                      </Badge>
+                      {isSignedIn && version.status === "verified" && (
+                        <Button variant="outline" size="sm" asChild>
+                          <a
+                            href={`/api/skills/${encodeURIComponent(owner)}/${encodeURIComponent(name)}/download?version=${encodeURIComponent(version.version)}`}
+                          >
+                            <Download className="mr-1 h-3 w-3" />
+                            Download
+                          </a>
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Content Gate - show sign-in prompt for unauthenticated users */}
+          {!isSignedIn && (
+            <Card className="bg-[var(--surface-2)] backdrop-blur border-border/50 mb-8">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Lock className="h-5 w-5 text-muted-foreground" />
+                  <CardHeading level={2} className="text-xl">Download Skill Content</CardHeading>
                 </div>
-              ))
-            )}
-          </CardContent>
-        </Card>
+                <CardDescription className="text-sm">
+                  Sign in to download skill versions
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Skill content is available to authenticated users. Sign in to download versions and access the full skill package.
+                </p>
+                <div className="flex gap-3">
+                  <SignUpButton mode="modal">
+                    <button className={cn(buttonVariants({ variant: "default" }))}>
+                      Sign Up
+                    </button>
+                  </SignUpButton>
+                  <SignInButton mode="modal">
+                    <button className={cn(buttonVariants({ variant: "outline" }))}>
+                      Sign In
+                    </button>
+                  </SignInButton>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </>
       )}
 
       {/* License Information */}

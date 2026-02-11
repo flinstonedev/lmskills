@@ -2,171 +2,121 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useMutation, useAction, useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, ExternalLink, Star, Check } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { SignInButton, SignUpButton, useAuth } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-interface RepoInfo {
-  owner: string;
-  name: string;
-  description: string;
-  license: string | null;
-  stars?: number;
-  url: string;
-  lastUpdated?: string;
+const COMMON_LICENSES = [
+  { value: "", label: "No license" },
+  { value: "MIT", label: "MIT" },
+  { value: "Apache-2.0", label: "Apache 2.0" },
+  { value: "GPL-3.0", label: "GPL 3.0" },
+  { value: "BSD-3-Clause", label: "BSD 3-Clause" },
+  { value: "ISC", label: "ISC" },
+  { value: "MPL-2.0", label: "MPL 2.0" },
+  { value: "Unlicense", label: "The Unlicense" },
+];
+
+function generateSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
 }
 
-export default function SubmitSkillPage() {
+function formatErrorMessage(error: unknown): string {
+  if (!(error instanceof Error)) {
+    return "Unknown error";
+  }
+  return error.message
+    .replace(/^Uncaught Error:\s*/, "")
+    .replace(/^Error:\s*/, "")
+    .replace(/^\[CONVEX.*?\]\s*/, "")
+    .trim();
+}
+
+export default function CreateRepositoryPage() {
   const router = useRouter();
   const { isLoaded: authLoaded, isSignedIn } = useAuth();
   const currentUser = useQuery(api.users.getCurrentUser);
 
-  const [repoUrl, setRepoUrl] = useState("");
-  const [repoInfo, setRepoInfo] = useState<RepoInfo | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [isFetching, setIsFetching] = useState(false);
+  const [name, setName] = useState("");
+  const [slug, setSlug] = useState("");
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
+  const [description, setDescription] = useState("");
+  const [license, setLicense] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const fetchRepoInfo = useAction(api.github.fetchRepoInfo);
-  const submitSkill = useMutation(api.skills.submitSkill);
+  const createRepository = useMutation(api.skills.createRepository);
 
-  const handleFetch = async () => {
-    if (!repoUrl.trim()) {
-      setError("Please enter a GitHub repository URL");
-      toast.error("URL Required", {
-        description: "Please enter a GitHub repository URL to continue.",
-      });
+  function handleNameChange(value: string) {
+    setName(value);
+    if (!slugManuallyEdited) {
+      setSlug(generateSlug(value));
+    }
+  }
+
+  const handleSubmit = async () => {
+    if (!name.trim()) {
+      toast.error("Name is required");
+      return;
+    }
+    if (!slug.trim()) {
+      toast.error("Slug is required");
+      return;
+    }
+    if (!description.trim()) {
+      toast.error("Description is required");
       return;
     }
 
-    setError(null);
-    setRepoInfo(null);
-    setIsFetching(true);
-
-    try {
-      const info = await fetchRepoInfo({ url: repoUrl });
-      setRepoInfo(info);
-      toast.success("Repository Validated", {
-        description: "SKILL.md found. Review the details and submit below.",
-      });
-    } catch (err: unknown) {
-      let errorMessage = "Failed to fetch repository information";
-
-      if (err instanceof Error) {
-        const fullMessage = err.message;
-        const match = fullMessage.match(/Uncaught Error: (.+?)(?:\n|$)/);
-        if (match && match[1]) {
-          errorMessage = match[1];
-        } else {
-          errorMessage = fullMessage.split('\n')[0];
-        }
-      } else if (typeof err === 'string') {
-        errorMessage = err;
-      }
-
-      errorMessage = errorMessage
-        .replace(/^Error:\s*/, '')
-        .replace(/^\[CONVEX.*?\]\s*/, '')
-        .trim();
-
-      if (errorMessage.includes("SKILL.md")) {
-        toast.error("SKILL.md Not Found", {
-          description: "The repository must contain a SKILL.md file. Please check the URL and try again.",
-        });
-      } else if (errorMessage.includes("Repository not found") || errorMessage.includes("404")) {
-        toast.error("Repository Not Found", {
-          description: "Could not find the repository at this URL. Please check the URL and try again.",
-        });
-      } else if (errorMessage.includes("Invalid")) {
-        toast.error("Invalid URL", {
-          description: errorMessage,
-        });
-      } else {
-        toast.error("Fetch Failed", {
-          description: errorMessage || "An unexpected error occurred. Please try again.",
-        });
-      }
-
-      setError(errorMessage);
-    } finally {
-      setIsFetching(false);
-    }
-  };
-
-  const handleSubmit = async () => {
-    if (!repoInfo) return;
-
-    setError(null);
     setIsSubmitting(true);
 
     try {
-      await submitSkill({
-        repoUrl: repoInfo.url,
-        name: repoInfo.name,
-        description: repoInfo.description,
-        license: repoInfo.license || undefined,
-        stars: repoInfo.stars ?? 0,
-        lastSyncedAt: Date.now(),
+      await createRepository({
+        name: name.trim(),
+        slug: slug.trim(),
+        description: description.trim(),
+        visibility: "public",
       });
 
       if (!currentUser?.handle) {
         throw new Error("User handle not found");
       }
 
-      toast.success("Skill submitted successfully!", {
-        description: "Redirecting to your skill page...",
+      toast.success("Repository created!", {
+        description: "Redirecting to your repository page...",
       });
 
-      const redirectUrl = `/skills/${currentUser.handle}/${repoInfo.name}`;
+      const redirectUrl = `/skills/${currentUser.handle}/${slug.trim()}`;
       await new Promise(resolve => setTimeout(resolve, 500));
       router.push(redirectUrl);
-    } catch (err: unknown) {
-      let errorMessage = "Failed to submit skill";
+    } catch (error) {
+      const errorMessage = formatErrorMessage(error);
 
-      if (err instanceof Error) {
-        const fullMessage = err.message;
-        const match = fullMessage.match(/Uncaught Error: (.+?)(?:\n|$)/);
-        if (match && match[1]) {
-          errorMessage = match[1];
-        } else {
-          errorMessage = fullMessage.split('\n')[0];
-        }
-      } else if (typeof err === 'string') {
-        errorMessage = err;
-      }
-
-      errorMessage = errorMessage
-        .replace(/^Error:\s*/, '')
-        .replace(/^\[CONVEX.*?\]\s*/, '')
-        .trim();
-
-      if (errorMessage.includes("already been submitted")) {
-        toast.error("Skill Already Exists", {
-          description: "This skill has already been submitted to LMSkills. Try submitting a different skill directory.",
+      if (errorMessage.includes("already exists")) {
+        toast.error("Repository Already Exists", {
+          description: "A repository with this slug already exists. Try a different name.",
         });
       } else if (errorMessage.includes("Not authenticated")) {
         toast.error("Authentication Required", {
-          description: "Please sign in to submit a skill.",
-        });
-      } else if (errorMessage.includes("User not found")) {
-        toast.error("User Error", {
-          description: "Your user profile could not be found. Please try signing out and back in.",
+          description: "Please sign in to create a repository.",
         });
       } else {
-        toast.error("Submission Failed", {
-          description: errorMessage || "An unexpected error occurred. Please try again.",
+        toast.error("Creation Failed", {
+          description: errorMessage || "An unexpected error occurred.",
         });
       }
 
-      setError(errorMessage);
       setIsSubmitting(false);
     }
   };
@@ -186,10 +136,10 @@ export default function SubmitSkillPage() {
       <div className="container mx-auto px-4 py-12 max-w-4xl">
         <div className="mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold mb-3 leading-tight">
-            Submit a Skill
+            Create a Repository
           </h1>
           <p className="text-base text-muted-foreground leading-relaxed">
-            Share your Claude skill. Provide a GitHub URL to a specific skill directory containing a SKILL.md file.
+            Create a skill repository to publish versioned skill packages.
           </p>
         </div>
 
@@ -197,7 +147,7 @@ export default function SubmitSkillPage() {
           <CardHeader>
             <CardTitle className="text-xl font-semibold">Authentication Required</CardTitle>
             <CardDescription className="text-sm">
-              You need to be signed in to submit a skill
+              You need to be signed in to create a repository
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -259,148 +209,106 @@ export default function SubmitSkillPage() {
     <div className="container mx-auto px-4 py-12 max-w-4xl">
       <div className="mb-8">
         <h1 className="text-2xl sm:text-3xl font-bold mb-3 leading-tight">
-          Submit a Skill
+          Create a Repository
         </h1>
         <p className="text-base text-muted-foreground leading-relaxed">
-          Share your Claude skill. Provide a GitHub URL to a specific skill directory containing a SKILL.md file.
+          Create a skill repository to publish versioned skill packages. Each repository is a single skill
+          with semver-versioned releases.
         </p>
       </div>
 
       <Card className="mb-8 bg-[var(--surface-2)] backdrop-blur border-border/50">
         <CardHeader>
-          <CardTitle className="text-xl font-semibold">Skill Directory URL</CardTitle>
+          <CardTitle className="text-xl font-semibold">Repository Details</CardTitle>
           <CardDescription className="text-sm">
-            Enter the URL to your skill directory (e.g., https://github.com/owner/repo/tree/main/skill-name)
+            Fill in the details for your new skill repository
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="repo-url" className="text-sm font-medium">
-              Skill Directory URL
-            </Label>
-            <div className="flex gap-2">
-              <Input
-                id="repo-url"
-                type="text"
-                placeholder="https://github.com/owner/repo/tree/main/skill-name"
-                value={repoUrl}
-                onChange={(e) => setRepoUrl(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    handleFetch();
-                  }
-                }}
-                disabled={isFetching || isSubmitting}
-                className="flex-1"
-              />
-              <Button
-                onClick={handleFetch}
-                disabled={isFetching || isSubmitting}
-                variant="gradient"
-              >
-                {isFetching ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Validating
-                  </>
-                ) : (
-                  "Validate"
-                )}
-              </Button>
-            </div>
+            <Label htmlFor="repo-name">Name</Label>
+            <Input
+              id="repo-name"
+              value={name}
+              onChange={(e) => handleNameChange(e.target.value)}
+              placeholder="Weather Skill"
+              disabled={isSubmitting}
+            />
           </div>
 
-          {error && (
-            <Alert variant="destructive">
-              <AlertDescription className="text-sm">{error}</AlertDescription>
-            </Alert>
-          )}
+          <div className="space-y-2">
+            <Label htmlFor="repo-slug">Slug</Label>
+            <Input
+              id="repo-slug"
+              value={slug}
+              onChange={(e) => {
+                setSlug(e.target.value);
+                setSlugManuallyEdited(true);
+              }}
+              placeholder="weather-skill"
+              disabled={isSubmitting}
+            />
+            <p className="text-xs text-muted-foreground">
+              URL-safe identifier. Auto-generated from name. Your repository will be at{" "}
+              <code className="px-1 py-0.5 bg-muted rounded">
+                {currentUser.handle}/{slug || "slug"}
+              </code>
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="repo-description">Description</Label>
+            <Textarea
+              id="repo-description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Describe what this skill does and when to use it"
+              disabled={isSubmitting}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="repo-license">License</Label>
+            <select
+              id="repo-license"
+              value={license}
+              onChange={(e) => setLicense(e.target.value)}
+              className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+              disabled={isSubmitting}
+            >
+              {COMMON_LICENSES.map((l) => (
+                <option key={l.value} value={l.value}>
+                  {l.label}
+                </option>
+              ))}
+            </select>
+          </div>
         </CardContent>
       </Card>
 
-      {repoInfo && (
-        <>
-          <Card className="mb-8 bg-[var(--surface-2)] backdrop-blur border-border/50">
-            <CardHeader>
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Check className="h-5 w-5 text-green-500" />
-                    <CardTitle className="text-xl font-semibold">
-                      {repoInfo.name}
-                    </CardTitle>
-                  </div>
-                  <CardDescription className="text-sm leading-relaxed">
-                    {repoInfo.description}
-                  </CardDescription>
-                </div>
-                <Button variant="outline" size="sm" asChild className="shrink-0">
-                  <a
-                    href={repoInfo.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    View on GitHub
-                  </a>
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground mb-4">
-                <div>
-                  <span className="font-medium text-foreground">Owner:</span> {repoInfo.owner}
-                </div>
-                {repoInfo.stars !== undefined && (
-                  <div className="flex items-center gap-1">
-                    <Star className="h-4 w-4" />
-                    <span className="font-medium text-foreground">{repoInfo.stars.toLocaleString()}</span> stars
-                  </div>
-                )}
-                {repoInfo.license && (
-                  <div>
-                    <span className="font-medium text-foreground">License:</span> {repoInfo.license}
-                  </div>
-                )}
-              </div>
-              <Alert className="bg-green-500/10 border-green-500/20">
-                <Check className="h-4 w-4 text-green-500" />
-                <AlertDescription className="text-sm text-green-700 dark:text-green-300">
-                  SKILL.md validated successfully. The skill content will be displayed directly from GitHub for security.
-                </AlertDescription>
-              </Alert>
-            </CardContent>
-          </Card>
-
-          <div className="flex justify-end gap-4">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setRepoInfo(null);
-                setRepoUrl("");
-                setError(null);
-              }}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="gradient"
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Submitting
-                </>
-              ) : (
-                "Submit Skill"
-              )}
-            </Button>
-          </div>
-        </>
-      )}
+      <div className="flex justify-end gap-4">
+        <Button
+          variant="outline"
+          onClick={() => router.push("/skills")}
+          disabled={isSubmitting}
+        >
+          Cancel
+        </Button>
+        <Button
+          variant="gradient"
+          onClick={handleSubmit}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Creating
+            </>
+          ) : (
+            "Create Repository"
+          )}
+        </Button>
+      </div>
     </div>
   );
 }

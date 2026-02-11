@@ -39,76 +39,83 @@ export default function Documentation() {
             </div>
 
             <div>
-              <h3 className="text-lg font-semibold mb-2">3. Submit Your Skills</h3>
+              <h3 className="text-lg font-semibold mb-2">3. Create a Repository</h3>
               <p className="text-muted-foreground">
-                Share your own skills by submitting a GitHub repository containing a <code>SKILL.md</code> file.
+                Share your own skills by creating a repository and publishing versioned skill packages via the CLI or web dashboard.
               </p>
             </div>
           </div>
         </section>
 
-        {/* Submitting Skills */}
+        {/* Creating a Repository */}
         <section className="mb-12">
-          <h2 className="text-2xl font-semibold mb-4 scroll-mt-24" id="submitting-skills">Submitting Skills</h2>
+          <h2 className="text-2xl font-semibold mb-4 scroll-mt-24" id="creating-a-repository">Creating a Repository</h2>
 
-          <h3 className="text-xl font-semibold mb-3 mt-6">Requirements</h3>
           <p className="text-muted-foreground mb-4">
-            To submit a skill, your GitHub repository must meet the following requirements:
+            Skill repositories are versioned packages that contain your skill files. Each repository represents a single skill
+            with semver-versioned releases.
           </p>
 
-          <ul className="space-y-2 text-muted-foreground mb-6">
-            <li>Public repository (private repositories are not supported)</li>
-            <li>A <code>SKILL.md</code> file in the root directory with proper YAML frontmatter</li>
-            <li>Valid markdown content following the{" "}
-              <a
-                href="https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:underline"
-              >
-                official Claude skills format
-              </a>
+          <h3 className="text-xl font-semibold mb-3 mt-6">Via the Web</h3>
+          <ol className="space-y-3 text-muted-foreground mb-6">
+            <li>
+              <strong>Create:</strong> Navigate to the <Link href="/skills/submit" className="text-primary hover:underline">Create Repository</Link> page and fill in the name, slug, and description.
             </li>
-          </ul>
+            <li>
+              <strong>Publish:</strong> Use the CLI to publish versioned artifacts to your repository.
+            </li>
+          </ol>
 
-          <h3 className="text-xl font-semibold mb-3 mt-6">SKILL.md Format</h3>
+          <h3 className="text-xl font-semibold mb-3 mt-6">Via the CLI</h3>
+          <div className="bg-muted p-4 rounded-lg font-mono text-sm mb-6">
+            <pre className="whitespace-pre-wrap">
+{`# Authenticate (opens browser)
+npx lmskills-cli login
+
+# Create a repository (reads from skill.json if available)
+npx lmskills-cli repo create --name "My Skill" --slug my-skill --description "Does something useful"
+
+# Initialize skill.json template
+npx lmskills-cli init
+
+# Publish to your repository
+npx lmskills-cli publish --remote --set-default`}
+            </pre>
+          </div>
+
+          <h3 className="text-xl font-semibold mb-3 mt-6">skill.json Format</h3>
           <p className="text-muted-foreground mb-4">
-            Your SKILL.md file must include YAML frontmatter with required metadata fields:
+            Your skill directory must contain a <code>skill.json</code> manifest with the following fields:
           </p>
 
           <div className="bg-muted p-4 rounded-lg font-mono text-sm mb-6">
             <pre className="whitespace-pre-wrap">
-{`---
-name: my-skill-name
-description: Brief description of what this skill does and when to use it
----
-
-# Skill Instructions
-
-Detailed instructions for Claude on how to use this skill.
-
-## Key Capabilities
-
-- Feature 1
-- Feature 2
-
-## Usage Guidelines
-
-Step-by-step procedural guidance...
-
-## Examples
-
-Practical examples and use cases...`}
+{`{
+  "name": "Weather Skill",
+  "slug": "weather-skill",
+  "version": "1.0.0",
+  "description": "Get current weather info",
+  "author": "username",
+  "license": "MIT",
+  "entry": "SKILL.md",
+  "files": ["SKILL.md", "utils.js"]
+}`}
             </pre>
           </div>
 
           <div className="bg-accent/10 border-l-4 border-accent p-4 mb-4">
             <p className="text-sm mb-2">
-              <strong>Required Frontmatter Fields:</strong>
+              <strong>Required Manifest Fields:</strong>
             </p>
             <ul className="text-sm space-y-1 list-disc list-inside">
-              <li><code>name</code>: Lowercase letters, numbers, and hyphens only (max 64 characters)</li>
-              <li><code>description</code>: What the skill does and when to use it (max 1024 characters)</li>
+              <li><code>name</code>: Display name of your skill</li>
+              <li><code>slug</code>: URL-safe identifier (lowercase, hyphens allowed)</li>
+              <li><code>version</code>: Semver version (e.g., 1.0.0)</li>
+              <li><code>description</code>: What the skill does</li>
+              <li><code>author</code>: Your username</li>
+              <li><code>license</code>: License identifier (e.g., MIT)</li>
+              <li><code>entry</code>: Main skill file (usually SKILL.md)</li>
+              <li><code>files</code>: Array of all files to include</li>
             </ul>
           </div>
 
@@ -126,22 +133,24 @@ Practical examples and use cases...`}
               for more details.
             </p>
           </div>
+        </section>
 
-          <h3 className="text-xl font-semibold mb-3 mt-6">Submission Process</h3>
-          <ol className="space-y-3 text-muted-foreground mb-6">
-            <li>
-              <strong>Prepare Your Repository:</strong> Ensure your GitHub repository is public and contains a SKILL.md file.
-            </li>
-            <li>
-              <strong>Submit:</strong> Navigate to the <Link href="/skills/submit" className="text-primary hover:underline">Submit Skill</Link> page and enter your repository URL.
-            </li>
-            <li>
-              <strong>Validate:</strong> We verify that your SKILL.md file exists and extract metadata from your repository.
-            </li>
-            <li>
-              <strong>Publish:</strong> Click Submit to make your skill available in the directory.
-            </li>
-          </ol>
+        {/* Content Gating */}
+        <section className="mb-12">
+          <h2 className="text-2xl font-semibold mb-4 scroll-mt-24" id="content-gating">Content Gating</h2>
+
+          <p className="text-muted-foreground mb-4">
+            Repository skills have a content gating model to protect skill content while keeping metadata discoverable:
+          </p>
+
+          <ul className="space-y-2 text-muted-foreground mb-6">
+            <li><strong>Public (no auth):</strong> Skill name, description, owner, license, version list (numbers and dates), creation date</li>
+            <li><strong>Authenticated only:</strong> Version content, download URLs, tarball access</li>
+          </ul>
+
+          <p className="text-muted-foreground">
+            Legacy GitHub-linked skills remain fully public with content viewable on GitHub.
+          </p>
         </section>
 
         {/* Finding and Using Skills */}
@@ -165,10 +174,10 @@ Practical examples and use cases...`}
           </p>
 
           <ul className="space-y-2 text-muted-foreground mb-6">
-            <li>Link to view the skill documentation directly on GitHub</li>
-            <li>Installation and usage instructions</li>
-            <li>Author information and metadata</li>
-            <li>Tags and categories</li>
+            <li>Skill metadata (name, description, license, owner)</li>
+            <li>Version history with changelogs</li>
+            <li>Installation instructions</li>
+            <li>Download buttons (for authenticated users)</li>
           </ul>
 
           <h3 className="text-xl font-semibold mb-3 mt-6">Managing Your Skills</h3>
@@ -177,10 +186,10 @@ Practical examples and use cases...`}
           </p>
 
           <ul className="space-y-2 text-muted-foreground mb-6">
-            <li>View all skills you&apos;ve submitted</li>
-            <li>Track views and engagement metrics</li>
-            <li>Update skill information</li>
-            <li>Remove skills from the directory</li>
+            <li>View all your repositories</li>
+            <li>Create new repositories</li>
+            <li>Publish new versions</li>
+            <li>Manage default versions and verification status</li>
           </ul>
         </section>
 
@@ -189,7 +198,7 @@ Practical examples and use cases...`}
           <h2 className="text-2xl font-semibold mb-4 scroll-mt-24" id="cli-tool">CLI Tool</h2>
 
           <p className="text-muted-foreground mb-4">
-            The LMSkills CLI tool makes it easy to install skills directly to your <code>.claude</code> directory from GitHub repositories.
+            The LMSkills CLI tool makes it easy to create repositories, publish skills, and install skills from the directory.
           </p>
 
           <h3 className="text-xl font-semibold mb-3 mt-6">Installation</h3>
@@ -211,6 +220,56 @@ npm install -g lmskills-cli`}
 
           <div className="space-y-6 mb-6">
             <div>
+              <h4 className="text-lg font-semibold mb-2">Login</h4>
+              <p className="text-muted-foreground mb-3">
+                Authenticate with LMSkills. Opens your browser for sign-in:
+              </p>
+              <div className="bg-muted p-4 rounded-lg font-mono text-sm mb-3">
+                <pre className="whitespace-pre-wrap">
+{`npx lmskills-cli login`}
+                </pre>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="text-lg font-semibold mb-2">Repository Management</h4>
+              <p className="text-muted-foreground mb-3">
+                Create and list skill repositories:
+              </p>
+              <div className="bg-muted p-4 rounded-lg font-mono text-sm mb-3">
+                <pre className="whitespace-pre-wrap">
+{`# Create a new repository
+npx lmskills-cli repo create --name "My Skill" --slug my-skill --description "Description"
+
+# List your repositories
+npx lmskills-cli repo list`}
+                </pre>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="text-lg font-semibold mb-2">Init and Publish</h4>
+              <p className="text-muted-foreground mb-3">
+                Initialize a skill manifest and publish versions:
+              </p>
+              <div className="bg-muted p-4 rounded-lg font-mono text-sm mb-3">
+                <pre className="whitespace-pre-wrap">
+{`# Create skill.json template
+npx lmskills-cli init
+
+# Package and publish locally
+npx lmskills-cli publish
+
+# Publish to LMSkills
+npx lmskills-cli publish --remote --set-default
+
+# With changelog
+npx lmskills-cli publish --remote --changelog "Bug fixes and improvements"`}
+                </pre>
+              </div>
+            </div>
+
+            <div>
               <h4 className="text-lg font-semibold mb-2">Install a Skill</h4>
               <p className="text-muted-foreground mb-3">
                 Install a skill from a GitHub subdirectory URL to your local or global <code>.claude/skills/</code> directory:
@@ -227,33 +286,17 @@ npx lmskills-cli install https://github.com/owner/repo/tree/main/path/to/skill -
             </div>
 
             <div>
-              <h4 className="text-lg font-semibold mb-2">List Installed Skills</h4>
+              <h4 className="text-lg font-semibold mb-2">List and Remove Skills</h4>
               <p className="text-muted-foreground mb-3">
-                View all installed skills with their source URLs and installation details:
+                Manage locally installed skills:
               </p>
               <div className="bg-muted p-4 rounded-lg font-mono text-sm mb-3">
                 <pre className="whitespace-pre-wrap">
-{`# List local skills
+{`# List installed skills
 npx lmskills-cli list
 
-# List global skills
-npx lmskills-cli list --global`}
-                </pre>
-              </div>
-            </div>
-
-            <div>
-              <h4 className="text-lg font-semibold mb-2">Remove a Skill</h4>
-              <p className="text-muted-foreground mb-3">
-                Uninstall a skill by name:
-              </p>
-              <div className="bg-muted p-4 rounded-lg font-mono text-sm mb-3">
-                <pre className="whitespace-pre-wrap">
-{`# Remove local skill
-npx lmskills-cli remove <skill-name>
-
-# Remove global skill
-npx lmskills-cli remove <skill-name> --global`}
+# Remove a skill
+npx lmskills-cli remove <skill-name>`}
                 </pre>
               </div>
             </div>
@@ -264,81 +307,40 @@ npx lmskills-cli remove <skill-name> --global`}
             <li><strong>Local:</strong> <code>./claude/skills/</code> in your current project directory</li>
             <li><strong>Global:</strong> <code>~/.claude/skills/</code> in your home directory</li>
           </ul>
-
-          <div className="bg-accent/10 border-l-4 border-accent p-4 mb-4">
-            <p className="text-sm">
-              <strong>Quick Tip:</strong> Each skill detail page has an &quot;Install with CLI&quot; button that provides the exact command to install that skill.
-            </p>
-          </div>
         </section>
 
-        {/* Hosted Publishing */}
+        {/* Publishing */}
         <section className="mb-12">
-          <h2 className="text-2xl font-semibold mb-4 scroll-mt-24" id="hosted-publishing">
-            Hosted Publishing
+          <h2 className="text-2xl font-semibold mb-4 scroll-mt-24" id="publishing">
+            Publishing
           </h2>
 
           <p className="text-muted-foreground mb-4">
-            Hosted skills are versioned artifacts managed directly in LMSkills. The recommended
-            flow is: create the hosted skill, package a tar artifact, publish the version, then
-            confirm verification and default version.
+            The recommended workflow for publishing skills:
           </p>
 
-          <h3 className="text-xl font-semibold mb-3 mt-6">1. Create a Hosted Skill</h3>
+          <ol className="space-y-3 text-muted-foreground mb-6">
+            <li>
+              <strong>1. Login:</strong> Run <code>lmskills login</code> to authenticate.
+            </li>
+            <li>
+              <strong>2. Create repository:</strong> Run <code>lmskills repo create</code> or create one on the web dashboard.
+            </li>
+            <li>
+              <strong>3. Initialize:</strong> Run <code>lmskills init</code> to create a <code>skill.json</code> manifest.
+            </li>
+            <li>
+              <strong>4. Publish:</strong> Run <code>lmskills publish --remote --set-default</code> to package and upload.
+            </li>
+          </ol>
+
+          <h3 className="text-xl font-semibold mb-3 mt-6">Verification</h3>
           <p className="text-muted-foreground mb-4">
-            Open your <Link href="/dashboard" className="text-primary hover:underline">dashboard</Link>,
-            create a hosted skill entry, and choose visibility (<code>public</code> or{" "}
-            <code>unlisted</code>).
-          </p>
-
-          <h3 className="text-xl font-semibold mb-3 mt-6">2. Package an Artifact</h3>
-          <p className="text-muted-foreground mb-4">
-            In your skill folder, initialize a manifest once and package a versioned tarball:
-          </p>
-          <div className="bg-muted p-4 rounded-lg font-mono text-sm mb-6">
-            <pre className="whitespace-pre-wrap">
-{`# Create skill.json template (once per skill)
-npx lmskills-cli init
-
-# Package current version locally
-npx lmskills-cli publish`}
-            </pre>
-          </div>
-
-          <h3 className="text-xl font-semibold mb-3 mt-6">3. Publish a Hosted Version</h3>
-          <p className="text-muted-foreground mb-4">
-            Publish directly to LMSkills using remote mode:
-          </p>
-          <div className="bg-muted p-4 rounded-lg font-mono text-sm mb-6">
-            <pre className="whitespace-pre-wrap">
-{`# Authenticate once (opens browser + Clerk sign-in)
-npx lmskills-cli login
-
-# Publish remotely
-npx lmskills-cli publish --remote --set-default
-
-# Optional flags:
-# --no-set-default
-# --visibility public|unlisted
-# --changelog "What changed"`}
-            </pre>
-          </div>
-          <p className="text-muted-foreground mb-6">
-            <strong>Important:</strong> <code>lmskills login</code> stores a session token locally,
-            and remote publish sends it as a Bearer token to Clerk-protected LMSkills API endpoints.
-          </p>
-          <p className="text-muted-foreground mb-6">
-            By default, login auto-detects a local dev server at <code>http://127.0.0.1:3000</code>{" "}
-            or <code>http://localhost:3000</code> before falling back to production.
-          </p>
-
-          <h3 className="text-xl font-semibold mb-3 mt-6">4. Verification and Default Version</h3>
-          <p className="text-muted-foreground mb-4">
-            Every hosted version is verified automatically and gets one of these statuses:
+            Every published version is verified automatically and gets one of these statuses:
           </p>
           <ul className="space-y-2 text-muted-foreground mb-6">
             <li><code>pending</code>: verification is in progress</li>
-            <li><code>verified</code>: ready for public/default usage</li>
+            <li><code>verified</code>: ready for public usage</li>
             <li><code>rejected</code>: failed verification checks</li>
           </ul>
           <p className="text-muted-foreground">
@@ -348,10 +350,10 @@ npx lmskills-cli publish --remote --set-default
           </p>
         </section>
 
-        {/* Hosted Config */}
+        {/* Config */}
         <section className="mb-12">
-          <h2 className="text-2xl font-semibold mb-4 scroll-mt-24" id="hosted-config">
-            Hosted Config
+          <h2 className="text-2xl font-semibold mb-4 scroll-mt-24" id="config">
+            Configuration
           </h2>
 
           <p className="text-muted-foreground mb-4">
@@ -360,38 +362,16 @@ npx lmskills-cli publish --remote --set-default
           <ul className="space-y-2 text-muted-foreground mb-6">
             <li><code>LMSKILLS_REMOTE_PUBLISH=true</code>: optional default to enable remote mode without passing <code>--remote</code></li>
           </ul>
-        </section>
-
-        {/* Hosted API Behavior */}
-        <section className="mb-12">
-          <h2 className="text-2xl font-semibold mb-4 scroll-mt-24" id="hosted-api-behavior">
-            Hosted API Behavior
-          </h2>
-
-          <h3 className="text-xl font-semibold mb-3 mt-6">Content Negotiation</h3>
-          <p className="text-muted-foreground mb-4">
-            The endpoint <code>/api/skills/:owner/:name</code> supports JSON metadata responses and
-            markdown redirects for GitHub-backed skills.
+          <p className="text-muted-foreground mb-6">
+            By default, login auto-detects a local dev server at <code>http://127.0.0.1:3000</code>{" "}
+            or <code>http://localhost:3000</code> before falling back to production.
           </p>
-          <ul className="space-y-2 text-muted-foreground mb-6">
-            <li><code>Accept: application/json</code>: returns skill metadata</li>
-            <li><code>Accept: text/markdown</code> or <code>text/plain</code>: redirects only for GitHub-backed skills</li>
-            <li>Hosted skills with markdown/text Accept headers return <code>406 Not Acceptable</code></li>
-          </ul>
-
-          <h3 className="text-xl font-semibold mb-3 mt-6">Visibility and Versions</h3>
-          <ul className="space-y-2 text-muted-foreground mb-6">
-            <li>Public hosted skills expose only <code>verified</code> versions to non-owners</li>
-            <li>Unlisted hosted skills are visible only to the owner</li>
-            <li>Listings and search include public skills only</li>
-            <li>CLI remote publish uses Clerk-protected endpoints at <code>/api/cli/hosted/upload</code> and <code>/api/cli/hosted/publish</code></li>
-          </ul>
         </section>
 
-        {/* Hosted Troubleshooting */}
+        {/* Troubleshooting */}
         <section className="mb-12">
-          <h2 className="text-2xl font-semibold mb-4 scroll-mt-24" id="hosted-troubleshooting">
-            Hosted Troubleshooting
+          <h2 className="text-2xl font-semibold mb-4 scroll-mt-24" id="troubleshooting">
+            Troubleshooting
           </h2>
 
           <div className="space-y-6">
@@ -404,10 +384,17 @@ npx lmskills-cli publish --remote --set-default
             </div>
 
             <div>
+              <h3 className="text-lg font-semibold mb-2">Repository creation fails with &quot;already exists&quot;</h3>
+              <p className="text-muted-foreground">
+                A repository with the same slug already exists under your account. Try a different slug.
+              </p>
+            </div>
+
+            <div>
               <h3 className="text-lg font-semibold mb-2">Artifact upload fails</h3>
               <p className="text-muted-foreground">
                 Confirm you generated a <code>.tar</code> artifact with <code>lmskills publish</code>{" "}
-                and that the selected hosted skill/version does not already exist.
+                and that the version does not already exist.
               </p>
             </div>
 
@@ -423,7 +410,7 @@ npx lmskills-cli publish --remote --set-default
               <h3 className="text-lg font-semibold mb-2">Default version did not change</h3>
               <p className="text-muted-foreground">
                 Only <code>verified</code> versions can be set as default. Wait for verification or
-                set default later from the hosted versions list.
+                set default later from the dashboard.
               </p>
             </div>
           </div>
@@ -445,16 +432,16 @@ npx lmskills-cli publish --remote --set-default
           <ul className="space-y-2 text-muted-foreground mb-6">
             <li>Follow coding best practices and conventions</li>
             <li>Include inline comments for complex logic</li>
-            <li>Test thoroughly before submitting</li>
+            <li>Test thoroughly before publishing</li>
             <li>Keep dependencies minimal and well-documented</li>
           </ul>
 
-          <h3 className="text-xl font-semibold mb-3 mt-6">Maintenance</h3>
+          <h3 className="text-xl font-semibold mb-3 mt-6">Versioning</h3>
           <ul className="space-y-2 text-muted-foreground mb-6">
-            <li>Keep your skills updated with the latest changes</li>
-            <li>Respond to issues and questions from users</li>
-            <li>Update documentation when making changes</li>
-            <li>Use versioning for major updates</li>
+            <li>Use semantic versioning (major.minor.patch)</li>
+            <li>Include changelogs with each version</li>
+            <li>Bump major version for breaking changes</li>
+            <li>Keep your default version pointing to the latest stable release</li>
           </ul>
         </section>
 
@@ -485,6 +472,25 @@ npx lmskills-cli publish --remote --set-default
             </a>{" "}
             in the official documentation.
           </p>
+
+          <h3 className="text-xl font-semibold mb-3 mt-6">API Behavior</h3>
+          <p className="text-muted-foreground mb-4">
+            The endpoint <code>/api/skills/:owner/:name</code> supports content negotiation:
+          </p>
+          <ul className="space-y-2 text-muted-foreground mb-6">
+            <li><code>Accept: application/json</code>: returns skill metadata</li>
+            <li><code>Accept: text/markdown</code>: redirects for GitHub-backed skills only</li>
+            <li>Repository skills with markdown Accept headers return <code>406 Not Acceptable</code></li>
+          </ul>
+
+          <p className="text-muted-foreground mb-4">
+            The download endpoint <code>/api/skills/:owner/:name/download</code> requires authentication:
+          </p>
+          <ul className="space-y-2 text-muted-foreground mb-6">
+            <li>Returns 401 for unauthenticated requests</li>
+            <li>Optional <code>version</code> query parameter (defaults to latest verified)</li>
+            <li>Redirects to the artifact storage URL</li>
+          </ul>
         </section>
 
         {/* FAQ */}
@@ -493,21 +499,21 @@ npx lmskills-cli publish --remote --set-default
 
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-semibold mb-2">Can I submit private repositories?</h3>
+              <h3 className="text-lg font-semibold mb-2">What happened to GitHub skill submission?</h3>
               <p className="text-muted-foreground">
-                No, all skills must be from public GitHub repositories to ensure accessibility for all users.
+                Existing GitHub-linked skills continue to work. New skills should be created as repositories with versioned packages for better management and security.
               </p>
             </div>
 
             <div>
-              <h3 className="text-lg font-semibold mb-2">Can I update a skill after submission?</h3>
+              <h3 className="text-lg font-semibold mb-2">Can I download skills without an account?</h3>
               <p className="text-muted-foreground">
-                Yes, you can update your skills from your dashboard. Changes to your GitHub repository will be reflected on LMSkills.
+                Skill titles and descriptions are always public. To download skill content, you need to sign in with a free account.
               </p>
             </div>
 
             <div>
-              <h3 className="text-lg font-semibold mb-2">What types of skills can I submit?</h3>
+              <h3 className="text-lg font-semibold mb-2">What types of skills can I publish?</h3>
               <p className="text-muted-foreground">
                 LMSkills supports Claude skills including modular packages of instructions, metadata, and optional resources (scripts, templates) that extend Claude&apos;s capabilities for specialized tasks. See the{" "}
                 <a
@@ -523,9 +529,9 @@ npx lmskills-cli publish --remote --set-default
             </div>
 
             <div>
-              <h3 className="text-lg font-semibold mb-2">How do I delete a skill?</h3>
+              <h3 className="text-lg font-semibold mb-2">How do I delete a repository?</h3>
               <p className="text-muted-foreground">
-                Navigate to your dashboard, select the skill you want to remove, and click the delete button. This action cannot be undone.
+                Navigate to your dashboard, find the repository, and click the delete button. This action cannot be undone and will remove all versions.
               </p>
             </div>
           </div>

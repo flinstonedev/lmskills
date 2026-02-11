@@ -26,12 +26,9 @@ type SemverParts = {
   prerelease: Array<string>;
 };
 
-type HostedVisibility = 'public' | 'unlisted';
-
 export interface PublishOptions {
   remote?: boolean;
   setDefault?: boolean;
-  visibility?: HostedVisibility;
   changelog?: string;
 }
 
@@ -39,7 +36,6 @@ interface RemotePublishConfig {
   apiUrl: string;
   authToken: string;
   setDefault: boolean;
-  visibility: HostedVisibility;
   changelog?: string;
 }
 
@@ -286,16 +282,10 @@ function resolveRemotePublishConfig(
     );
   }
 
-  const visibility = options.visibility ?? 'public';
-  if (visibility !== 'public' && visibility !== 'unlisted') {
-    throw new Error('Visibility must be either "public" or "unlisted"');
-  }
-
   return {
     apiUrl,
     authToken,
     setDefault: options.setDefault ?? true,
-    visibility,
     changelog: options.changelog,
   };
 }
@@ -327,6 +317,12 @@ async function requestJson<T>(
   });
 
   if (!response.ok) {
+    if (response.status === 401 || response.status === 403) {
+      throw new Error(
+        'Authentication failed. Your session may have expired.\n' +
+        'Run "lmskills login" to re-authenticate, then try again.'
+      );
+    }
     const message = await parseApiError(response);
     throw new Error(`Remote API request failed (${response.status}): ${message}`);
   }
@@ -350,7 +346,7 @@ async function publishRemoteHostedVersion(args: {
     name: manifest.name,
     slug: manifest.slug,
     description: manifest.description,
-    visibility: remote.visibility,
+    visibility: 'public',
     version: manifest.version,
   });
 
@@ -464,7 +460,7 @@ export async function publishSkill(options: PublishOptions = {}): Promise<void> 
 
     const remoteConfig = resolveRemotePublishConfig(options);
     if (remoteConfig) {
-      spinner.start('Publishing hosted version via LMSkills API...');
+      spinner.start('Publishing version to LMSkills...');
       const remoteResult = await publishRemoteHostedVersion({
         remote: remoteConfig,
         manifest,
@@ -472,15 +468,13 @@ export async function publishSkill(options: PublishOptions = {}): Promise<void> 
         hash,
         sizeBytes,
       });
-      spinner.succeed('Hosted publish completed');
+      spinner.succeed('Remote publish completed');
 
-      console.log(chalk.green('\n✓ Hosted version published'));
+      console.log(chalk.green('\n✓ Version published to repository'));
       if (remoteResult.skillFullName) {
-        console.log(chalk.gray(`  Skill: ${remoteResult.skillFullName}`));
+        console.log(chalk.gray(`  Repository: ${remoteResult.skillFullName}`));
       }
-      console.log(chalk.gray(`  Skill ID: ${remoteResult.skillId}`));
-      console.log(chalk.gray(`  Version ID: ${remoteResult.versionId}`));
-      console.log(chalk.gray(`  Storage ID: ${remoteResult.storageId}`));
+      console.log(chalk.gray(`  Version: ${manifest.version}`));
       if (remoteConfig.setDefault) {
         if (remoteResult.defaultSet) {
           console.log(chalk.gray('  Default: updated'));

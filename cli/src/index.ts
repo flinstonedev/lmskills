@@ -9,6 +9,7 @@ import { initSkill } from './init';
 import { publishSkill } from './publish';
 import { listVersions } from './versions';
 import { login } from './auth';
+import { createRepo, listRepos } from './repo';
 
 import packageJson from '../package.json';
 
@@ -64,19 +65,15 @@ program
   .option('--remote', 'Also publish artifact to the hosted backend')
   .option('--set-default', 'Set published version as default (remote mode)')
   .option('--no-set-default', 'Do not set the published version as default')
-  .option('--visibility <visibility>', 'Visibility for auto-created hosted skills (public|unlisted)')
   .option('--changelog <text>', 'Optional changelog text for this version')
   .action(async (options: {
     remote?: boolean;
     setDefault?: boolean;
-    visibility?: string;
     changelog?: string;
   }) => {
     await publishSkill({
       remote: options.remote,
       setDefault: options.setDefault,
-      visibility:
-        options.visibility === 'unlisted' ? 'unlisted' : 'public',
       changelog: options.changelog,
     });
   });
@@ -86,6 +83,27 @@ program
   .description('List locally published versions for the current skill')
   .action(async () => {
     await listVersions();
+  });
+
+const repoCommand = program
+  .command('repo')
+  .description('Manage skill repositories on LMSkills');
+
+repoCommand
+  .command('create')
+  .description('Create a new skill repository on LMSkills')
+  .option('--name <name>', 'Repository name')
+  .option('--slug <slug>', 'URL-safe identifier')
+  .option('--description <description>', 'Repository description')
+  .action(async (options: { name?: string; slug?: string; description?: string }) => {
+    await createRepo(options);
+  });
+
+repoCommand
+  .command('list')
+  .description('List your skill repositories on LMSkills')
+  .action(async () => {
+    await listRepos();
   });
 
 // Handle unknown commands with helpful error messages
