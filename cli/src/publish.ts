@@ -32,8 +32,6 @@ export interface PublishOptions {
   remote?: boolean;
   setDefault?: boolean;
   visibility?: HostedVisibility;
-  apiUrl?: string;
-  convexUrl?: string; // Deprecated alias for --api-url
   changelog?: string;
 }
 
@@ -278,10 +276,7 @@ function resolveRemotePublishConfig(
 
   const savedConfig = readCliConfig();
   const apiUrl = normalizeBaseUrl(
-    options.apiUrl ??
-      options.convexUrl ??
-      savedConfig.apiUrl ??
-      getDefaultApiUrl()
+    savedConfig.apiUrl ?? getDefaultApiUrl()
   );
   const authToken = savedConfig.authToken;
 

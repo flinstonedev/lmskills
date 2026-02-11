@@ -320,7 +320,6 @@ npx lmskills-cli publish --remote --set-default
 # Optional flags:
 # --no-set-default
 # --visibility public|unlisted
-# --api-url https://staging.lmskills.ai
 # --changelog "What changed"`}
             </pre>
           </div>
@@ -360,7 +359,6 @@ npx lmskills-cli publish --remote --set-default
           </p>
           <ul className="space-y-2 text-muted-foreground mb-6">
             <li><code>LMSKILLS_REMOTE_PUBLISH=true</code>: optional default to enable remote mode without passing <code>--remote</code></li>
-            <li><code>--api-url</code>: optional CLI flag to force a specific LMSkills environment</li>
           </ul>
         </section>
 

@@ -54,9 +54,8 @@ program
 program
   .command('login')
   .description('Authenticate with LMSkills in your browser')
-  .option('--api-url <url>', 'Base LMSkills URL (default: https://www.lmskills.ai)')
-  .action(async (options: { apiUrl?: string }) => {
-    await login({ apiUrl: options.apiUrl });
+  .action(async () => {
+    await login();
   });
 
 program
@@ -66,15 +65,11 @@ program
   .option('--set-default', 'Set published version as default (remote mode)')
   .option('--no-set-default', 'Do not set the published version as default')
   .option('--visibility <visibility>', 'Visibility for auto-created hosted skills (public|unlisted)')
-  .option('--api-url <url>', 'Base LMSkills URL for remote publishing API')
-  .option('--convex-url <url>', 'Deprecated alias for --api-url')
   .option('--changelog <text>', 'Optional changelog text for this version')
   .action(async (options: {
     remote?: boolean;
     setDefault?: boolean;
     visibility?: string;
-    apiUrl?: string;
-    convexUrl?: string;
     changelog?: string;
   }) => {
     await publishSkill({
@@ -82,8 +77,6 @@ program
       setDefault: options.setDefault,
       visibility:
         options.visibility === 'unlisted' ? 'unlisted' : 'public',
-      apiUrl: options.apiUrl ?? options.convexUrl,
-      convexUrl: options.convexUrl,
       changelog: options.changelog,
     });
   });

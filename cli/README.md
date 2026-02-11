@@ -106,17 +106,14 @@ Remote publish requires:
 
 `lmskills login` resolves the API URL in this order:
 
-1. `--api-url` (if provided)
-2. Previously saved API URL from the last login
-3. Local dev server auto-detect (`http://127.0.0.1:3000`, then `http://localhost:3000`)
-4. Production default (`https://www.lmskills.ai`)
+1. Local dev server auto-detect (`http://127.0.0.1:3000`, then `http://localhost:3000`)
+2. Production default (`https://www.lmskills.ai`)
 
 Optional settings:
 
 - `--visibility public|unlisted` (used if hosted skill must be auto-created)
 - `--changelog \"...\"`
 - `--no-set-default`
-- `--api-url <url>` (override API base URL)
 
 ### List Local Published Versions
 

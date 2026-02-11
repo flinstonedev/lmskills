@@ -19,10 +19,6 @@ interface CliAuthConfig {
   updatedAt?: string;
 }
 
-interface LoginOptions {
-  apiUrl?: string;
-}
-
 export function normalizeBaseUrl(value: string): string {
   return value.replace(/\/+$/, '');
 }
@@ -191,17 +187,7 @@ async function canReachAuthStart(baseUrl: string): Promise<boolean> {
 }
 
 async function resolveApiUrlForLogin(
-  optionsApiUrl: string | undefined,
-  existingApiUrl: string | undefined
 ): Promise<string> {
-  if (optionsApiUrl?.trim()) {
-    return normalizeBaseUrl(optionsApiUrl.trim());
-  }
-
-  if (existingApiUrl?.trim()) {
-    return normalizeBaseUrl(existingApiUrl.trim());
-  }
-
   const checks = await Promise.all(
     LOCAL_API_URLS.map(async (candidate) => ({
       candidate,
@@ -216,9 +202,9 @@ async function resolveApiUrlForLogin(
   return DEFAULT_API_URL;
 }
 
-export async function login(options: LoginOptions = {}): Promise<void> {
+export async function login(): Promise<void> {
   const existing = readCliConfig();
-  const apiUrl = await resolveApiUrlForLogin(options.apiUrl, existing.apiUrl);
+  const apiUrl = await resolveApiUrlForLogin();
 
   const state = crypto.randomBytes(16).toString('hex');
 
