@@ -356,13 +356,11 @@ npx lmskills-cli publish --remote --set-default
           </h2>
 
           <p className="text-muted-foreground mb-4">
-            Remote publishing uses these environment variables:
+            Remote publishing supports this configuration:
           </p>
           <ul className="space-y-2 text-muted-foreground mb-6">
-            <li><code>LMSKILLS_API_URL</code>: LMSkills base URL (defaults to <code>https://www.lmskills.ai</code>)</li>
-            <li><code>NEXT_PUBLIC_APP_URL</code>: fallback base URL if <code>LMSKILLS_API_URL</code>{" "}
-              is not set</li>
             <li><code>LMSKILLS_REMOTE_PUBLISH=true</code>: optional default to enable remote mode without passing <code>--remote</code></li>
+            <li><code>--api-url</code>: optional CLI flag to force a specific LMSkills environment</li>
           </ul>
         </section>
 

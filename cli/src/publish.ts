@@ -280,8 +280,6 @@ function resolveRemotePublishConfig(
   const apiUrl = normalizeBaseUrl(
     options.apiUrl ??
       options.convexUrl ??
-      process.env.LMSKILLS_API_URL ??
-      process.env.NEXT_PUBLIC_APP_URL ??
       savedConfig.apiUrl ??
       getDefaultApiUrl()
   );

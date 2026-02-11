@@ -103,15 +103,13 @@ lmskills publish --remote --set-default
 Remote publish requires:
 
 - Browser auth via `lmskills login` (recommended)
-- `LMSKILLS_API_URL` (optional, defaults to `https://www.lmskills.ai`)
 
 `lmskills login` resolves the API URL in this order:
 
 1. `--api-url` (if provided)
 2. Previously saved API URL from the last login
-3. `LMSKILLS_API_URL` / `NEXT_PUBLIC_APP_URL` environment variable
-4. Local dev server auto-detect (`http://127.0.0.1:3000`, then `http://localhost:3000`)
-5. Production default (`https://www.lmskills.ai`)
+3. Local dev server auto-detect (`http://127.0.0.1:3000`, then `http://localhost:3000`)
+4. Production default (`https://www.lmskills.ai`)
 
 Optional settings:
 

@@ -32,16 +32,7 @@ function getCliConfigPath(): string {
 }
 
 export function getDefaultApiUrl(): string {
-  return normalizeBaseUrl(
-    process.env.LMSKILLS_API_URL ??
-      process.env.NEXT_PUBLIC_APP_URL ??
-      DEFAULT_API_URL
-  );
-}
-
-function getEnvApiUrl(): string | null {
-  const value = process.env.LMSKILLS_API_URL ?? process.env.NEXT_PUBLIC_APP_URL;
-  return value ? normalizeBaseUrl(value) : null;
+  return normalizeBaseUrl(DEFAULT_API_URL);
 }
 
 export function readCliConfig(): CliAuthConfig {
@@ -209,11 +200,6 @@ async function resolveApiUrlForLogin(
 
   if (existingApiUrl?.trim()) {
     return normalizeBaseUrl(existingApiUrl.trim());
-  }
-
-  const envApiUrl = getEnvApiUrl();
-  if (envApiUrl) {
-    return envApiUrl;
   }
 
   const checks = await Promise.all(
