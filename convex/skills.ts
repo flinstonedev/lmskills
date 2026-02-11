@@ -507,6 +507,10 @@ export const generateRepositoryUploadUrl = mutation({
       ...UPLOAD_RATE_LIMIT,
     });
 
+    if (args.version.length > 128) {
+      throw new Error("Version string is too long");
+    }
+
     if (!SEMVER_PATTERN.test(args.version)) {
       throw new Error("Version must be valid semver");
     }

@@ -158,7 +158,7 @@ async function installFromRepo(
     fs.mkdirSync(targetDir, { recursive: true });
 
     const decompressed = zlib.gunzipSync(tarballBuffer);
-    extractTar(decompressed, targetDir, resolvedSkillsPath);
+    extractTar(decompressed, targetDir);
 
     spinner.succeed(`Extracted skill to ${targetDir}`);
 
@@ -196,7 +196,8 @@ async function installFromRepo(
  * Simple tar extraction (handles standard POSIX tar format).
  * Extracts all regular files from the tar archive into targetDir.
  */
-function extractTar(data: Buffer, targetDir: string, safePrefix: string): void {
+function extractTar(data: Buffer, targetDir: string): void {
+  const resolvedTarget = path.resolve(targetDir) + path.sep;
   let offset = 0;
 
   while (offset + 512 <= data.length) {
@@ -234,9 +235,9 @@ function extractTar(data: Buffer, targetDir: string, safePrefix: string): void {
         const destPath = path.join(targetDir, relativePath);
         const resolvedDest = path.resolve(destPath);
 
-        // Prevent path traversal
-        if (!resolvedDest.startsWith(safePrefix)) {
-          throw new Error(`Refusing to extract file outside skills directory: ${fileName}`);
+        // Prevent path traversal - ensure file stays within targetDir
+        if (!resolvedDest.startsWith(resolvedTarget)) {
+          throw new Error(`Refusing to extract file outside target directory: ${fileName}`);
         }
 
         fs.mkdirSync(path.dirname(destPath), { recursive: true });

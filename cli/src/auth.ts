@@ -48,8 +48,15 @@ export function readCliConfig(): CliAuthConfig {
 
 function writeCliConfig(config: CliAuthConfig): void {
   const configPath = getCliConfigPath();
-  fs.mkdirSync(path.dirname(configPath), { recursive: true });
-  fs.writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n');
+  fs.mkdirSync(path.dirname(configPath), { recursive: true, mode: 0o700 });
+  fs.writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n', {
+    mode: 0o600,
+  });
+  try {
+    fs.chmodSync(configPath, 0o600);
+  } catch {
+    // Best-effort: ignore chmod errors on unsupported platforms (e.g., Windows).
+  }
 }
 
 async function openBrowser(url: string): Promise<boolean> {

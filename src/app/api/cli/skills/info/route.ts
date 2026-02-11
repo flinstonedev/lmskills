@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
       skill: {
         name: skill.name,
         slug: skill.slug,
-        fullName: skill.fullName,
+        fullName,
         description: skill.description,
         source: skill.source,
         license: skill.license,

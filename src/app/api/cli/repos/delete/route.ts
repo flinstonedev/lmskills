@@ -39,7 +39,12 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const body = (await request.json()) as Record<string, unknown>;
+    let body: Record<string, unknown>;
+    try {
+      body = (await request.json()) as Record<string, unknown>;
+    } catch {
+      return errorResponse(400, "Invalid JSON body");
+    }
     const slug = typeof body.slug === "string" ? body.slug.trim() : "";
 
     if (!slug) {

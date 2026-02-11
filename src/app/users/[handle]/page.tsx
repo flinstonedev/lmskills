@@ -91,7 +91,7 @@ export default function UserProfilePage({
           {isLoadingSkills ? (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {[1, 2, 3].map((i) => (
-                <Card key={i} className="h-full bg-[var(--surface-2)] backdrop-blur border-border/50">
+                <Card key={i} className="h-full bg-(--surface-2) backdrop-blur border-border/50">
                   <CardHeader>
                     <div className="flex items-start justify-between mb-2">
                       <Skeleton className="h-7 w-3/4" />
@@ -114,7 +114,7 @@ export default function UserProfilePage({
               ))}
             </div>
           ) : userSkills.length === 0 ? (
-            <Card className="bg-[var(--surface-2)] backdrop-blur border-border/50">
+            <Card className="bg-(--surface-2) backdrop-blur border-border/50">
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <p className="text-lg font-semibold mb-3">No skills published yet</p>
                 <p className="text-base text-muted-foreground">
@@ -139,9 +139,9 @@ export default function UserProfilePage({
                 return (
                   <Link
                     key={skill._id}
-                    href={`/skills/${skill.owner?.handle}/${encodeURIComponent(skill.slug ?? skill.name)}`}
+                    href={`/skills/${encodeURIComponent(skill.owner?.handle ?? "")}/${encodeURIComponent(skill.slug ?? skill.name)}`}
                   >
-                    <Card className="h-full bg-[var(--surface-2)] backdrop-blur border-border/50 hover:shadow-lg hover:scale-[1.02] transition-all cursor-pointer">
+                    <Card className="h-full bg-(--surface-2) backdrop-blur border-border/50 hover:shadow-lg hover:scale-[1.02] transition-all cursor-pointer">
                       <CardHeader>
                         <div className="flex items-start justify-between mb-2">
                           <CardTitle className="text-xl font-semibold line-clamp-1">

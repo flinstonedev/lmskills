@@ -35,13 +35,17 @@ export async function GET(
     const convex = new ConvexHttpClient(convexUrl);
     convex.setAuth(convexToken);
 
+    const skill = await convex.query(api.skills.getSkill, {
+      owner: decodeURIComponent(owner),
+      name: decodeURIComponent(name),
+    });
+
+    if (!skill) {
+      return errorResponse(404, "Skill not found");
+    }
+
     const result = await convex.query(api.skills.getVersionDownloadUrl, {
-      skillId: (
-        await convex.query(api.skills.getSkill, {
-          owner: decodeURIComponent(owner),
-          name: decodeURIComponent(name),
-        })
-      )?._id as import("@/convex/_generated/dataModel").Id<"skills">,
+      skillId: skill._id,
       version,
     });
 

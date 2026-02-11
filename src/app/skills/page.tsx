@@ -64,7 +64,7 @@ export default function SkillsPage() {
       {isLoading ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Card key={i} className="h-full bg-[var(--surface-2)] backdrop-blur border-border/50">
+            <Card key={i} className="h-full bg-(--surface-2) backdrop-blur border-border/50">
               <CardHeader>
                 <div className="flex items-start justify-between mb-2">
                   <Skeleton className="h-7 w-3/4" />
@@ -122,7 +122,7 @@ export default function SkillsPage() {
                 key={skill._id}
                 href={`/skills/${skill.owner?.handle}/${encodeURIComponent(skill.slug ?? skill.name)}`}
               >
-                <Card className="h-full bg-[var(--surface-2)] backdrop-blur border-border/50 hover:shadow-lg hover:scale-[1.02] transition-all cursor-pointer">
+                <Card className="h-full bg-(--surface-2) backdrop-blur border-border/50 hover:shadow-lg hover:scale-[1.02] transition-all cursor-pointer">
                   <CardHeader>
                     <div className="flex items-start justify-between mb-2">
                       <CardTitle className="text-xl font-semibold line-clamp-1">

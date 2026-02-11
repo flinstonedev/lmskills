@@ -86,6 +86,7 @@ export default function CreateRepositoryPage() {
         name: name.trim(),
         slug: slug.trim(),
         description: description.trim(),
+        license: license.trim() || undefined,
         visibility: "public",
       });
 
@@ -143,7 +144,7 @@ export default function CreateRepositoryPage() {
           </p>
         </div>
 
-        <Card className="bg-[var(--surface-2)] backdrop-blur border-border/50">
+        <Card className="bg-(--surface-2) backdrop-blur border-border/50">
           <CardHeader>
             <CardTitle className="text-xl font-semibold">Authentication Required</CardTitle>
             <CardDescription className="text-sm">
@@ -185,7 +186,7 @@ export default function CreateRepositoryPage() {
   if (currentUser === null) {
     return (
       <div className="container mx-auto px-4 py-12 max-w-4xl">
-        <Card className="bg-[var(--surface-2)] backdrop-blur border-border/50">
+        <Card className="bg-(--surface-2) backdrop-blur border-border/50">
           <CardHeader>
             <CardTitle className="text-xl font-semibold">Profile Sync in Progress</CardTitle>
             <CardDescription className="text-sm">
@@ -217,7 +218,7 @@ export default function CreateRepositoryPage() {
         </p>
       </div>
 
-      <Card className="mb-8 bg-[var(--surface-2)] backdrop-blur border-border/50">
+      <Card className="mb-8 bg-(--surface-2) backdrop-blur border-border/50">
         <CardHeader>
           <CardTitle className="text-xl font-semibold">Repository Details</CardTitle>
           <CardDescription className="text-sm">

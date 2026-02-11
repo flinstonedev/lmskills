@@ -161,7 +161,7 @@ export default function SkillDetailPage() {
       {skill.repoUrl && (
         <>
           {/* View on GitHub Card */}
-          <Card className="bg-[var(--surface-2)] backdrop-blur border-border/50 mb-8">
+          <Card className="bg-(--surface-2) backdrop-blur border-border/50 mb-8">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Github className="h-5 w-5 text-muted-foreground" />
@@ -192,7 +192,7 @@ export default function SkillDetailPage() {
           </Card>
 
           {/* CLI Installation Card */}
-          <Card className="bg-[var(--surface-2)] backdrop-blur border-border/50 mb-8">
+          <Card className="bg-(--surface-2) backdrop-blur border-border/50 mb-8">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Terminal className="h-5 w-5 text-muted-foreground" />
@@ -218,7 +218,7 @@ export default function SkillDetailPage() {
       {isRepository && (
         <>
           {/* CLI Install Card */}
-          <Card className="bg-[var(--surface-2)] backdrop-blur border-border/50 mb-8">
+          <Card className="bg-(--surface-2) backdrop-blur border-border/50 mb-8">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Terminal className="h-5 w-5 text-muted-foreground" />
@@ -239,7 +239,7 @@ export default function SkillDetailPage() {
           </Card>
 
           {/* Version List */}
-          <Card className="bg-[var(--surface-2)] backdrop-blur border-border/50 mb-8">
+          <Card className="bg-(--surface-2) backdrop-blur border-border/50 mb-8">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Package className="h-5 w-5 text-muted-foreground" />
@@ -307,7 +307,7 @@ export default function SkillDetailPage() {
 
           {/* Content Gate - show sign-in prompt for unauthenticated users */}
           {!isSignedIn && (
-            <Card className="bg-[var(--surface-2)] backdrop-blur border-border/50 mb-8">
+            <Card className="bg-(--surface-2) backdrop-blur border-border/50 mb-8">
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <Lock className="h-5 w-5 text-muted-foreground" />
@@ -341,7 +341,7 @@ export default function SkillDetailPage() {
 
       {/* License Information */}
       {licenseInfo && (
-        <Card className="bg-[var(--surface-2)] backdrop-blur border-border/50">
+        <Card className="bg-(--surface-2) backdrop-blur border-border/50">
           <CardHeader>
             <div className="flex items-center gap-2">
               <Scale className="h-5 w-5 text-muted-foreground" />
