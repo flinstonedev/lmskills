@@ -3,7 +3,7 @@
 import { useQuery, useMutation, usePaginatedQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,23 +25,87 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Trash2, ExternalLink, Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Trash2, ExternalLink, Loader2, Upload, RefreshCw } from "lucide-react";
 import { Id } from "../../../convex/_generated/dataModel";
+import { toast } from "sonner";
+
+const SEMVER_PATTERN =
+  /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
+
+function formatErrorMessage(error: unknown): string {
+  if (!(error instanceof Error)) {
+    return "Unknown error";
+  }
+  return error.message
+    .replace(/^Uncaught Error:\s*/, "")
+    .replace(/^Error:\s*/, "")
+    .replace(/^\[CONVEX.*?\]\s*/, "")
+    .trim();
+}
+
+async function sha256Hex(file: File): Promise<string> {
+  const content = await file.arrayBuffer();
+  const digest = await crypto.subtle.digest("SHA-256", content);
+  return Array.from(new Uint8Array(digest), (byte) =>
+    byte.toString(16).padStart(2, "0")
+  ).join("");
+}
 
 export default function DashboardPage() {
   const { user, isLoaded } = useUser();
   const me = useQuery(api.users.getCurrentUser);
+  const hostedSkills = useQuery(api.skills.getMyHostedSkills);
   const { results: skills, status, loadMore } = usePaginatedQuery(
     api.skills.getSkillsByOwner,
     me?.handle ? { ownerHandle: me.handle } : "skip",
     { initialNumItems: 20 }
   );
+
   const deleteSkill = useMutation(api.skills.deleteSkill);
+  const createHostedSkill = useMutation(api.skills.createHostedSkill);
+  const generateHostedSkillUploadUrl = useMutation(
+    api.skills.generateHostedSkillUploadUrl
+  );
+  const publishSkillVersion = useMutation(api.skills.publishSkillVersion);
+  const setDefaultVersion = useMutation(api.skills.setDefaultVersion);
+  const reverifyHostedSkillVersion = useMutation(
+    api.skills.reverifyHostedSkillVersion
+  );
 
   const [deletingSkillId, setDeletingSkillId] = useState<Id<"skills"> | null>(
     null
   );
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  const [hostedName, setHostedName] = useState("");
+  const [hostedSlug, setHostedSlug] = useState("");
+  const [hostedDescription, setHostedDescription] = useState("");
+  const [hostedVisibility, setHostedVisibility] = useState<"public" | "unlisted">(
+    "public"
+  );
+  const [isCreatingHosted, setIsCreatingHosted] = useState(false);
+
+  const [selectedHostedSkillId, setSelectedHostedSkillId] = useState<string>("");
+  const [publishVersion, setPublishVersion] = useState("");
+  const [publishChangelog, setPublishChangelog] = useState("");
+  const [publishFile, setPublishFile] = useState<File | null>(null);
+  const [setAsDefault, setSetAsDefault] = useState(true);
+  const [isPublishingVersion, setIsPublishingVersion] = useState(false);
+  const [settingDefaultVersionId, setSettingDefaultVersionId] = useState<
+    Id<"skillVersions"> | null
+  >(null);
+  const [reverifyingVersionId, setReverifyingVersionId] = useState<
+    Id<"skillVersions"> | null
+  >(null);
+
+  const selectedHostedSkill = useMemo(
+    () => hostedSkills?.find((skill) => skill._id === selectedHostedSkillId),
+    [hostedSkills, selectedHostedSkillId]
+  );
 
   const handleDelete = (skillId: Id<"skills">) => {
     setDeletingSkillId(skillId);
@@ -55,9 +119,171 @@ export default function DashboardPage() {
       await deleteSkill({ skillId: deletingSkillId });
       setIsDeleteDialogOpen(false);
       setDeletingSkillId(null);
+      toast.success("Skill deleted");
     } catch (error) {
-      console.error("Failed to delete skill:", error);
-      alert("Failed to delete skill. Please try again.");
+      toast.error("Failed to delete skill", {
+        description: formatErrorMessage(error),
+      });
+    }
+  };
+
+  const handleCreateHostedSkill = async () => {
+    if (!hostedName.trim() || !hostedSlug.trim() || !hostedDescription.trim()) {
+      toast.error("Missing required fields", {
+        description: "Name, slug, and description are required.",
+      });
+      return;
+    }
+
+    setIsCreatingHosted(true);
+    try {
+      const skillId = await createHostedSkill({
+        name: hostedName.trim(),
+        slug: hostedSlug.trim(),
+        description: hostedDescription.trim(),
+        visibility: hostedVisibility,
+      });
+      setHostedName("");
+      setHostedSlug("");
+      setHostedDescription("");
+      setSelectedHostedSkillId(skillId);
+      toast.success("Hosted skill created");
+    } catch (error) {
+      toast.error("Failed to create hosted skill", {
+        description: formatErrorMessage(error),
+      });
+    } finally {
+      setIsCreatingHosted(false);
+    }
+  };
+
+  const handlePublishHostedVersion = async () => {
+    if (!selectedHostedSkillId) {
+      toast.error("Select a hosted skill first");
+      return;
+    }
+    if (!publishVersion.trim()) {
+      toast.error("Version is required");
+      return;
+    }
+    if (!SEMVER_PATTERN.test(publishVersion.trim())) {
+      toast.error("Version must be valid semver");
+      return;
+    }
+    if (!publishFile) {
+      toast.error("Artifact file is required", {
+        description: "Upload a .tar artifact generated by lmskills publish.",
+      });
+      return;
+    }
+
+    setIsPublishingVersion(true);
+    try {
+      const hash = await sha256Hex(publishFile);
+      const { uploadUrl } = await generateHostedSkillUploadUrl({
+        skillId: selectedHostedSkillId as Id<"skills">,
+        version: publishVersion.trim(),
+      });
+
+      const uploadResponse = await fetch(uploadUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-tar",
+        },
+        body: publishFile,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error(`Artifact upload failed with status ${uploadResponse.status}`);
+      }
+
+      const uploadPayload = (await uploadResponse.json()) as {
+        storageId?: string;
+      };
+      if (!uploadPayload.storageId) {
+        throw new Error("Upload response did not include storageId");
+      }
+
+      const versionId = await publishSkillVersion({
+        skillId: selectedHostedSkillId as Id<"skills">,
+        version: publishVersion.trim(),
+        changelog: publishChangelog.trim() || undefined,
+        storageKey: uploadPayload.storageId,
+        contentHash: hash,
+        sizeBytes: publishFile.size,
+      });
+
+      if (setAsDefault) {
+        try {
+          await setDefaultVersion({
+            skillId: selectedHostedSkillId as Id<"skills">,
+            versionId,
+          });
+          toast.success("Hosted version published and set as default");
+        } catch (error) {
+          toast.success("Hosted version published", {
+            description:
+              "Version was uploaded but is not yet verified, so default version was not changed.",
+          });
+          const message = formatErrorMessage(error);
+          if (message) {
+            toast.info("Default version not updated", {
+              description: message,
+            });
+          }
+        }
+      } else {
+        toast.success("Hosted version published");
+      }
+
+      setPublishVersion("");
+      setPublishChangelog("");
+      setPublishFile(null);
+    } catch (error) {
+      toast.error("Failed to publish hosted version", {
+        description: formatErrorMessage(error),
+      });
+    } finally {
+      setIsPublishingVersion(false);
+    }
+  };
+
+  const handleSetDefaultVersion = async (
+    skillId: Id<"skills">,
+    versionId: Id<"skillVersions">
+  ) => {
+    setSettingDefaultVersionId(versionId);
+    try {
+      await setDefaultVersion({ skillId, versionId });
+      toast.success("Default version updated");
+    } catch (error) {
+      toast.error("Failed to set default version", {
+        description: formatErrorMessage(error),
+      });
+    } finally {
+      setSettingDefaultVersionId(null);
+    }
+  };
+
+  const handleReverifyVersion = async (
+    skillId: Id<"skills">,
+    versionId: Id<"skillVersions">
+  ) => {
+    setReverifyingVersionId(versionId);
+    try {
+      const result = await reverifyHostedSkillVersion({ skillId, versionId });
+      toast.success("Verification completed", {
+        description:
+          result?.status === "verified"
+            ? "Version is verified."
+            : "Version was rejected. Review verification errors.",
+      });
+    } catch (error) {
+      toast.error("Failed to verify version", {
+        description: formatErrorMessage(error),
+      });
+    } finally {
+      setReverifyingVersionId(null);
     }
   };
 
@@ -109,6 +335,270 @@ export default function DashboardPage() {
         <h1 className="text-2xl sm:text-3xl font-bold">My Skills</h1>
       </div>
 
+      <div className="grid gap-6 lg:grid-cols-2 mb-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Create Hosted Skill</CardTitle>
+            <CardDescription>
+              Create a hosted skill entry, then publish versioned artifacts.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="hosted-name">Name</Label>
+              <Input
+                id="hosted-name"
+                value={hostedName}
+                onChange={(event) => setHostedName(event.target.value)}
+                placeholder="Weather Skill"
+                disabled={isCreatingHosted}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="hosted-slug">Slug</Label>
+              <Input
+                id="hosted-slug"
+                value={hostedSlug}
+                onChange={(event) => setHostedSlug(event.target.value)}
+                placeholder="weather"
+                disabled={isCreatingHosted}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="hosted-description">Description</Label>
+              <Textarea
+                id="hosted-description"
+                value={hostedDescription}
+                onChange={(event) => setHostedDescription(event.target.value)}
+                placeholder="Describe what this skill does"
+                disabled={isCreatingHosted}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="hosted-visibility">Visibility</Label>
+              <select
+                id="hosted-visibility"
+                value={hostedVisibility}
+                onChange={(event) =>
+                  setHostedVisibility(event.target.value as "public" | "unlisted")
+                }
+                className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+                disabled={isCreatingHosted}
+              >
+                <option value="public">Public</option>
+                <option value="unlisted">Unlisted</option>
+              </select>
+            </div>
+            <Button onClick={handleCreateHostedSkill} disabled={isCreatingHosted}>
+              {isCreatingHosted ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating
+                </>
+              ) : (
+                "Create Hosted Skill"
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Publish Hosted Version</CardTitle>
+            <CardDescription>
+              Upload a tar artifact, verify it, and optionally set it as default.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="publish-skill">Hosted skill</Label>
+              <select
+                id="publish-skill"
+                value={selectedHostedSkillId}
+                onChange={(event) => setSelectedHostedSkillId(event.target.value)}
+                className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+                disabled={isPublishingVersion || !hostedSkills || hostedSkills.length === 0}
+              >
+                <option value="">Select a hosted skill</option>
+                {hostedSkills?.map((skill) => (
+                  <option key={skill._id} value={skill._id}>
+                    {skill.fullName}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="publish-version">Version</Label>
+              <Input
+                id="publish-version"
+                value={publishVersion}
+                onChange={(event) => setPublishVersion(event.target.value)}
+                placeholder="1.0.0"
+                disabled={isPublishingVersion}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="publish-file">Artifact (.tar)</Label>
+              <Input
+                id="publish-file"
+                type="file"
+                accept=".tar,application/x-tar"
+                onChange={(event) =>
+                  setPublishFile(event.target.files?.[0] ?? null)
+                }
+                disabled={isPublishingVersion}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="publish-changelog">Changelog (optional)</Label>
+              <Textarea
+                id="publish-changelog"
+                value={publishChangelog}
+                onChange={(event) => setPublishChangelog(event.target.value)}
+                placeholder="What changed in this version?"
+                disabled={isPublishingVersion}
+              />
+            </div>
+            <label className="flex items-center gap-2 text-sm text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={setAsDefault}
+                onChange={(event) => setSetAsDefault(event.target.checked)}
+                disabled={isPublishingVersion}
+              />
+              Set this as default version after successful verification
+            </label>
+            <Button
+              onClick={handlePublishHostedVersion}
+              disabled={isPublishingVersion || !selectedHostedSkill}
+            >
+              {isPublishingVersion ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Publishing
+                </>
+              ) : (
+                <>
+                  <Upload className="mr-2 h-4 w-4" />
+                  Publish Version
+                </>
+              )}
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              Generate a tar artifact with <code>lmskills publish</code>, then upload it here.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {hostedSkills && hostedSkills.length > 0 && (
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Hosted Skills</CardTitle>
+            <CardDescription>
+              Review version status, set defaults, and re-run verification.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {hostedSkills.map((skill) => (
+              <div key={skill._id} className="rounded-lg border p-4">
+                <div className="flex flex-wrap items-center gap-2 mb-3">
+                  <h3 className="font-semibold">{skill.fullName}</h3>
+                  <Badge variant="secondary">{skill.visibility}</Badge>
+                  <span className="text-xs text-muted-foreground">
+                    Updated {new Date(skill.updatedAt).toLocaleDateString()}
+                  </span>
+                </div>
+                {skill.versions.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    No versions published yet.
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {skill.versions.map((version) => {
+                      const isDefault = skill.defaultVersionId === version._id;
+                      const statusVariant =
+                        version.status === "verified"
+                          ? "default"
+                          : version.status === "rejected"
+                            ? "destructive"
+                            : "secondary";
+
+                      return (
+                        <div
+                          key={version._id}
+                          className="flex flex-col gap-2 rounded border px-3 py-2"
+                        >
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-mono text-sm">{version.version}</span>
+                            <Badge variant={statusVariant}>{version.status}</Badge>
+                            {isDefault && <Badge variant="outline">default</Badge>}
+                            {version.publishedAt && (
+                              <span className="text-xs text-muted-foreground">
+                                {new Date(version.publishedAt).toLocaleString()}
+                              </span>
+                            )}
+                          </div>
+                          {version.verification?.errors &&
+                            version.verification.errors.length > 0 && (
+                              <p className="text-xs text-destructive">
+                                {version.verification.errors[0]}
+                              </p>
+                            )}
+                          <div className="flex flex-wrap items-center gap-2">
+                            {version.status === "verified" && !isDefault && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() =>
+                                  handleSetDefaultVersion(skill._id, version._id)
+                                }
+                                disabled={settingDefaultVersionId === version._id}
+                              >
+                                {settingDefaultVersionId === version._id ? (
+                                  <>
+                                    <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                                    Setting default
+                                  </>
+                                ) : (
+                                  "Set default"
+                                )}
+                              </Button>
+                            )}
+                            {version.status !== "verified" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() =>
+                                  handleReverifyVersion(skill._id, version._id)
+                                }
+                                disabled={reverifyingVersionId === version._id}
+                              >
+                                {reverifyingVersionId === version._id ? (
+                                  <>
+                                    <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                                    Verifying
+                                  </>
+                                ) : (
+                                  <>
+                                    <RefreshCw className="mr-2 h-3.5 w-3.5" />
+                                    Re-verify
+                                  </>
+                                )}
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
       {status === "LoadingFirstPage" ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3].map((i) => (
@@ -136,7 +626,7 @@ export default function DashboardPage() {
             <CardTitle>No skills yet</CardTitle>
             <CardDescription>
               You haven&apos;t published any skills yet. Get started by submitting
-              your first skill!
+              your first skill.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -174,23 +664,21 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent className="flex-1">
                   <div className="space-y-2 text-sm">
+                    <div className="flex gap-2">
+                      <Badge variant="outline">{skill.source ?? "github"}</Badge>
+                      <Badge variant="secondary">{skill.visibility}</Badge>
+                    </div>
                     {skill.license && (
-                      <p className="text-muted-foreground">
-                        License: {skill.license}
-                      </p>
+                      <p className="text-muted-foreground">License: {skill.license}</p>
                     )}
                     {skill.stars !== undefined && skill.stars > 0 && (
-                      <p className="text-muted-foreground">
-                        Stars: {skill.stars}
-                      </p>
+                      <p className="text-muted-foreground">Stars: {skill.stars}</p>
                     )}
                     <p className="text-muted-foreground">
-                      Created:{" "}
-                      {new Date(skill.createdAt).toLocaleDateString()}
+                      Created: {new Date(skill.createdAt).toLocaleDateString()}
                     </p>
                     <p className="text-muted-foreground">
-                      Updated:{" "}
-                      {new Date(skill.updatedAt).toLocaleDateString()}
+                      Updated: {new Date(skill.updatedAt).toLocaleDateString()}
                     </p>
                   </div>
                 </CardContent>
@@ -214,7 +702,6 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Load More Button */}
       {(status === "CanLoadMore" || status === "LoadingMore") && skills.length > 0 && (
         <div className="mt-8 flex justify-center">
           <Button
@@ -234,7 +721,6 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Delete Confirmation Dialog */}
       <AlertDialog
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}

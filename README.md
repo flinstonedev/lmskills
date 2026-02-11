@@ -7,6 +7,7 @@ A public, LLM-agnostic platform for sharing, discovering, and collaborating on C
 - ✅ User authentication with Clerk (GitHub OAuth + Email magic link)
 - ✅ User profiles with customizable handles and bios
 - ✅ Convex database integration
+- ✅ Hosted skills with versioned artifact publishing and verification
 - ✅ Responsive landing page
 - ✅ Modern UI with shadcn/ui components
 - ✅ Full TypeScript support
@@ -101,6 +102,31 @@ https://your-convex-deployment.convex.site/clerk-webhook
 ```
 
 Configure this in Clerk Dashboard → Webhooks after deployment.
+
+## Hosted Skill Publishing
+
+LMSkills supports two skill sources:
+
+- GitHub-backed skills (submitted from a repo URL)
+- Hosted skills (published as versioned tar artifacts)
+
+### Create and Manage Hosted Skills
+
+1. Open `/dashboard`
+2. Use **Create Hosted Skill**
+3. Upload and publish versions from **Publish Hosted Version**
+4. Set or change the default verified version from the hosted versions list
+
+### Verification Pipeline
+
+When a hosted version is published, LMSkills automatically verifies:
+
+- Artifact exists in storage
+- Artifact size matches `sizeBytes`
+- Artifact SHA-256 matches `contentHash`
+- Optional manifest JSON structure is valid
+
+Versions are marked `verified` or `rejected`, and only verified versions can be set as default.
 
 ## Deployment
 

@@ -36,8 +36,13 @@ export async function GET(
     if (wantsMarkdown) {
       if (!skill.repoUrl) {
         return NextResponse.json(
-          { error: "Skill content is not hosted on GitHub" },
-          { status: 404 }
+          {
+            error:
+              skill.source === "hosted"
+                ? "Hosted skills expose versioned artifacts; markdown redirect is only available for GitHub-backed skills"
+                : "Skill content is not hosted on GitHub",
+          },
+          { status: 406 }
         );
       }
       // Validate URL is a GitHub URL before redirecting (prevent open redirect)
@@ -77,6 +82,10 @@ export async function GET(
       name: skill.name,
       description: skill.description,
       owner: skill.owner,
+      source: skill.source,
+      slug: skill.slug,
+      fullName: skill.fullName,
+      visibility: skill.visibility,
       repoUrl: skill.repoUrl,
       license: skill.license,
       stars: skill.stars,

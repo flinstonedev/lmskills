@@ -70,6 +70,49 @@ lmskills remove <skill-name> --global
 
 Alias: `lmskills rm <skill-name>`
 
+### Initialize a Hosted Skill Manifest
+
+Create a `skill.json` template in the current folder:
+
+```bash
+lmskills init
+```
+
+### Package a Hosted Skill Version Locally
+
+Create a tar artifact and register a local published version:
+
+```bash
+lmskills publish
+```
+
+Artifacts are written to `.lmskills/artifacts/` and metadata to `.lmskills/versions.json`.
+
+### Publish to LMSkills Hosted Backend
+
+You can package and publish in one step:
+
+```bash
+lmskills publish --remote --set-default
+```
+
+Remote publish requires:
+
+- `LMSKILLS_CONVEX_URL` (or `--convex-url`)
+- `LMSKILLS_AUTH_TOKEN` (or `--auth-token`)
+
+Optional settings:
+
+- `--visibility public|unlisted` (used if hosted skill must be auto-created)
+- `--changelog \"...\"`
+- `--no-set-default`
+
+### List Local Published Versions
+
+```bash
+lmskills versions
+```
+
 ## Examples
 
 ### Using npx (no installation required)

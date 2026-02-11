@@ -3,6 +3,8 @@ import * as path from 'path';
 import * as crypto from 'crypto';
 import chalk from 'chalk';
 import ora from 'ora';
+import fetch from 'node-fetch';
+import { ConvexHttpClient } from 'convex/browser';
 import {
   SkillManifest,
   VersionsRegistry,
@@ -15,6 +17,52 @@ const REGISTRY_FILE = 'versions.json';
 const ARTIFACTS_DIR = 'artifacts';
 
 const SEMVER_PATTERN = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
+const SAFE_SLUG_PATTERN = /^[A-Za-z0-9._-]+$/;
+
+type SemverParts = {
+  major: number;
+  minor: number;
+  patch: number;
+  prerelease: Array<string>;
+};
+
+type HostedVisibility = 'public' | 'unlisted';
+
+export interface PublishOptions {
+  remote?: boolean;
+  setDefault?: boolean;
+  visibility?: HostedVisibility;
+  convexUrl?: string;
+  authToken?: string;
+  changelog?: string;
+}
+
+interface RemotePublishConfig {
+  convexUrl: string;
+  authToken: string;
+  setDefault: boolean;
+  visibility: HostedVisibility;
+  changelog?: string;
+}
+
+interface HostedSkillLookup {
+  _id: string;
+  fullName?: string;
+}
+
+interface RemotePublishResult {
+  skillId: string;
+  skillFullName?: string;
+  versionId: string;
+  storageId: string;
+  defaultSet: boolean;
+  defaultSetMessage?: string;
+}
+
+interface ConvexStringClient {
+  query(name: string, args: Record<string, unknown>): Promise<unknown>;
+  mutation(name: string, args: Record<string, unknown>): Promise<unknown>;
+}
 
 function readManifest(manifestPath: string): SkillManifest {
   const raw = fs.readFileSync(manifestPath, 'utf-8');
@@ -27,6 +75,9 @@ function assertValidManifest(manifest: SkillManifest): void {
   }
   if (!manifest.slug?.trim()) {
     throw new Error('Manifest missing "slug"');
+  }
+  if (!SAFE_SLUG_PATTERN.test(manifest.slug) || manifest.slug.includes('..')) {
+    throw new Error('Manifest "slug" contains invalid characters');
   }
   if (!manifest.version?.trim()) {
     throw new Error('Manifest missing "version"');
@@ -98,13 +149,6 @@ function collectFiles(manifest: SkillManifest, baseDir: string): string[] {
 
   return files;
 }
-
-type SemverParts = {
-  major: number;
-  minor: number;
-  patch: number;
-  prerelease: Array<string>;
-};
 
 function parseSemver(version: string): SemverParts {
   const [withoutBuild] = version.split('+', 2);
@@ -231,7 +275,153 @@ function writeRegistry(registryPath: string, registry: VersionsRegistry): void {
   fs.writeFileSync(registryPath, JSON.stringify(registry, null, 2) + '\n');
 }
 
-export async function publishSkill(): Promise<void> {
+function resolveRemotePublishConfig(
+  options: PublishOptions
+): RemotePublishConfig | null {
+  const flag = process.env.LMSKILLS_REMOTE_PUBLISH;
+  const remoteFromEnv = flag === '1' || flag === 'true';
+  const remote = options.remote ?? remoteFromEnv;
+
+  if (!remote) {
+    return null;
+  }
+
+  const convexUrl =
+    options.convexUrl ??
+    process.env.LMSKILLS_CONVEX_URL ??
+    process.env.NEXT_PUBLIC_CONVEX_URL;
+  const authToken = options.authToken ?? process.env.LMSKILLS_AUTH_TOKEN;
+
+  if (!convexUrl) {
+    throw new Error(
+      'Remote publish requested but Convex URL is missing. Set LMSKILLS_CONVEX_URL or pass --convex-url.'
+    );
+  }
+  if (!authToken) {
+    throw new Error(
+      'Remote publish requested but auth token is missing. Set LMSKILLS_AUTH_TOKEN or pass --auth-token.'
+    );
+  }
+
+  const visibility = options.visibility ?? 'public';
+  if (visibility !== 'public' && visibility !== 'unlisted') {
+    throw new Error('Visibility must be either "public" or "unlisted"');
+  }
+
+  return {
+    convexUrl,
+    authToken,
+    setDefault: options.setDefault ?? true,
+    visibility,
+    changelog: options.changelog,
+  };
+}
+
+async function findOrCreateHostedSkill(
+  convex: ConvexHttpClient,
+  manifest: SkillManifest,
+  visibility: HostedVisibility
+): Promise<HostedSkillLookup> {
+  const client = convex as unknown as ConvexStringClient;
+  const lookup = (await client.query('skills:getMyHostedSkillBySlug', {
+    slug: manifest.slug,
+  })) as HostedSkillLookup | null;
+
+  if (lookup) {
+    return lookup;
+  }
+
+  const createdSkillId = (await client.mutation('skills:createHostedSkill', {
+    name: manifest.name,
+    slug: manifest.slug,
+    description: manifest.description,
+    visibility,
+  })) as string;
+
+  const created = (await client.query('skills:getMyHostedSkillBySlug', {
+    slug: manifest.slug,
+  })) as HostedSkillLookup | null;
+
+  return created ?? { _id: createdSkillId };
+}
+
+async function publishRemoteHostedVersion(args: {
+  remote: RemotePublishConfig;
+  manifest: SkillManifest;
+  tarball: Buffer;
+  hash: string;
+  sizeBytes: number;
+}): Promise<RemotePublishResult> {
+  const { remote, manifest, tarball, hash, sizeBytes } = args;
+  const convex = new ConvexHttpClient(remote.convexUrl);
+  convex.setAuth(remote.authToken);
+  const client = convex as unknown as ConvexStringClient;
+
+  const hostedSkill = await findOrCreateHostedSkill(
+    convex,
+    manifest,
+    remote.visibility
+  );
+
+  const upload = (await client.mutation('skills:generateHostedSkillUploadUrl', {
+    skillId: hostedSkill._id,
+    version: manifest.version,
+  })) as { uploadUrl: string };
+
+  const uploadResponse = await fetch(upload.uploadUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-tar',
+    },
+    body: tarball,
+  });
+
+  if (!uploadResponse.ok) {
+    throw new Error(`Artifact upload failed with status ${uploadResponse.status}`);
+  }
+
+  const payload = (await uploadResponse.json()) as { storageId?: string };
+  if (!payload.storageId) {
+    throw new Error('Artifact upload did not return a storageId');
+  }
+
+  const versionId = (await client.mutation('skills:publishSkillVersion', {
+    skillId: hostedSkill._id,
+    version: manifest.version,
+    changelog: remote.changelog,
+    storageKey: payload.storageId,
+    contentHash: hash,
+    sizeBytes,
+    manifest: JSON.stringify(manifest),
+  })) as string;
+
+  let defaultSet = false;
+  let defaultSetMessage: string | undefined;
+
+  if (remote.setDefault) {
+    try {
+      await client.mutation('skills:setDefaultVersion', {
+        skillId: hostedSkill._id,
+        versionId,
+      });
+      defaultSet = true;
+    } catch (error) {
+      defaultSetMessage =
+        error instanceof Error ? error.message : 'Failed to set default version';
+    }
+  }
+
+  return {
+    skillId: hostedSkill._id,
+    skillFullName: hostedSkill.fullName,
+    versionId,
+    storageId: payload.storageId,
+    defaultSet,
+    defaultSetMessage,
+  };
+}
+
+export async function publishSkill(options: PublishOptions = {}): Promise<void> {
   const spinner = ora();
 
   try {
@@ -257,14 +447,12 @@ export async function publishSkill(): Promise<void> {
     const sizeBytes = tarball.length;
     spinner.succeed('Tarball created');
 
-    const registryDir = path.join(baseDir, REGISTRY_DIR, ARTIFACTS_DIR);
-    fs.mkdirSync(registryDir, { recursive: true });
+    const artifactsDir = path.join(baseDir, REGISTRY_DIR, ARTIFACTS_DIR);
+    fs.mkdirSync(artifactsDir, { recursive: true });
 
-    const artifactPath = path.join(
-      registryDir,
-      `${manifest.slug}-${manifest.version}.tar`
-    );
-    fs.writeFileSync(artifactPath, tarball);
+    const artifactFilename = `${manifest.slug}-${manifest.version}.tar`;
+    const artifactAbsPath = path.join(artifactsDir, artifactFilename);
+    fs.writeFileSync(artifactAbsPath, tarball);
 
     const registryPath = path.join(baseDir, REGISTRY_DIR, REGISTRY_FILE);
     const registry = readRegistry(registryPath);
@@ -281,9 +469,10 @@ export async function publishSkill(): Promise<void> {
 
     const publishedVersion: PublishedSkillVersion = {
       version: manifest.version,
+      changelog: options.changelog,
       hash,
       sizeBytes,
-      artifactPath,
+      artifactPath: path.join(ARTIFACTS_DIR, artifactFilename),
       publishedAt: new Date().toISOString(),
     };
 
@@ -293,9 +482,37 @@ export async function publishSkill(): Promise<void> {
     writeRegistry(registryPath, registry);
 
     console.log(chalk.green('\n✓ Skill packaged successfully'));
-    console.log(chalk.gray(`  Artifact: ${artifactPath}`));
+    console.log(chalk.gray(`  Artifact: ${artifactAbsPath}`));
     console.log(chalk.gray(`  Size: ${sizeBytes.toLocaleString()} bytes`));
     console.log(chalk.gray(`  SHA256: ${hash}`));
+
+    const remoteConfig = resolveRemotePublishConfig(options);
+    if (remoteConfig) {
+      spinner.start('Publishing hosted version to Convex...');
+      const remoteResult = await publishRemoteHostedVersion({
+        remote: remoteConfig,
+        manifest,
+        tarball,
+        hash,
+        sizeBytes,
+      });
+      spinner.succeed('Hosted publish completed');
+
+      console.log(chalk.green('\n✓ Hosted version published'));
+      if (remoteResult.skillFullName) {
+        console.log(chalk.gray(`  Skill: ${remoteResult.skillFullName}`));
+      }
+      console.log(chalk.gray(`  Skill ID: ${remoteResult.skillId}`));
+      console.log(chalk.gray(`  Version ID: ${remoteResult.versionId}`));
+      console.log(chalk.gray(`  Storage ID: ${remoteResult.storageId}`));
+      if (remoteConfig.setDefault) {
+        if (remoteResult.defaultSet) {
+          console.log(chalk.gray('  Default: updated'));
+        } else if (remoteResult.defaultSetMessage) {
+          console.log(chalk.yellow(`  Default: not updated (${remoteResult.defaultSetMessage})`));
+        }
+      }
+    }
   } catch (error) {
     spinner.fail('Publish failed');
 

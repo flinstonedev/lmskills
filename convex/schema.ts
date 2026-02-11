@@ -59,6 +59,7 @@ export default defineSchema({
     sizeBytes: v.number(),
     manifest: v.optional(v.string()), // JSON string
     publishedBy: v.id("users"),
+    publishedAt: v.optional(v.number()),
     status: v.union(v.literal("pending"), v.literal("verified"), v.literal("rejected")),
     verificationId: v.optional(v.id("skillVerifications")),
   })
@@ -74,7 +75,9 @@ export default defineSchema({
     errors: v.optional(v.array(v.string())),
     startedAt: v.number(),
     completedAt: v.optional(v.number()),
-  }),
+  })
+    .index("by_skill_version", ["skillVersionId"])
+    .index("by_status", ["status"]),
 
   // Tags for categorizing skills
   tags: defineTable({

@@ -18,6 +18,10 @@ export default function SkillDetailPage() {
   const name = params.name as string;
 
   const skill = useQuery(api.skills.getSkill, { owner, name });
+  const skillWithVersions = useQuery(
+    api.skills.getSkillWithVersions,
+    skill?.fullName ? { fullName: skill.fullName } : "skip"
+  );
 
   if (skill === undefined) {
     return (
@@ -189,6 +193,58 @@ export default function SkillDetailPage() {
             </CardContent>
           </Card>
         </>
+      )}
+
+      {skill.source === "hosted" && (
+        <Card className="bg-[var(--surface-2)] backdrop-blur border-border/50 mb-8">
+          <CardHeader>
+            <CardHeading level={2} className="text-xl">
+              Hosted Versions
+            </CardHeading>
+            <CardDescription className="text-sm">
+              {skill.visibility === "public"
+                ? "Showing verified public versions."
+                : "Showing versions visible to the owner."}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {skillWithVersions === undefined ? (
+              <Skeleton className="h-16 w-full" />
+            ) : !skillWithVersions || skillWithVersions.versions.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No hosted versions are available yet.
+              </p>
+            ) : (
+              skillWithVersions.versions.map((version) => (
+                <div
+                  key={version._id}
+                  className="flex items-center justify-between gap-3 rounded border px-3 py-2"
+                >
+                  <div>
+                    <p className="font-mono text-sm">{version.version}</p>
+                    {version.publishedAt && (
+                      <p className="text-xs text-muted-foreground">
+                        Published{" "}
+                        {new Date(version.publishedAt).toLocaleDateString()}
+                      </p>
+                    )}
+                  </div>
+                  <Badge
+                    variant={
+                      version.status === "verified"
+                        ? "default"
+                        : version.status === "rejected"
+                          ? "destructive"
+                          : "secondary"
+                    }
+                  >
+                    {version.status}
+                  </Badge>
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
       )}
 
       {/* License Information */}

@@ -49,11 +49,14 @@ export async function listVersions(): Promise<void> {
 
     console.log(chalk.green(`\nPublished versions for ${record.name} (${record.slug}):`));
     for (const version of record.versions) {
+      const artifactPath = path.isAbsolute(version.artifactPath)
+        ? version.artifactPath
+        : path.resolve(path.dirname(registryPath), version.artifactPath);
       console.log(chalk.cyan(`  ${version.version}`));
       console.log(chalk.gray(`    Published: ${version.publishedAt}`));
       console.log(chalk.gray(`    SHA256: ${version.hash}`));
       console.log(chalk.gray(`    Size: ${version.sizeBytes.toLocaleString()} bytes`));
-      console.log(chalk.gray(`    Artifact: ${version.artifactPath}`));
+      console.log(chalk.gray(`    Artifact: ${artifactPath}`));
     }
   } catch (error) {
     spinner.fail('Failed to list versions');
