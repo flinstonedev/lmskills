@@ -9,7 +9,8 @@ import { initSkill } from './init';
 import { publishSkill } from './publish';
 import { listVersions } from './versions';
 import { login } from './auth';
-import { createRepo, listRepos } from './repo';
+import { createRepo, listRepos, infoRepo, deleteRepo } from './repo';
+import { searchSkills } from './search';
 
 import packageJson from '../package.json';
 
@@ -21,11 +22,20 @@ program
   .version((packageJson as { version: string }).version);
 
 program
-  .command('install <github-url>')
-  .description('Install a skill from a GitHub subdirectory URL')
+  .command('install <source>')
+  .description('Install a skill from a GitHub URL or repository (owner/slug)')
   .option('-g, --global', 'Install globally instead of in the current project')
-  .action(async (githubUrl: string, options: { global?: boolean }) => {
-    await installSkill(githubUrl, options);
+  .option('--version <version>', 'Specific version to install (repository skills only)')
+  .action(async (source: string, options: { global?: boolean; version?: string }) => {
+    await installSkill(source, options);
+  });
+
+program
+  .command('search [query]')
+  .description('Search and browse skills in the registry')
+  .option('--limit <limit>', 'Maximum number of results (default: 20, max: 100)')
+  .action(async (query: string | undefined, options: { limit?: string }) => {
+    await searchSkills(query, options);
   });
 
 program
@@ -104,6 +114,20 @@ repoCommand
   .description('List your skill repositories on LMSkills')
   .action(async () => {
     await listRepos();
+  });
+
+repoCommand
+  .command('info <owner/slug>')
+  .description('View details and versions for a skill repository')
+  .action(async (ownerSlug: string) => {
+    await infoRepo(ownerSlug);
+  });
+
+repoCommand
+  .command('delete <slug>')
+  .description('Delete a skill repository you own')
+  .action(async (slug: string) => {
+    await deleteRepo(slug);
   });
 
 // Handle unknown commands with helpful error messages

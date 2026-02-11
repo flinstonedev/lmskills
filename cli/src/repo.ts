@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import * as readline from 'readline';
 import chalk from 'chalk';
 import ora from 'ora';
 import fetch from 'node-fetch';
@@ -124,6 +125,167 @@ export async function createRepo(options: RepoCreateOptions = {}): Promise<void>
     );
   } catch (error) {
     spinner.fail('Failed to create repository');
+
+    if (error instanceof Error) {
+      console.error(chalk.red(`\nError: ${error.message}`));
+    } else {
+      console.error(chalk.red('\nAn unknown error occurred'));
+    }
+
+    process.exit(1);
+  }
+}
+
+export async function infoRepo(ownerSlug: string): Promise<void> {
+  const spinner = ora();
+
+  try {
+    const savedConfig = readCliConfig();
+    const apiUrl = normalizeBaseUrl(savedConfig.apiUrl ?? getDefaultApiUrl());
+
+    const parts = ownerSlug.split('/');
+    if (parts.length !== 2 || !parts[0] || !parts[1]) {
+      throw new Error(
+        'Invalid format. Use: lmskills repo info <owner>/<slug>'
+      );
+    }
+    const [owner, name] = parts;
+
+    spinner.start('Fetching skill info...');
+
+    const response = await fetch(
+      `${apiUrl}/api/cli/skills/info?owner=${encodeURIComponent(owner)}&name=${encodeURIComponent(name)}`,
+      { method: 'GET' }
+    );
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new Error(`Skill "${ownerSlug}" not found.`);
+      }
+      const message = await parseApiError(response);
+      throw new Error(`Failed to fetch skill info: ${message}`);
+    }
+
+    const result = (await response.json()) as {
+      skill: {
+        name: string;
+        slug: string;
+        fullName: string;
+        description: string;
+        source: string;
+        license: string | null;
+        stars: number | null;
+        owner: { handle: string } | null;
+        createdAt: number;
+        updatedAt: number;
+      };
+      versions: Array<{
+        version: string;
+        status: string;
+        changelog: string | null;
+        publishedAt: number;
+        sizeBytes: number;
+      }>;
+    };
+
+    spinner.succeed('Skill info fetched');
+
+    const { skill, versions } = result;
+    const ownerHandle = skill.owner?.handle ?? 'unknown';
+
+    console.log(chalk.bold(`\n  ${skill.fullName || `${ownerHandle}/${skill.slug}`}\n`));
+    console.log(chalk.gray(`  Description: ${skill.description}`));
+    console.log(chalk.gray(`  Owner:       ${ownerHandle}`));
+    console.log(chalk.gray(`  Source:      ${skill.source}`));
+    console.log(chalk.gray(`  License:     ${skill.license || '-'}`));
+    console.log(chalk.gray(`  Stars:       ${skill.stars ?? '-'}`));
+    console.log(chalk.gray(`  Created:     ${new Date(skill.createdAt).toLocaleDateString()}`));
+
+    if (versions.length > 0) {
+      console.log(chalk.bold(`\n  Versions (${versions.length}):\n`));
+
+      for (const v of versions) {
+        const date = new Date(v.publishedAt).toLocaleDateString();
+        const size = v.sizeBytes ? `${(v.sizeBytes / 1024).toFixed(1)}KB` : '-';
+        const changelog = v.changelog ? `  ${v.changelog}` : '';
+
+        console.log(chalk.cyan(`  v${v.version}`) + chalk.gray(`  ${v.status}  |  ${date}  |  ${size}${changelog}`));
+      }
+      console.log();
+    } else {
+      console.log(chalk.gray('\n  No versions published yet.\n'));
+    }
+  } catch (error) {
+    spinner.fail('Failed to fetch skill info');
+
+    if (error instanceof Error) {
+      console.error(chalk.red(`\nError: ${error.message}`));
+    } else {
+      console.error(chalk.red('\nAn unknown error occurred'));
+    }
+
+    process.exit(1);
+  }
+}
+
+export async function deleteRepo(slug: string): Promise<void> {
+  const spinner = ora();
+
+  try {
+    const { apiUrl, authToken } = getAuthConfig();
+
+    // Confirmation prompt
+    const confirmed = await new Promise<boolean>((resolve) => {
+      const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+      });
+
+      rl.question(
+        chalk.yellow(`\nAre you sure you want to delete repository "${slug}"? This cannot be undone. (y/N) `),
+        (answer) => {
+          rl.close();
+          resolve(answer.trim().toLowerCase() === 'y');
+        }
+      );
+    });
+
+    if (!confirmed) {
+      console.log(chalk.gray('\nDeletion cancelled.'));
+      return;
+    }
+
+    spinner.start('Deleting repository...');
+
+    const response = await fetch(`${apiUrl}/api/cli/repos/delete`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ slug }),
+    });
+
+    if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        throw new Error(
+          'Authentication failed. Run "lmskills login" to re-authenticate.'
+        );
+      }
+      if (response.status === 404) {
+        throw new Error(
+          `Repository "${slug}" not found. Make sure you own the repository and the slug is correct.`
+        );
+      }
+      const message = await parseApiError(response);
+      throw new Error(`Failed to delete repository: ${message}`);
+    }
+
+    spinner.succeed('Repository deleted');
+
+    console.log(chalk.green(`\n✓ Repository "${slug}" deleted successfully.`));
+  } catch (error) {
+    spinner.fail('Failed to delete repository');
 
     if (error instanceof Error) {
       console.error(chalk.red(`\nError: ${error.message}`));
