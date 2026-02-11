@@ -30,6 +30,7 @@ const navigation: DocSection[] = [
     items: [
       { title: "Submitting Skills", href: "/docs#submitting-skills" },
       { title: "Using Skills", href: "/docs#using-skills" },
+      { title: "Hosted Publishing", href: "/docs#hosted-publishing" },
     ],
   },
   {
@@ -47,6 +48,9 @@ const navigation: DocSection[] = [
   {
     title: "Reference",
     items: [
+      { title: "Hosted Config", href: "/docs#hosted-config" },
+      { title: "Hosted API Behavior", href: "/docs#hosted-api-behavior" },
+      { title: "Hosted Troubleshooting", href: "/docs#hosted-troubleshooting" },
       { title: "API Reference", href: "/docs#api-reference" },
       { title: "FAQ", href: "/docs#faq" },
     ],

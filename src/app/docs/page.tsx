@@ -272,6 +272,161 @@ npx lmskills-cli remove <skill-name> --global`}
           </div>
         </section>
 
+        {/* Hosted Publishing */}
+        <section className="mb-12">
+          <h2 className="text-2xl font-semibold mb-4 scroll-mt-24" id="hosted-publishing">
+            Hosted Publishing
+          </h2>
+
+          <p className="text-muted-foreground mb-4">
+            Hosted skills are versioned artifacts managed directly in LMSkills. The recommended
+            flow is: create the hosted skill, package a tar artifact, publish the version, then
+            confirm verification and default version.
+          </p>
+
+          <h3 className="text-xl font-semibold mb-3 mt-6">1. Create a Hosted Skill</h3>
+          <p className="text-muted-foreground mb-4">
+            Open your <Link href="/dashboard" className="text-primary hover:underline">dashboard</Link>,
+            create a hosted skill entry, and choose visibility (<code>public</code> or{" "}
+            <code>unlisted</code>).
+          </p>
+
+          <h3 className="text-xl font-semibold mb-3 mt-6">2. Package an Artifact</h3>
+          <p className="text-muted-foreground mb-4">
+            In your skill folder, initialize a manifest once and package a versioned tarball:
+          </p>
+          <div className="bg-muted p-4 rounded-lg font-mono text-sm mb-6">
+            <pre className="whitespace-pre-wrap">
+{`# Create skill.json template (once per skill)
+npx lmskills-cli init
+
+# Package current version locally
+npx lmskills-cli publish`}
+            </pre>
+          </div>
+
+          <h3 className="text-xl font-semibold mb-3 mt-6">3. Publish a Hosted Version</h3>
+          <p className="text-muted-foreground mb-4">
+            Publish directly to LMSkills using remote mode:
+          </p>
+          <div className="bg-muted p-4 rounded-lg font-mono text-sm mb-6">
+            <pre className="whitespace-pre-wrap">
+{`export LMSKILLS_CONVEX_URL=https://<your-deployment>.convex.cloud
+export LMSKILLS_AUTH_TOKEN=<your-auth-token>
+
+npx lmskills-cli publish --remote --set-default
+
+# Optional flags:
+# --no-set-default
+# --visibility public|unlisted
+# --changelog "What changed"`}
+            </pre>
+          </div>
+          <p className="text-muted-foreground mb-6">
+            <strong>Important:</strong> Auth is read from <code>LMSKILLS_AUTH_TOKEN</code>. There
+            is no <code>--auth-token</code> CLI flag.
+          </p>
+
+          <h3 className="text-xl font-semibold mb-3 mt-6">4. Verification and Default Version</h3>
+          <p className="text-muted-foreground mb-4">
+            Every hosted version is verified automatically and gets one of these statuses:
+          </p>
+          <ul className="space-y-2 text-muted-foreground mb-6">
+            <li><code>pending</code>: verification is in progress</li>
+            <li><code>verified</code>: ready for public/default usage</li>
+            <li><code>rejected</code>: failed verification checks</li>
+          </ul>
+          <p className="text-muted-foreground">
+            Only <code>verified</code> versions can be set as default. If <code>--set-default</code>{" "}
+            is used while a version is still pending, publish still succeeds and default can be set
+            later from the dashboard.
+          </p>
+        </section>
+
+        {/* Hosted Config */}
+        <section className="mb-12">
+          <h2 className="text-2xl font-semibold mb-4 scroll-mt-24" id="hosted-config">
+            Hosted Config
+          </h2>
+
+          <p className="text-muted-foreground mb-4">
+            Remote publishing uses these environment variables:
+          </p>
+          <ul className="space-y-2 text-muted-foreground mb-6">
+            <li><code>LMSKILLS_CONVEX_URL</code>: Convex deployment URL used by the CLI</li>
+            <li><code>LMSKILLS_AUTH_TOKEN</code>: auth token required for remote publish actions</li>
+            <li><code>NEXT_PUBLIC_CONVEX_URL</code>: fallback URL if <code>LMSKILLS_CONVEX_URL</code>{" "}
+              is not set</li>
+            <li><code>LMSKILLS_REMOTE_PUBLISH=true</code>: optional default to enable remote mode without passing <code>--remote</code></li>
+          </ul>
+        </section>
+
+        {/* Hosted API Behavior */}
+        <section className="mb-12">
+          <h2 className="text-2xl font-semibold mb-4 scroll-mt-24" id="hosted-api-behavior">
+            Hosted API Behavior
+          </h2>
+
+          <h3 className="text-xl font-semibold mb-3 mt-6">Content Negotiation</h3>
+          <p className="text-muted-foreground mb-4">
+            The endpoint <code>/api/skills/:owner/:name</code> supports JSON metadata responses and
+            markdown redirects for GitHub-backed skills.
+          </p>
+          <ul className="space-y-2 text-muted-foreground mb-6">
+            <li><code>Accept: application/json</code>: returns skill metadata</li>
+            <li><code>Accept: text/markdown</code> or <code>text/plain</code>: redirects only for GitHub-backed skills</li>
+            <li>Hosted skills with markdown/text Accept headers return <code>406 Not Acceptable</code></li>
+          </ul>
+
+          <h3 className="text-xl font-semibold mb-3 mt-6">Visibility and Versions</h3>
+          <ul className="space-y-2 text-muted-foreground mb-6">
+            <li>Public hosted skills expose only <code>verified</code> versions to non-owners</li>
+            <li>Unlisted hosted skills are visible only to the owner</li>
+            <li>Listings and search include public skills only</li>
+          </ul>
+        </section>
+
+        {/* Hosted Troubleshooting */}
+        <section className="mb-12">
+          <h2 className="text-2xl font-semibold mb-4 scroll-mt-24" id="hosted-troubleshooting">
+            Hosted Troubleshooting
+          </h2>
+
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Remote publish fails with missing auth token</h3>
+              <p className="text-muted-foreground">
+                Set <code>LMSKILLS_AUTH_TOKEN</code> in your shell before running{" "}
+                <code>publish --remote</code>.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Artifact upload fails</h3>
+              <p className="text-muted-foreground">
+                Confirm you generated a <code>.tar</code> artifact with <code>lmskills publish</code>{" "}
+                and that the selected hosted skill/version does not already exist.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Version is rejected</h3>
+              <p className="text-muted-foreground">
+                Check verification errors in the dashboard, fix the package or manifest, and
+                republish or re-run verification.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Default version did not change</h3>
+              <p className="text-muted-foreground">
+                Only <code>verified</code> versions can be set as default. Wait for verification or
+                set default later from the hosted versions list.
+              </p>
+            </div>
+          </div>
+        </section>
+
         {/* Best Practices */}
         <section className="mb-12">
           <h2 className="text-2xl font-semibold mb-4 scroll-mt-24" id="best-practices">Best Practices</h2>
