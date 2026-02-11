@@ -101,6 +101,10 @@ Remote publish requires:
 - `LMSKILLS_API_URL` (optional, defaults to `https://www.lmskills.ai`)
 - `LMSKILLS_AUTH_TOKEN` (Bearer token for Clerk-protected LMSkills API requests)
 
+If you are signed in on LMSkills in your browser, you can retrieve a token from:
+
+- `https://www.lmskills.ai/api/cli/auth/token`
+
 Optional settings:
 
 - `--visibility public|unlisted` (used if hosted skill must be auto-created)

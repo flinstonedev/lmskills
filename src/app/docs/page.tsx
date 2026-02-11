@@ -328,6 +328,11 @@ npx lmskills-cli publish --remote --set-default
             token) and sent to Clerk-protected LMSkills API endpoints. There is no{" "}
             <code>--auth-token</code> CLI flag.
           </p>
+          <p className="text-muted-foreground mb-6">
+            If you are already signed in on LMSkills, you can fetch a CLI token from{" "}
+            <code>/api/cli/auth/token</code> and export it as{" "}
+            <code>LMSKILLS_AUTH_TOKEN</code>.
+          </p>
 
           <h3 className="text-xl font-semibold mb-3 mt-6">4. Verification and Default Version</h3>
           <p className="text-muted-foreground mb-4">
@@ -360,6 +365,7 @@ npx lmskills-cli publish --remote --set-default
             <li><code>NEXT_PUBLIC_APP_URL</code>: fallback base URL if <code>LMSKILLS_API_URL</code>{" "}
               is not set</li>
             <li><code>LMSKILLS_REMOTE_PUBLISH=true</code>: optional default to enable remote mode without passing <code>--remote</code></li>
+            <li><code>/api/cli/auth/token</code>: helper endpoint for signed-in users to retrieve a CLI auth token</li>
           </ul>
         </section>
 

@@ -286,7 +286,7 @@ function resolveRemotePublishConfig(
 
   if (!authToken) {
     throw new Error(
-      'Remote publish requested but auth token is missing. Set LMSKILLS_AUTH_TOKEN (Clerk session token).'
+      'Remote publish requested but auth token is missing. Set LMSKILLS_AUTH_TOKEN (for example from https://www.lmskills.ai/api/cli/auth/token while signed in).'
     );
   }
 
