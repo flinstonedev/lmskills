@@ -93,17 +93,17 @@ Artifacts are written to `.lmskills/artifacts/` and metadata to `.lmskills/versi
 You can package and publish in one step:
 
 ```bash
+# Authenticate once (opens browser + Clerk sign-in)
+lmskills login
+
+# Then publish
 lmskills publish --remote --set-default
 ```
 
 Remote publish requires:
 
+- Browser auth via `lmskills login` (recommended)
 - `LMSKILLS_API_URL` (optional, defaults to `https://www.lmskills.ai`)
-- `LMSKILLS_AUTH_TOKEN` (Bearer token for Clerk-protected LMSkills API requests)
-
-If you are signed in on LMSkills in your browser, you can retrieve a token from:
-
-- `https://www.lmskills.ai/api/cli/auth/token`
 
 Optional settings:
 
@@ -111,6 +111,8 @@ Optional settings:
 - `--changelog \"...\"`
 - `--no-set-default`
 - `--api-url <url>` (override API base URL)
+
+Non-interactive environments can set `LMSKILLS_AUTH_TOKEN` directly.
 
 ### List Local Published Versions
 

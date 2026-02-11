@@ -8,6 +8,7 @@ import { removeSkill } from './remove';
 import { initSkill } from './init';
 import { publishSkill } from './publish';
 import { listVersions } from './versions';
+import { login } from './auth';
 
 import packageJson from '../package.json';
 
@@ -48,6 +49,14 @@ program
   .description('Create a skill.json template in the current directory')
   .action(async () => {
     await initSkill();
+  });
+
+program
+  .command('login')
+  .description('Authenticate with LMSkills in your browser')
+  .option('--api-url <url>', 'Base LMSkills URL (default: https://www.lmskills.ai)')
+  .action(async (options: { apiUrl?: string }) => {
+    await login({ apiUrl: options.apiUrl });
   });
 
 program

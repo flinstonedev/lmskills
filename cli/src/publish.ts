@@ -4,6 +4,7 @@ import * as crypto from 'crypto';
 import chalk from 'chalk';
 import ora from 'ora';
 import fetch, { Response } from 'node-fetch';
+import { getDefaultApiUrl, normalizeBaseUrl, readCliConfig } from './auth';
 import {
   SkillManifest,
   VersionsRegistry,
@@ -275,18 +276,20 @@ function resolveRemotePublishConfig(
     return null;
   }
 
+  const savedConfig = readCliConfig();
   const apiUrl = normalizeBaseUrl(
     options.apiUrl ??
       options.convexUrl ??
       process.env.LMSKILLS_API_URL ??
       process.env.NEXT_PUBLIC_APP_URL ??
-      'https://www.lmskills.ai'
+      savedConfig.apiUrl ??
+      getDefaultApiUrl()
   );
-  const authToken = process.env.LMSKILLS_AUTH_TOKEN;
+  const authToken = process.env.LMSKILLS_AUTH_TOKEN ?? savedConfig.authToken;
 
   if (!authToken) {
     throw new Error(
-      'Remote publish requested but auth token is missing. Set LMSKILLS_AUTH_TOKEN (for example from https://www.lmskills.ai/api/cli/auth/token while signed in).'
+      'Remote publish requested but auth token is missing. Run "lmskills login" or set LMSKILLS_AUTH_TOKEN.'
     );
   }
 
@@ -302,10 +305,6 @@ function resolveRemotePublishConfig(
     visibility,
     changelog: options.changelog,
   };
-}
-
-function normalizeBaseUrl(value: string): string {
-  return value.replace(/\/+$/, '');
 }
 
 async function parseApiError(response: Response): Promise<string> {
