@@ -146,7 +146,8 @@ export default function DashboardPage() {
   };
 
   const handleCreateHostedSkill = async () => {
-    if (!hostedName.trim() || !hostedSlug.trim() || !hostedDescription.trim()) {
+    const normalizedSlug = generateSlug(hostedSlug.trim());
+    if (!hostedName.trim() || !normalizedSlug || !hostedDescription.trim()) {
       toast.error("Missing required fields", {
         description: "Name, slug, and description are required.",
       });
@@ -157,7 +158,7 @@ export default function DashboardPage() {
     try {
       const skillId = await createRepository({
         name: hostedName.trim(),
-        slug: hostedSlug.trim(),
+        slug: normalizedSlug,
         description: hostedDescription.trim(),
         visibility: hostedVisibility,
       });

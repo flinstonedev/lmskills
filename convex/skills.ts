@@ -939,6 +939,12 @@ export const getVersionStorageKey = internalQuery({
       return null;
     }
 
+    // Block unlisted skills from being served via internal query
+    // since there is no auth context to verify ownership
+    if (skill.visibility === "unlisted") {
+      return null;
+    }
+
     let versionDoc;
     if (args.version) {
       versionDoc = await ctx.db
