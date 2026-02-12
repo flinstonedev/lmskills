@@ -120,7 +120,7 @@ export default function SkillsPage() {
             return (
               <Link
                 key={skill._id}
-                href={`/skills/${skill.owner?.handle}/${encodeURIComponent(skill.slug ?? skill.name)}`}
+                href={`/skills/${encodeURIComponent(skill.owner?.handle ?? "")}/${encodeURIComponent(skill.slug ?? skill.name)}`}
               >
                 <Card className="h-full bg-(--surface-2) backdrop-blur border-border/50 hover:shadow-lg hover:scale-[1.02] transition-all cursor-pointer">
                   <CardHeader>

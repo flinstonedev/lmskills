@@ -70,7 +70,8 @@ export default function CreateRepositoryPage() {
       toast.error("Name is required");
       return;
     }
-    if (!slug.trim()) {
+    const normalizedSlug = generateSlug(slug.trim());
+    if (!normalizedSlug) {
       toast.error("Slug is required");
       return;
     }
@@ -84,7 +85,7 @@ export default function CreateRepositoryPage() {
     try {
       await createRepository({
         name: name.trim(),
-        slug: slug.trim(),
+        slug: normalizedSlug,
         description: description.trim(),
         license: license.trim() || undefined,
         visibility: "public",
@@ -98,7 +99,7 @@ export default function CreateRepositoryPage() {
         description: "Redirecting to your repository page...",
       });
 
-      const redirectUrl = `/skills/${currentUser.handle}/${slug.trim()}`;
+      const redirectUrl = `/skills/${currentUser.handle}/${normalizedSlug}`;
       await new Promise(resolve => setTimeout(resolve, 500));
       router.push(redirectUrl);
     } catch (error) {

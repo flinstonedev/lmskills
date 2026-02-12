@@ -13,7 +13,7 @@ function toSkillWithOwner(skill: Doc<"skills">, owner: Doc<"users"> | null) {
     _id: skill._id,
     source: skill.source,
     slug: skill.slug,
-    fullName: skill.fullName,
+    fullName: skill.fullName ?? `${skill.handle ?? ""}/${skill.slug ?? skill.name}`,
     name: skill.name,
     description: skill.description ?? "",
     visibility: skill.visibility ?? "public",
@@ -306,6 +306,9 @@ export const createRepository = mutation({
     if (args.description.length > MAX_DESCRIPTION_LENGTH) {
       throw new Error("Description is too long");
     }
+    if (args.license && args.license.length > MAX_LICENSE_LENGTH) {
+      throw new Error("License is too long");
+    }
 
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
@@ -396,7 +399,7 @@ export const getMyRepositoryBySlug = query({
       _id: skill._id,
       name: skill.name,
       slug: skill.slug,
-      fullName: skill.fullName,
+      fullName: skill.fullName ?? `${skill.handle ?? ""}/${skill.slug ?? skill.name}`,
       visibility: skill.visibility ?? "public",
       defaultVersionId: skill.defaultVersionId,
       createdAt: skill.createdAt,
@@ -476,7 +479,7 @@ export const getMyRepositories = query({
           name: skill.name,
           description: skill.description,
           slug: skill.slug,
-          fullName: skill.fullName,
+          fullName: skill.fullName ?? `${skill.handle ?? ""}/${skill.slug ?? skill.name}`,
           visibility: skill.visibility ?? "public",
           defaultVersionId: skill.defaultVersionId,
           createdAt: skill.createdAt,
@@ -584,9 +587,22 @@ export const publishSkillVersion = mutation({
       throw new Error("User not found");
     }
 
-    // Validate version format (semver)
+    // Validate version length and format (semver)
+    if (args.version.length > 128) {
+      throw new Error("Version string is too long");
+    }
     if (!SEMVER_PATTERN.test(args.version)) {
       throw new Error("Version must be valid semver");
+    }
+
+    // Validate changelog length if provided
+    if (args.changelog && args.changelog.length > MAX_DESCRIPTION_LENGTH) {
+      throw new Error("Changelog is too long");
+    }
+
+    // Validate manifest length if provided
+    if (args.manifest && args.manifest.length > 10000) {
+      throw new Error("Manifest is too long");
     }
 
     // Validate size is positive and within limit
@@ -849,6 +865,16 @@ export const getVersionDownloadUrl = query({
     const skill = await ctx.db.get(args.skillId);
     if (!skill || skill.source !== "repository") {
       return null;
+    }
+
+    if (skill.visibility === "unlisted") {
+      const user = await ctx.db
+        .query("users")
+        .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+        .first();
+      if (!user || user._id !== skill.ownerUserId) {
+        return null;
+      }
     }
 
     let versionDoc;
