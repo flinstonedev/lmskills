@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Fira_Code } from "next/font/google";
+import localFont from "next/font/local";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ConvexClientProvider } from "@/components/providers/convex-client-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
@@ -11,9 +11,21 @@ import { CookieConsentBanner } from "@/components/cookie-consent-banner";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { Toaster } from "@/components/ui/sonner";
 
-const firaCode = Fira_Code({
-  subsets: ["latin"],
+const firaCode = localFont({
+  src: [
+    {
+      path: "./fonts/FiraCode-Variable-latin.woff2",
+      style: "normal",
+      weight: "300 700",
+    },
+    {
+      path: "./fonts/FiraCode-Variable-latin-ext.woff2",
+      style: "normal",
+      weight: "300 700",
+    },
+  ],
   display: "swap",
+  variable: "--font-fira-code",
 });
 
 export const metadata: Metadata = {
